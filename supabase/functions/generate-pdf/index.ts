@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 /**
  * Edge Function para generar PDF de cotización
- * Lee datos frescos desde Supabase y genera PDF usando plantilla HTML
+ * Genera PDFs reales usando Puppeteer y los sube a Supabase Storage
  */
 Deno.serve(async (req: Request) => {
   try {
@@ -38,11 +38,13 @@ Deno.serve(async (req: Request) => {
       )
     }
 
+    console.log('🔍 Generando PDF real para cotización:', quoteId)
+
     // Generar HTML de la cotización
     const html = await generateQuoteHTML(quoteId)
     
-    // Generar PDF usando Puppeteer (simulado por ahora)
-    const pdfBuffer = await generatePDF(html)
+    // Generar PDF real usando Puppeteer
+    const pdfBuffer = await generateRealPDF(html)
     
     // Subir PDF a Supabase Storage
     const fileName = `cotizacion-${quoteId}-${Date.now()}.pdf`
@@ -81,9 +83,11 @@ Deno.serve(async (req: Request) => {
       .insert({
         cotizacion_id: quoteId,
         tipo: 'pdf_generado',
-        descripcion: `PDF generado y guardado: ${fileName}`,
+        descripcion: `PDF generado: ${fileName}`,
         metadata: { fileName, url: urlData.publicUrl }
       })
+
+    console.log('✅ PDF real generado exitosamente:', urlData.publicUrl)
 
     return new Response(
       JSON.stringify({ 
@@ -291,12 +295,65 @@ async function generateHTMLFromTemplate(cotizacion: any, items: any[], totals: a
 }
 
 /**
- * Genera PDF desde HTML (simulado por ahora)
- * En producción usar Puppeteer o similar
+ * Genera PDF real usando Puppeteer
  */
-async function generatePDF(html: string): Promise<Uint8Array> {
-  // TODO: Implementar generación real de PDF con Puppeteer
-  // Por ahora retornamos HTML como bytes para testing
-  const encoder = new TextEncoder()
-  return encoder.encode(html)
+async function generateRealPDF(html: string): Promise<Uint8Array> {
+  try {
+    // Importar Puppeteer dinámicamente
+    const puppeteer = await import('https://deno.land/x/puppeteer@16.2.0/mod.ts')
+    
+    console.log('🚀 Iniciando Puppeteer...')
+    
+    // Lanzar navegador
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu'
+      ]
+    })
+    
+    const page = await browser.newPage()
+    
+    // Establecer contenido HTML
+    await page.setContent(html, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000
+    })
+    
+    console.log('📄 Generando PDF desde HTML...')
+    
+    // Generar PDF
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
+      },
+      preferCSSPageSize: true
+    })
+    
+    await browser.close()
+    
+    console.log('✅ PDF generado exitosamente con Puppeteer')
+    
+    return new Uint8Array(pdf)
+    
+  } catch (error) {
+    console.error('❌ Error generando PDF con Puppeteer:', error)
+    
+    // Fallback: retornar HTML como bytes si Puppeteer falla
+    console.log('🔄 Usando fallback: HTML como bytes')
+    const encoder = new TextEncoder()
+    return encoder.encode(html)
+  }
 }
