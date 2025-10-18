@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle2, Mail, Phone, Building2, FileText, ArrowRight, Home } from "lucide-react"
+import { CheckCircle2, Mail, Phone, Building2, FileText, ArrowRight, Home, Package } from "lucide-react"
 import PDFGenerator from "@/components/pdf-generator"
 import { supabase } from "@/src/services/supabaseClient"
 
