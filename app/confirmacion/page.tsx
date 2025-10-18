@@ -1,61 +1,122 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, Mail, Phone, Building2, FileText, ArrowRight, Home } from "lucide-react"
 import PDFGenerator from "@/components/pdf-generator"
+import { supabase } from "@/src/services/supabaseClient"
 
-interface QuoteItem {
-  productId: number
-  name: string
-  quantity: number
-  pricePerUnit: number
-  total: number
-}
-
-interface ContactInfo {
-  name: string
-  email: string
-  phone: string
-  company: string
-  notes: string
+interface QuoteData {
+  cotizacion: {
+    id: number
+    estado: string
+    total: number
+    created_at: string
+    pdf_url?: string
+  }
+  lead: {
+    nombre: string
+    email: string
+    telefono: string
+    empresa: string
+    ruc_cedula?: string
+    ciudad?: string
+    notas?: string
+  }
+  items: Array<{
+    cantidad: number
+    precio_unitario_aplicado: number
+    subtotal: number
+    productos: {
+      nombre: string
+      categoria: string
+      imagen_url?: string
+    }
+  }>
 }
 
 export default function ConfirmacionPage() {
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
-  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
-  const [quoteNumber, setQuoteNumber] = useState("")
+  const searchParams = useSearchParams()
+  const quoteId = searchParams.get('quoteId')
+  
+  const [quoteData, setQuoteData] = useState<QuoteData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-
-    // Load data from localStorage
-    const savedQuote = localStorage.getItem("quote")
-    const savedContact = localStorage.getItem("contactInfo")
-
-    if (savedQuote) {
-      setQuoteItems(JSON.parse(savedQuote))
+    if (!quoteId) {
+      setLoading(false)
+      return
     }
 
-    if (savedContact) {
-      setContactInfo(JSON.parse(savedContact))
+    loadQuoteData(parseInt(quoteId))
+  }, [quoteId])
+
+  const loadQuoteData = async (id: number) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      // Obtener cotización completa con lead e items
+      const { data: cotizacion, error: cotizacionError } = await supabase
+        .from('cotizaciones')
+        .select(`
+          *,
+          leads (
+            nombre,
+            email,
+            telefono,
+            empresa,
+            ruc_cedula,
+            ciudad,
+            notas
+          )
+        `)
+        .eq('id', id)
+        .single()
+
+      if (cotizacionError) {
+        throw new Error(`Error obteniendo cotización: ${cotizacionError.message}`)
+      }
+
+      // Obtener items de la cotización
+      const { data: items, error: itemsError } = await supabase
+        .from('items_cotizacion')
+        .select(`
+          *,
+          productos (
+            nombre,
+            categoria,
+            imagen_url
+          )
+        `)
+        .eq('cotizacion_id', id)
+
+      if (itemsError) {
+        throw new Error(`Error obteniendo items: ${itemsError.message}`)
+      }
+
+      setQuoteData({
+        cotizacion,
+        lead: cotizacion.leads,
+        items
+      })
+
+    } catch (err) {
+      console.error('Error loading quote data:', err)
+      setError(err instanceof Error ? err.message : 'Error cargando cotización')
+    } finally {
+      setLoading(false)
     }
-
-    // Generate a quote number
-    const number = `FC-${Date.now().toString().slice(-8)}`
-    setQuoteNumber(number)
-
-    // Clear the quote after confirmation
-    localStorage.removeItem("quote")
-    localStorage.removeItem("contactInfo")
-  }, [])
+  }
 
   const calculateSubtotal = () => {
-    return quoteItems.reduce((sum, item) => sum + item.total, 0)
+    if (!quoteData) return 0
+    return quoteData.items.reduce((sum, item) => sum + item.subtotal, 0)
   }
 
   const calculateIVA = () => {
@@ -66,214 +127,295 @@ export default function ConfirmacionPage() {
     return calculateSubtotal() + calculateIVA()
   }
 
-  if (!contactInfo || quoteItems.length === 0) {
+  // Si no hay quoteId, mostrar mensaje de error
+  if (!quoteId) {
     return (
-      <div className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-md mx-auto space-y-4">
-          <div className="flex justify-center">
-            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
-              <FileText className="h-10 w-10 text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <FileText className="w-8 h-8 text-gray-400" />
             </div>
-          </div>
-          <h1 className="text-2xl font-bold">No hay cotización para confirmar</h1>
-          <p className="text-muted-foreground">Por favor, crea una cotización primero.</p>
-          <Link href="/catalogo">
-            <Button className="bg-primary hover:bg-primary-hover text-white">Ir al Catálogo</Button>
-          </Link>
-        </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              No hay cotización para confirmar
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Por favor, crea una cotización primero.
+            </p>
+            <Link href="/catalogo">
+              <Button className="w-full">
+                Ir al Catálogo
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
-  return (
-    <div className="py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Success Header */}
-          <div className="text-center mb-12 space-y-4">
-            <div className="flex justify-center">
-              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <CheckCircle2 className="h-12 w-12 text-primary" />
-              </div>
+  // Si está cargando, mostrar spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+              <FileText className="w-8 h-8 text-blue-600 animate-pulse" />
             </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl md:text-4xl font-bold text-balance">¡Cotización Enviada con Éxito!</h1>
-              <p className="text-lg text-muted-foreground text-pretty">
-                Hemos recibido tu solicitud de cotización y te responderemos pronto
-              </p>
-            </div>
-            <Card className="inline-block">
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">Número de Cotización</p>
-                <p className="text-2xl font-bold text-primary">{quoteNumber}</p>
-              </CardContent>
-            </Card>
-          </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Cargando cotización...
+            </h1>
+            <p className="text-gray-600">
+              Obteniendo datos desde Supabase
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
-          {/* Contact Information */}
-          <Card className="mb-6">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold mb-4">Información de Contacto</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
+  // Si hay error, mostrarlo
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+              <FileText className="w-8 h-8 text-red-600" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Error cargando cotización
+            </h1>
+            <p className="text-gray-600 mb-6">
+              {error}
+            </p>
+            <Link href="/catalogo">
+              <Button className="w-full">
+                Ir al Catálogo
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Si no hay datos, mostrar mensaje
+  if (!quoteData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <FileText className="w-8 h-8 text-gray-400" />
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Cotización no encontrada
+            </h1>
+            <p className="text-gray-600 mb-6">
+              La cotización solicitada no existe.
+            </p>
+            <Link href="/catalogo">
+              <Button className="w-full">
+                Ir al Catálogo
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const quoteNumber = `FC-2025-${quoteData.cotizacion.id.toString().padStart(3, '0')}`
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-balance">¡Cotización Enviada con Éxito!</h1>
+            <p className="text-lg text-muted-foreground text-pretty">
+              Hemos recibido tu solicitud de cotización y te responderemos pronto
+            </p>
+          </div>
+          <Card className="inline-block mt-4">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">Número de Cotización</p>
+              <p className="text-2xl font-bold text-primary">{quoteNumber}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Contact Information */}
+        <Card className="mb-6">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Información de Contacto</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="flex items-start gap-3">
+                <Building2 className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Empresa</p>
+                  <p className="font-medium">{quoteData.lead.empresa}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Nombre</p>
+                  <p className="font-medium">{quoteData.lead.nombre}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Mail className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{quoteData.lead.email}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Phone className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Teléfono</p>
+                  <p className="font-medium">{quoteData.lead.telefono || 'No especificado'}</p>
+                </div>
+              </div>
+              {quoteData.lead.ruc_cedula && (
                 <div className="flex items-start gap-3">
                   <Building2 className="h-5 w-5 text-primary mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Empresa</p>
-                    <p className="font-medium">{contactInfo.company}</p>
+                    <p className="text-sm text-muted-foreground">RUC/Cédula</p>
+                    <p className="font-medium">{quoteData.lead.ruc_cedula}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nombre</p>
-                    <p className="font-medium">{contactInfo.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Mail className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{contactInfo.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Teléfono</p>
-                    <p className="font-medium">{contactInfo.phone}</p>
-                  </div>
-                </div>
-              </div>
-              {contactInfo.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Notas Adicionales</p>
-                    <p className="text-sm">{contactInfo.notes}</p>
-                  </div>
-                </>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Quote Summary */}
-          <Card className="mb-6">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold mb-4">Resumen de Productos</h2>
-              <div className="space-y-4">
-                {quoteItems.map((item) => (
-                  <div key={item.productId}>
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.quantity} unidades × ${item.pricePerUnit.toFixed(2)}
-                        </p>
-                      </div>
-                      <p className="font-semibold">${item.total.toFixed(2)}</p>
-                    </div>
-                    <Separator className="mt-4" />
+              {quoteData.lead.ciudad && (
+                <div className="flex items-start gap-3">
+                  <Building2 className="h-5 w-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ciudad</p>
+                    <p className="font-medium">{quoteData.lead.ciudad}</p>
                   </div>
-                ))}
-              </div>
-
-              <div className="space-y-2 pt-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">IVA (15%):</span>
-                  <span className="font-medium">${calculateIVA().toFixed(2)}</span>
-                </div>
+              )}
+            </div>
+            {quoteData.lead.notas && (
+              <>
                 <Separator />
-                <div className="flex justify-between">
-                  <span className="font-semibold text-lg">Total:</span>
-                  <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Notas Adicionales</p>
+                  <p className="text-sm">{quoteData.lead.notas}</p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quote Summary */}
+        <Card className="mb-6">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Resumen de Productos</h2>
+            <div className="space-y-4">
+              {quoteData.items.map((item, index) => (
+                <div key={index}>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <p className="font-medium">{item.productos.nombre}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.cantidad} unidades × ${item.precio_unitario_aplicado.toFixed(2)}
+                      </p>
+                    </div>
+                    <p className="font-semibold">${item.subtotal.toFixed(2)}</p>
+                  </div>
+                  <Separator className="mt-4" />
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IVA (15%):</span>
+                <span className="font-medium">${calculateIVA().toFixed(2)}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="font-semibold text-lg">Total:</span>
+                <span className="text-2xl font-bold text-primary">${calculateTotal().toFixed(2)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* PDF Generator */}
+        <PDFGenerator 
+          quoteId={quoteData.cotizacion.id}
+          quoteNumber={quoteNumber}
+          className="mb-6"
+        />
+
+        {/* Next Steps */}
+        <Card className="mb-8 bg-muted/50">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-semibold">Próximos Pasos</h2>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  1
+                </div>
+                <div>
+                  <p className="font-medium">Revisión de tu cotización</p>
+                  <p className="text-sm text-muted-foreground">
+                    Nuestro equipo revisará tu solicitud y te contactará en las próximas 24 horas.
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* PDF Generator */}
-          <PDFGenerator 
-            quoteId={1} // TODO: Obtener ID real de la cotización
-            quoteNumber={quoteNumber}
-            className="mb-6"
-          />
-
-          {/* Next Steps */}
-          <Card className="mb-8 bg-muted/50">
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold">Próximos Pasos</h2>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-medium">Revisión de tu Solicitud</p>
-                    <p className="text-sm text-muted-foreground">
-                      Nuestro equipo revisará tu cotización y verificará disponibilidad
-                    </p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  2
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-medium">Cotización Detallada</p>
-                    <p className="text-sm text-muted-foreground">
-                      Recibirás una cotización detallada por email en 24-48 horas
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-medium">Confirmación y Producción</p>
-                    <p className="text-sm text-muted-foreground">
-                      Una vez aprobada, iniciaremos la producción de tus productos
-                    </p>
-                  </div>
+                <div>
+                  <p className="font-medium">Propuesta detallada</p>
+                  <p className="text-sm text-muted-foreground">
+                    Te enviaremos una propuesta detallada con tiempos de entrega y condiciones.
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-start gap-3">
+                <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  3
+                </div>
+                <div>
+                  <p className="font-medium">Confirmación y producción</p>
+                  <p className="text-sm text-muted-foreground">
+                    Una vez aprobada, iniciaremos la producción de tus productos.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
-                <Home className="mr-2 h-5 w-5" />
-                Volver al Inicio
-              </Button>
-            </Link>
-            <Link href="/catalogo">
-              <Button size="lg" className="bg-primary hover:bg-primary-hover text-white w-full sm:w-auto">
-                Explorar Más Productos
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Contact Support */}
-          <div className="mt-12 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">¿Tienes preguntas sobre tu cotización?</p>
-            <p className="text-sm">
-              Contáctanos en{" "}
-              <a href="mailto:info@fullcolor.com" className="text-primary hover:underline font-medium">
-                info@fullcolor.com
-              </a>{" "}
-              o llámanos al{" "}
-              <a href="tel:+593991234567" className="text-primary hover:underline font-medium">
-                +593 99 123 4567
-              </a>
-            </p>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link href="/catalogo">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Package className="w-4 h-4 mr-2" />
+              Ver Más Productos
+            </Button>
+          </Link>
+          <Link href="/">
+            <Button className="w-full sm:w-auto">
+              <Home className="w-4 h-4 mr-2" />
+              Ir al Inicio
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
