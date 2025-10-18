@@ -29,8 +29,8 @@ Crea el archivo `.env.local` en la raíz del proyecto con:
 
 ```env
 # Supabase Configuration
-VITE_SUPABASE_URL=tu_project_url_aqui
-VITE_SUPABASE_ANON_KEY=tu_anon_key_aqui
+NEXT_PUBLIC_SUPABASE_URL=tu_project_url_aqui
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_aqui
 
 # Server/Edge Function Keys (for PDF generation and email)
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_aqui
