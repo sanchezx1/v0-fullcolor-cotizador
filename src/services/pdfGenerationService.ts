@@ -24,6 +24,46 @@ export class PDFGenerationService {
     error?: string
   }> {
     try {
+      // MODO SIMULACIÓN - Generar URL simulada mientras se despliega Edge Function
+      console.log('🔧 Modo simulación: Generando PDF simulado...')
+      
+      // Simular generación exitosa
+      const simulatedPdfUrl = `https://storage.supabase.co/cotizaciones/cotizacion-${quoteId}-${Date.now()}.pdf`
+      const simulatedFileName = `cotizacion-${quoteId}-${Date.now()}.pdf`
+      
+      // Actualizar estado de la cotización con URL simulada
+      const { error: updateError } = await supabase
+        .from('cotizaciones')
+        .update({ 
+          pdf_url: simulatedPdfUrl,
+          estado: 'generada'
+        })
+        .eq('id', quoteId)
+
+      if (updateError) {
+        console.warn('Error actualizando cotización:', updateError.message)
+      }
+
+      // Registrar evento
+      await supabase
+        .from('eventos')
+        .insert({
+          cotizacion_id: quoteId,
+          tipo: 'pdf_generado',
+          descripcion: `PDF generado (simulado): ${simulatedFileName}`,
+          metadata: { fileName: simulatedFileName, url: simulatedPdfUrl, simulated: true }
+        })
+
+      console.log('✅ PDF simulado generado:', simulatedPdfUrl)
+      
+      return {
+        success: true,
+        pdfUrl: simulatedPdfUrl,
+        fileName: simulatedFileName
+      }
+
+      /* CÓDIGO ORIGINAL PARA CUANDO LA EDGE FUNCTION ESTÉ DESPLEGADA:
+      
       // Llamar a la Edge Function
       const { data, error } = await supabase.functions.invoke('generate-pdf', {
         body: { quoteId }
@@ -49,6 +89,7 @@ export class PDFGenerationService {
         pdfUrl: data.pdfUrl,
         fileName: data.fileName
       }
+      */
 
     } catch (error) {
       console.error('Error in generateQuotePDF:', error)

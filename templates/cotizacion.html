@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Cotización {{COTIZACION_NUMERO}}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{--azul:#0066a1;--amarillo:#f5c700;--gris:#e5e7eb;--txt:#1a1a1a}
+    *{box-sizing:border-box} body{margin:0;color:var(--txt);font-family:Inter,Helvetica,Arial,sans-serif}
+    .page{width:210mm; min-height:297mm; padding:16mm 18mm}
+    .row{display:flex;align-items:flex-start;justify-content:space-between}
+    .muted{color:#6b7280}
+    .h2{font-size:14px;font-weight:700}
+    .bar{height:3px;background:var(--azul);margin-top:12px}
+    .card{border:1px solid var(--gris);border-radius:8px;padding:12px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border-bottom:1px solid #eef0f2;padding:10px 8px;font-size:12px;vertical-align:top}
+    th{font-weight:700;background:#fafbfc}
+    .right{text-align:right}
+    .logo{height:28px}
+    .img{width:64px;height:48px;object-fit:cover;border:1px solid var(--gris);border-radius:6px}
+    .total{font-size:16px;font-weight:800}
+    .footnote{font-size:10px;color:#6b7280}
+    .subtitle{font-size:11px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- HEADER -->
+    <div class="row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img class="logo" src="{{EMPRESA_LOGO_URL}}" alt="logo empresa" />
+        <div class="muted subtitle">Líderes en Servicios Gráficos Digitales</div>
+      </div>
+      <div style="text-align:right">
+        <div class="h2">COTIZACIÓN</div>
+        <div class="muted">Nº: {{COTIZACION_NUMERO}}</div>
+        <div class="muted">Fecha: {{COTIZACION_FECHA}}</div>
+      </div>
+    </div>
+    <div class="bar"></div>
+
+    <!-- INFO BOXES -->
+    <div class="row" style="gap:14px; margin-top:12px">
+      <div class="card" style="flex:1">
+        <div class="h2" style="margin-bottom:8px">Cliente</div>
+        <div style="font-size:12px;line-height:1.5">
+          <strong>{{CLIENTE_NOMBRE}}</strong><br/>
+          RUC/Cédula: {{CLIENTE_DOCUMENTO}}<br/>
+          {{CLIENTE_DIRECCION}}<br/>
+          — {{CLIENTE_TELEFONO}}<br/>
+          {{CLIENTE_EMAIL}}
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="h2" style="margin-bottom:8px">Emisor</div>
+        <div style="font-size:12px;line-height:1.5">
+          <strong>{{EMPRESA_NOMBRE}}</strong><br/>
+          {{EMPRESA_DIRECCION}}<br/>
+          {{EMPRESA_TELEFONO}}<br/>
+          {{EMPRESA_EMAIL}}
+        </div>
+      </div>
+    </div>
+
+    <!-- TÍTULO PRESUPUESTO -->
+    <div class="h2" style="margin-top:24px;margin-bottom:8px">Presupuesto</div>
+
+    <!-- TABLA ITEMS -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px">Cant.</th>
+          <th style="width:80px">Imagen</th>
+          <th>Producto</th>
+          <th style="width:120px" class="right">P. Unit (sin IVA)</th>
+          <th style="width:70px" class="right">IVA</th>
+          <th style="width:120px" class="right">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ITEMS_ROWS}}
+      </tbody>
+    </table>
+
+    <!-- RESÚMENES -->
+    <table style="margin-top:12px">
+      <tbody>
+        <tr><td style="width:85%"></td><td class="right"><strong>SUBTOTAL</strong></td><td class="right">{{RESUMEN_SUBTOTAL}}</td></tr>
+        <tr><td></td><td class="right">IVA 0%</td><td class="right">{{RESUMEN_IVA0}}</td></tr>
+        <tr><td></td><td class="right">IVA 15%</td><td class="right">{{RESUMEN_IVA15}}</td></tr>
+        <tr><td></td><td class="right total">TOTAL</td><td class="right total">{{RESUMEN_TOTAL}}</td></tr>
+      </tbody>
+    </table>
+
+    <!-- OBSERVACIONES -->
+    <div style="margin:12px 0 8px 0"><strong>Observaciones:</strong> {{OBSERVACIONES}}</div>
+
+    <!-- FOOTNOTE -->
+    <div class="footnote" style="margin-top:24px">
+      * Precios en USD. Validez {{COTIZACION_VALIDEZ_DIAS}} días. Tiempos sujetos a aprobación de artes y abono.
+      No incluye flete salvo indicación.
+    </div>
+  </div>
+</body>
+</html>

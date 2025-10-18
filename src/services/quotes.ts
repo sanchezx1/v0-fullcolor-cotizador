@@ -13,6 +13,8 @@ export async function crearLead(leadData: {
   ciudad?: string
 }): Promise<Lead> {
   try {
+    console.log('🔍 Intentando crear lead con datos:', leadData)
+    
     const { data, error } = await supabase
       .from('leads')
       .insert(leadData)
@@ -20,14 +22,24 @@ export async function crearLead(leadData: {
       .single()
 
     if (error) {
-      console.error('Error creating lead:', error)
-      throw error
+      console.error('❌ Error detallado de Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw new Error(`Error de Supabase: ${error.message} (Código: ${error.code})`)
     }
 
+    console.log('✅ Lead creado exitosamente:', data)
     return data
   } catch (error) {
-    console.error('Error in crearLead:', error)
-    throw error
+    console.error('❌ Error en crearLead:', error)
+    if (error instanceof Error) {
+      throw error
+    } else {
+      throw new Error(`Error inesperado: ${JSON.stringify(error)}`)
+    }
   }
 }
 
