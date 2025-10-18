@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning={true}>
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

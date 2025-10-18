@@ -21,6 +21,15 @@
   --color-input: #ffffff;
   --color-card: #ffffff;
   --color-card-foreground: #1a1a1a;
+  
+  /* Additional required variables */
+  --color-primary-foreground: #ffffff;
+  --color-accent-foreground: #1a1a1a;
+  --color-secondary: #f5f5f5;
+  --color-secondary-foreground: #1a1a1a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-ring: #0066a1;
 
   /* Radius */
   --radius: 1rem;
@@ -38,38 +47,38 @@
   --color-foreground: var(--color-foreground);
   --color-card: var(--color-card);
   --color-card-foreground: var(--color-card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--color-background);
+  --color-popover-foreground: var(--color-foreground);
   --color-primary: var(--color-primary);
-  --color-primary-foreground: var(--color-primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-muted);
+  --color-secondary-foreground: var(--color-foreground);
   --color-muted: var(--color-muted);
   --color-muted-foreground: var(--color-muted-foreground);
   --color-accent: var(--color-accent);
-  --color-accent-foreground: var(--color-accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--color-foreground);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
   --color-border: var(--color-border);
   --color-input: var(--color-input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
+  --color-ring: var(--color-primary);
+  --color-chart-1: var(--color-primary);
+  --color-chart-2: var(--color-accent);
+  --color-chart-3: #22c55e;
+  --color-chart-4: #f59e0b;
+  --color-chart-5: #8b5cf6;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar: var(--color-background);
+  --color-sidebar-foreground: var(--color-foreground);
+  --color-sidebar-primary: var(--color-primary);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: var(--color-muted);
+  --color-sidebar-accent-foreground: var(--color-foreground);
+  --color-sidebar-border: var(--color-border);
+  --color-sidebar-ring: var(--color-primary);
 }
 
 @layer base {
@@ -167,6 +176,9 @@
 .animate-shimmer-diagonal { animation: shimmer-diagonal 15s linear infinite; }
 .animate-pulse-glow { animation: pulse-glow 8s ease-in-out infinite; }
 .animate-grid-fade { animation: grid-fade 10s ease-in-out infinite; }
+.animate-pulse-slow { animation: pulse 4s ease-in-out infinite; }
+.animate-pulse-slower { animation: pulse 6s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer-diagonal 3s linear infinite; }
 
 /* ---------- Patrones inspirados en impresión (útiles opcionales) ---------- */
 .bg-dotted-pattern {

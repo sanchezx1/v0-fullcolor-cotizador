@@ -42,6 +42,9 @@ export default function CotizadorPage() {
 
   // Load quote from localStorage
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     const savedQuote = localStorage.getItem("quote")
     if (savedQuote) {
       setQuoteItems(JSON.parse(savedQuote))
@@ -50,6 +53,9 @@ export default function CotizadorPage() {
 
   // Save quote to localStorage whenever it changes
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     if (quoteItems.length > 0) {
       localStorage.setItem("quote", JSON.stringify(quoteItems))
     }
@@ -72,7 +78,11 @@ export default function CotizadorPage() {
   const removeItem = (productId: number) => {
     const updatedItems = quoteItems.filter((item) => item.productId !== productId)
     setQuoteItems(updatedItems)
-    localStorage.setItem("quote", JSON.stringify(updatedItems))
+    
+    // Only update localStorage on client side
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("quote", JSON.stringify(updatedItems))
+    }
   }
 
   const calculateSubtotal = () => {
@@ -101,7 +111,9 @@ export default function CotizadorPage() {
     }
 
     // Store contact info and navigate to confirmation
-    localStorage.setItem("contactInfo", JSON.stringify(contactInfo))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("contactInfo", JSON.stringify(contactInfo))
+    }
     router.push("/confirmacion")
   }
 

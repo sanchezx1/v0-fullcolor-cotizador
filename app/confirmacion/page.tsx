@@ -29,6 +29,9 @@ export default function ConfirmacionPage() {
   const [quoteNumber, setQuoteNumber] = useState("")
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     // Load data from localStorage
     const savedQuote = localStorage.getItem("quote")
     const savedContact = localStorage.getItem("contactInfo")

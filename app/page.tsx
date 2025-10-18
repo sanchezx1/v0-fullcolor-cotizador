@@ -1,169 +1,212 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Package, Truck, HeadphonesIcon } from "lucide-react"
+import { ArrowRight, Package, Truck, HeadphonesIcon, AlertCircle } from "lucide-react"
 import { CategoryChips } from "@/components/category-chips"
 import { FeaturedCards } from "@/components/featured-cards"
 import { WhatsAppHelp } from "@/components/whatsapp-help"
+import { listProducts } from "@/src/lib/data"
+import { Producto } from "@/src/services/supabaseClient"
 
 export default function HomePage() {
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Tarjetas de Presentación Premium",
-      category: "Papelería Corporativa",
-      image: "/premium-business-cards-stack.jpg",
-      minPrice: 25,
-      description: "Impresión de alta calidad en papel couché",
-    },
-    {
-      id: 2,
-      name: "Carpetas Corporativas",
-      category: "Papelería Corporativa",
-      image: "/corporate-folders-presentation.jpg",
-      minPrice: 150,
-      description: "Carpetas personalizadas con tu logo",
-    },
-    {
-      id: 3,
-      name: "Banners Roll-Up",
-      category: "Material Publicitario",
-      image: "/roll-up-banner-display.jpg",
-      minPrice: 45,
-      description: "Banners portátiles para eventos",
-    },
-    {
-      id: 4,
-      name: "Tazas Personalizadas",
-      category: "Merchandising",
-      image: "/custom-branded-mugs.jpg",
-      minPrice: 180,
-      description: "Tazas cerámicas con impresión full color",
-    },
-    {
-      id: 5,
-      name: "Bolígrafos Corporativos",
-      category: "Merchandising",
-      image: "/corporate-branded-pens.jpg",
-      minPrice: 80,
-      description: "Bolígrafos metálicos con grabado láser",
-    },
-    {
-      id: 6,
-      name: "Volantes Publicitarios",
-      category: "Material Publicitario",
-      image: "/promotional-flyers-stack.jpg",
-      minPrice: 35,
-      description: "Volantes en papel couché brillante",
-    },
-  ]
+  const [featuredProducts, setFeaturedProducts] = useState<Producto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    loadFeaturedProducts()
+  }, [])
+
+  const loadFeaturedProducts = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const products = await listProducts()
+      // Tomar los primeros 6 productos como destacados
+      setFeaturedProducts(products.slice(0, 6))
+    } catch (err) {
+      console.error('Error loading featured products:', err)
+      setError('Error al cargar productos destacados')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const benefits = [
     {
       icon: Package,
-      title: "Calidad Garantizada",
-      description: "Productos de alta calidad con garantía de satisfacción",
+      title: "Calidad Premium",
+      description: "Materiales de primera calidad y acabados profesionales",
     },
     {
       icon: Truck,
-      title: "Envío a Todo el País",
-      description: "Entrega rápida y segura en todo Ecuador",
+      title: "Entrega Rápida",
+      description: "Tiempos de entrega optimizados para tu proyecto",
     },
     {
       icon: HeadphonesIcon,
-      title: "Soporte Personalizado",
-      description: "Asesoría experta para tus proyectos",
+      title: "Soporte 24/7",
+      description: "Atención personalizada cuando la necesites",
     },
   ]
 
-  return (
-    <div className="flex flex-col relative">
-      {/* Animated gradient background decorations */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        {/* Top right gradient blob */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent rounded-full blur-3xl animate-pulse-slow" />
-
-        {/* Bottom left gradient blob */}
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-accent/15 via-accent/8 to-transparent rounded-full blur-3xl animate-pulse-slower" />
-
-        {/* Center accent */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-primary/5 via-transparent to-transparent rounded-full blur-2xl" />
-      </div>
-
-      {/* Hero Section */}
-      <section className="relative py-12 md:py-24 lg:py-32 overflow-hidden">
-        {/* Subtle gradient overlay for hero */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background -z-10" />
-
-        <div className="container mx-auto px-5 md:px-6">
-          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-10 lg:gap-16 lg:items-center">
-            {/* Left Column: Content */}
-            <div className="space-y-6 md:space-y-8">
-              <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 text-xs md:text-sm px-3 py-1.5 md:px-4 inline-block">
-                Soluciones B2B de Impresión
-              </Badge>
-
-              <div className="space-y-4 md:space-y-6">
-                <h1 className="text-[32px] leading-[1.15] md:text-5xl lg:text-6xl font-bold text-balance md:leading-[1.1]">
-                  {"Cotiza productos personalizados con calidad "}
-                  <span className="text-primary">FullColor</span>
-                </h1>
-
-                <p className="text-base leading-relaxed md:text-lg lg:text-xl text-muted-foreground text-pretty max-w-xl">
-                  Papelería corporativa y merchandising premium para empresas que buscan destacar con productos de
-                  impresión de alta calidad.
-                </p>
-              </div>
-
-              <CategoryChips />
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-3">
-                <Link href="/cotizador" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="bg-primary hover:bg-primary-hover text-white w-full sm:w-auto h-12 md:h-14 text-base md:text-lg font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all"
-                  >
-                    Ir al Cotizador
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/catalogo" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto h-12 md:h-14 text-base md:text-lg font-medium border-2 border-border hover:bg-muted/50 hover:border-primary/30 bg-transparent transition-all"
-                  >
-                    Ver Catálogo
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="pt-2">
-                <WhatsAppHelp variant="inline" />
-              </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-16 bg-gray-200 rounded w-2/3 mx-auto"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-gray-200 rounded"></div>
+              ))}
             </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-            {/* Right Column: Featured Cards */}
-            <div className="relative mt-4 lg:mt-0">
-              <FeaturedCards />
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="container mx-auto px-4 py-16 lg:py-24">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+              Impresión y{" "}
+              <span className="text-primary">Merchandising</span> de Calidad
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              Transformamos tus ideas en productos físicos de alta calidad. 
+              Desde tarjetas de presentación hasta merchandising corporativo, 
+              tenemos todo lo que necesitas para hacer brillar tu marca.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
+                <Link href="/catalogo">
+                  Ver Catálogo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/cotizador">
+                  Cotizar Ahora
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Featured Products */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Productos Destacados
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Descubre nuestros productos más populares, diseñados para 
+              satisfacer las necesidades de tu empresa.
+            </p>
+          </div>
+
+          {error ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Error al cargar productos
+              </h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Button onClick={loadFeaturedProducts}>
+                Reintentar
+              </Button>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+              {featuredProducts.map((product) => (
+                <Link key={product.id} href={`/producto/${product.id}`}>
+                  <Card className="group overflow-hidden hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 h-full border-border/50 hover:border-primary/30">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                      <img
+                        src={product.imagen_url || "/placeholder.svg?height=300&width=400"}
+                        alt={product.nombre}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Ver detalles</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {product.categoria}
+                        </Badge>
+                        <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+                          {product.nombre}
+                        </h3>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {product.descripcion}
+                        </p>
+                        <div className="flex items-center justify-between pt-2">
+                          <span className="text-xs text-muted-foreground">
+                            Mínimo: {product.minimo_pedido} {product.unidad}
+                          </span>
+                          <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            Cotizar
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="text-center mt-8">
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/catalogo">
+                Ver Todos los Productos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-b from-muted/20 via-muted/30 to-muted/20 relative">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(0,102,161,0.03),transparent_50%)] pointer-events-none" />
-        <div className="container mx-auto px-5 md:px-6 relative">
-          <div className="grid md:grid-cols-3 gap-8 md:gap-10">
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              ¿Por qué elegirnos?
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Nos comprometemos a brindarte la mejor experiencia en impresión y merchandising
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex flex-col items-center text-center space-y-3 group">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-primary/10">
-                  <benefit.icon className="h-8 w-8 text-primary" />
+              <div key={index} className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                  <benefit.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="text-lg md:text-xl font-semibold">{benefit.title}</h3>
-                <p className="text-[15px] leading-relaxed text-muted-foreground text-pretty max-w-xs">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-600">
                   {benefit.description}
                 </p>
               </div>
@@ -172,110 +215,34 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Products Section */}
-      <section className="py-12 md:py-20 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-accent/5 to-background pointer-events-none" />
-        <div className="container mx-auto px-5 md:px-6 relative">
-          <div className="text-center mb-10 md:mb-12 space-y-3">
-            <h2 className="text-[28px] leading-tight md:text-3xl lg:text-4xl font-bold text-balance">
-              Productos Destacados
-            </h2>
-            <p className="text-base leading-relaxed md:text-lg text-muted-foreground text-pretty max-w-2xl mx-auto">
-              Explora nuestra selección de productos más populares con precios especiales por volumen
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-            {featuredProducts.map((product) => (
-              <Link key={product.id} href={`/producto/${product.id}`}>
-                <Card className="group overflow-hidden hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 h-full border-border/50 hover:border-primary/30">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                    <img
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground text-xs font-medium shadow-md">
-                      {product.category}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-5 md:p-6 space-y-3">
-                    <h3 className="font-semibold text-base md:text-lg text-balance group-hover:text-primary transition-colors leading-tight">
-                      {product.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground text-pretty leading-relaxed">{product.description}</p>
-                    <div className="flex items-center justify-between pt-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Desde</p>
-                        <p className="text-xl md:text-2xl font-bold text-primary">${product.minPrice}</p>
-                      </div>
-                      <Button variant="ghost" size="sm" className="group-hover:bg-primary/10 text-sm h-9 font-medium">
-                        Ver Detalles
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center mt-10 md:mt-12">
-            <Link href="/catalogo">
-              <Button
-                size="lg"
-                variant="outline"
-                className="group bg-transparent h-12 md:h-14 text-base md:text-lg border-2 hover:border-primary/30 hover:bg-muted/50 transition-all"
-              >
-                Ver Todos los Productos
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </div>
+      {/* Featured Cards Component */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <FeaturedCards />
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-14 md:py-20 bg-gradient-to-br from-primary via-primary to-primary-hover text-white relative overflow-hidden">
-        {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent animate-shimmer pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
-        <div className="container mx-auto px-5 md:px-6 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-6 md:space-y-7">
-            <h2 className="text-[28px] leading-tight md:text-3xl lg:text-4xl font-bold text-balance">
-              ¿Listo para Cotizar tus Productos?
+      {/* Category Chips */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Explora por Categorías
             </h2>
-            <p className="text-base leading-relaxed md:text-lg text-primary-foreground/95 text-pretty">
-              Obtén precios especiales por volumen y descubre cómo podemos ayudarte a impulsar tu marca con productos
-              personalizados de alta calidad.
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Encuentra exactamente lo que necesitas navegando por nuestras categorías especializadas
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-3 md:pt-4">
-              <Link href="/cotizador" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="bg-white text-primary hover:bg-gray-50 w-full sm:w-auto h-12 md:h-14 text-base md:text-lg font-medium shadow-xl hover:shadow-2xl transition-all hover:scale-105"
-                >
-                  Comenzar Cotización
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/catalogo" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/15 w-full sm:w-auto h-12 md:h-14 text-base md:text-lg font-medium bg-transparent backdrop-blur-sm transition-all"
-                >
-                  Explorar Catálogo
-                </Button>
-              </Link>
-            </div>
           </div>
+          <CategoryChips />
         </div>
       </section>
 
-      {/* Floating WhatsApp Button */}
-      <WhatsAppHelp variant="floating" />
+      {/* WhatsApp Help */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <WhatsAppHelp />
+        </div>
+      </section>
     </div>
   )
 }
