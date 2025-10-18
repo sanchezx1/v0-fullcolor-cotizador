@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, Mail, Phone, Building2, FileText, ArrowRight, Home } from "lucide-react"
+import PDFGenerator from "@/components/pdf-generator"
 
 interface QuoteItem {
   productId: number
@@ -193,6 +194,13 @@ export default function ConfirmacionPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* PDF Generator */}
+          <PDFGenerator 
+            quoteId={1} // TODO: Obtener ID real de la cotización
+            quoteNumber={quoteNumber}
+            className="mb-6"
+          />
 
           {/* Next Steps */}
           <Card className="mb-8 bg-muted/50">

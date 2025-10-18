@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { crearLead, crearCotizacion, registrarEvento } from '../services/quotes'
 import { calculatePriceForProduct } from '../lib/data'
+import { pdfGenerationService } from '../services/pdfGenerationService'
 
 export interface QuoteItem {
   productId: number
@@ -233,6 +234,19 @@ export function useQuoteBuilder() {
         notas: contactInfo.mensaje
       })
 
+      // Generar PDF automáticamente
+      try {
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        if (pdfResult.success) {
+          console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+        } else {
+          console.warn('Error generando PDF:', pdfResult.error)
+        }
+      } catch (pdfError) {
+        console.warn('Error en generación de PDF:', pdfError)
+        // No fallar la cotización por error de PDF
+      }
+
       // Limpiar cotización local
       clearQuote()
 
@@ -244,6 +258,54 @@ export function useQuoteBuilder() {
       return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Función para generar PDF de una cotización existente
+  const generatePDF = async (quoteId: number): Promise<{
+    success: boolean
+    pdfUrl?: string
+    error?: string
+  }> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const result = await pdfGenerationService.generateQuotePDF(quoteId)
+      
+      if (!result.success) {
+        setError(result.error || 'Error generando PDF')
+        return result
+      }
+
+      return result
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Error al generar PDF'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Función para obtener URL de PDF existente
+  const getPDFUrl = async (quoteId: number): Promise<string | null> => {
+    try {
+      return await pdfGenerationService.getExistingPDFUrl(quoteId)
+    } catch (err) {
+      console.error('Error getting PDF URL:', err)
+      return null
+    }
+  }
+
+  // Función para verificar si existe PDF
+  const hasPDF = async (quoteId: number): Promise<boolean> => {
+    try {
+      return await pdfGenerationService.hasExistingPDF(quoteId)
+    } catch (err) {
+      console.error('Error checking PDF existence:', err)
+      return false
     }
   }
 
@@ -261,7 +323,10 @@ export function useQuoteBuilder() {
     calculateIVA,
     calculateTotal,
     validateQuote,
-    submitQuote
+    submitQuote,
+    generatePDF,
+    getPDFUrl,
+    hasPDF
   }
 }
 
