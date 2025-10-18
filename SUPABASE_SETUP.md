@@ -48,7 +48,7 @@ WHATSAPP_NUMBER=593999999999
 WHATSAPP_MESSAGE_TEMPLATE=Hola, necesito información sobre la cotización #{QUOTE_ID}
 
 # App Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_COMPANY_NAME=FullColor
 NEXT_PUBLIC_COMPANY_EMAIL=info@fullcolor.com
 NEXT_PUBLIC_COMPANY_PHONE=+593 99 123 4567
