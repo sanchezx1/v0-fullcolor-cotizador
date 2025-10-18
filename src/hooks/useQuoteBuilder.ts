@@ -14,21 +14,23 @@ export interface QuoteItem {
 }
 
 export interface ContactInfo {
-  name: string
+  nombreRazonSocial: string
+  rucCedula: string
   email: string
-  phone: string
-  company: string
-  notes?: string
+  ciudad?: string
+  telefono?: string
+  mensaje?: string
 }
 
 export function useQuoteBuilder() {
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    name: '',
+    nombreRazonSocial: '',
+    rucCedula: '',
     email: '',
-    phone: '',
-    company: '',
-    notes: ''
+    ciudad: '',
+    telefono: '',
+    mensaje: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -173,22 +175,18 @@ export function useQuoteBuilder() {
       errors.push(`Algunos productos tienen cantidades menores al mínimo requerido`)
     }
 
-    if (!contactInfo.name.trim()) {
-      errors.push('El nombre es requerido')
+    if (!contactInfo.nombreRazonSocial.trim()) {
+      errors.push('El nombre o razón social es requerido')
+    }
+
+    if (!contactInfo.rucCedula.trim()) {
+      errors.push('El RUC o Cédula es requerido')
     }
 
     if (!contactInfo.email.trim()) {
-      errors.push('El email es requerido')
+      errors.push('El correo electrónico es requerido')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactInfo.email)) {
-      errors.push('El email no tiene un formato válido')
-    }
-
-    if (!contactInfo.phone.trim()) {
-      errors.push('El teléfono es requerido')
-    }
-
-    if (!contactInfo.company.trim()) {
-      errors.push('El nombre de la empresa es requerido')
+      errors.push('El correo electrónico no tiene un formato válido')
     }
 
     return {
@@ -209,7 +207,15 @@ export function useQuoteBuilder() {
       }
 
       // Crear lead
-      const lead = await crearLead(contactInfo)
+      const lead = await crearLead({
+        nombre: contactInfo.nombreRazonSocial,
+        email: contactInfo.email,
+        telefono: contactInfo.telefono || '',
+        empresa: contactInfo.nombreRazonSocial, // Usar el mismo nombre como empresa
+        notas: contactInfo.mensaje,
+        ruc_cedula: contactInfo.rucCedula,
+        ciudad: contactInfo.ciudad
+      })
 
       // Preparar items para la cotización
       const items = quoteItems.map(item => ({
@@ -224,7 +230,7 @@ export function useQuoteBuilder() {
         leadId: lead.id,
         items,
         canal: 'web',
-        notas: contactInfo.notes
+        notas: contactInfo.mensaje
       })
 
       // Limpiar cotización local

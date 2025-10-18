@@ -47,6 +47,8 @@ export interface Lead {
   telefono: string
   empresa: string
   notas?: string
+  ruc_cedula?: string
+  ciudad?: string
   created_at: string
   updated_at: string
 }

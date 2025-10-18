@@ -9,6 +9,8 @@ export async function crearLead(leadData: {
   telefono: string
   empresa: string
   notas?: string
+  ruc_cedula?: string
+  ciudad?: string
 }): Promise<Lead> {
   try {
     const { data, error } = await supabase

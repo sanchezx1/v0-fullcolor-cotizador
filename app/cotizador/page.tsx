@@ -193,60 +193,67 @@ export default function CotizadorPage() {
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">
-                          Nombre Completo <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                          id="name"
-                          required
-                          value={contactInfo.name}
-                          onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
-                          placeholder="Juan Pérez"
-                          disabled={loading || isSubmitting}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="company">
-                          Empresa <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                          id="company"
-                          required
-                          value={contactInfo.company}
-                          onChange={(e) => setContactInfo({ ...contactInfo, company: e.target.value })}
-                          placeholder="Mi Empresa S.A."
-                          disabled={loading || isSubmitting}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nombreRazonSocial">
+                        Nombre o razón social <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="nombreRazonSocial"
+                        required
+                        value={contactInfo.nombreRazonSocial}
+                        onChange={(e) => setContactInfo({ ...contactInfo, nombreRazonSocial: e.target.value })}
+                        placeholder="Juan Pérez o Mi Empresa S.A."
+                        disabled={loading || isSubmitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="rucCedula">
+                        RUC o Cédula <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="rucCedula"
+                        required
+                        value={contactInfo.rucCedula}
+                        onChange={(e) => setContactInfo({ ...contactInfo, rucCedula: e.target.value })}
+                        placeholder="1234567890123 o 1234567890"
+                        disabled={loading || isSubmitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">
+                        Correo electrónico <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        required
+                        value={contactInfo.email}
+                        onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
+                        placeholder="juan@empresa.com"
+                        disabled={loading || isSubmitting}
+                      />
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email">
-                          Email <span className="text-destructive">*</span>
-                        </Label>
+                        <Label htmlFor="ciudad">Ciudad</Label>
                         <Input
-                          id="email"
-                          type="email"
-                          required
-                          value={contactInfo.email}
-                          onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                          placeholder="juan@empresa.com"
+                          id="ciudad"
+                          value={contactInfo.ciudad || ''}
+                          onChange={(e) => setContactInfo({ ...contactInfo, ciudad: e.target.value })}
+                          placeholder="Quito"
                           disabled={loading || isSubmitting}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">
-                          Teléfono <span className="text-destructive">*</span>
-                        </Label>
+                        <Label htmlFor="telefono">Teléfono</Label>
                         <Input
-                          id="phone"
+                          id="telefono"
                           type="tel"
-                          required
-                          value={contactInfo.phone}
-                          onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
+                          value={contactInfo.telefono || ''}
+                          onChange={(e) => setContactInfo({ ...contactInfo, telefono: e.target.value })}
                           placeholder="+593 99 123 4567"
                           disabled={loading || isSubmitting}
                         />
@@ -254,11 +261,11 @@ export default function CotizadorPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="notes">Notas Adicionales (Opcional)</Label>
+                      <Label htmlFor="mensaje">Mensaje (Opcional)</Label>
                       <Textarea
-                        id="notes"
-                        value={contactInfo.notes || ''}
-                        onChange={(e) => setContactInfo({ ...contactInfo, notes: e.target.value })}
+                        id="mensaje"
+                        value={contactInfo.mensaje || ''}
+                        onChange={(e) => setContactInfo({ ...contactInfo, mensaje: e.target.value })}
                         placeholder="Detalles especiales, fecha de entrega deseada, etc."
                         rows={4}
                         disabled={loading || isSubmitting}
