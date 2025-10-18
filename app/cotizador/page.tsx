@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -11,111 +9,53 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package } from "lucide-react"
-
-interface QuoteItem {
-  productId: number
-  name: string
-  quantity: number
-  pricePerUnit: number
-  total: number
-}
-
-interface ContactInfo {
-  name: string
-  email: string
-  phone: string
-  company: string
-  notes: string
-}
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, AlertCircle, CheckCircle } from "lucide-react"
+import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
 
 export default function CotizadorPage() {
   const router = useRouter()
-  const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    notes: "",
-  })
+  const {
+    quoteItems,
+    contactInfo,
+    setContactInfo,
+    loading,
+    error,
+    updateItemQuantity,
+    removeItemFromQuote,
+    calculateSubtotal,
+    calculateIVA,
+    calculateTotal,
+    validateQuote,
+    submitQuote
+  } = useQuoteBuilder()
 
-  // Load quote from localStorage
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-    
-    const savedQuote = localStorage.getItem("quote")
-    if (savedQuote) {
-      setQuoteItems(JSON.parse(savedQuote))
-    }
-  }, [])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  // Save quote to localStorage whenever it changes
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-    
-    if (quoteItems.length > 0) {
-      localStorage.setItem("quote", JSON.stringify(quoteItems))
-    }
-  }, [quoteItems])
-
-  const updateQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity < 1) return
-
-    setQuoteItems((items) =>
-      items.map((item) => {
-        if (item.productId === productId) {
-          const newTotal = item.pricePerUnit * newQuantity
-          return { ...item, quantity: newQuantity, total: newTotal }
-        }
-        return item
-      }),
-    )
-  }
-
-  const removeItem = (productId: number) => {
-    const updatedItems = quoteItems.filter((item) => item.productId !== productId)
-    setQuoteItems(updatedItems)
-    
-    // Only update localStorage on client side
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("quote", JSON.stringify(updatedItems))
-    }
-  }
-
-  const calculateSubtotal = () => {
-    return quoteItems.reduce((sum, item) => sum + item.total, 0)
-  }
-
-  const calculateIVA = () => {
-    return calculateSubtotal() * 0.15 // 15% IVA
-  }
-
-  const calculateTotal = () => {
-    return calculateSubtotal() + calculateIVA()
-  }
-
-  const handleSubmitQuote = (e: React.FormEvent) => {
+  const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (quoteItems.length === 0) {
-      alert("Por favor agrega productos a tu cotización")
-      return
+    
+    try {
+      setIsSubmitting(true)
+      setSubmitSuccess(false)
+      
+      const result = await submitQuote()
+      
+      if (result.success) {
+        setSubmitSuccess(true)
+        // Redirigir a página de confirmación con el ID de la cotización
+        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+      } else {
+        console.error('Error submitting quote:', result.error)
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    if (!contactInfo.name || !contactInfo.email || !contactInfo.phone || !contactInfo.company) {
-      alert("Por favor completa todos los campos requeridos")
-      return
-    }
-
-    // Store contact info and navigate to confirmation
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("contactInfo", JSON.stringify(contactInfo))
-    }
-    router.push("/confirmacion")
   }
+
+  const validation = validateQuote()
 
   return (
     <div className="py-12">
@@ -172,13 +112,23 @@ export default function CotizadorPage() {
                                 <p className="text-sm text-muted-foreground">
                                   ${item.pricePerUnit.toFixed(2)} por unidad
                                 </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Mínimo: {item.minimumOrder} unidades
+                                </p>
+                                {!item.isQuantityValid && (
+                                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Cantidad por debajo del mínimo
+                                  </p>
+                                )}
                               </div>
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => removeItem(item.productId)}
+                                onClick={() => removeItemFromQuote(item.productId)}
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                disabled={loading}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -190,8 +140,8 @@ export default function CotizadorPage() {
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                                  disabled={item.quantity <= 1}
+                                  onClick={() => updateItemQuantity(item.productId, item.quantity - 1)}
+                                  disabled={item.quantity <= 1 || loading}
                                   className="h-8 w-8 p-0 bg-transparent"
                                 >
                                   <Minus className="h-3 w-3" />
@@ -199,15 +149,17 @@ export default function CotizadorPage() {
                                 <Input
                                   type="number"
                                   value={item.quantity}
-                                  onChange={(e) => updateQuantity(item.productId, Number.parseInt(e.target.value) || 1)}
+                                  onChange={(e) => updateItemQuantity(item.productId, Number.parseInt(e.target.value) || 1)}
                                   className="w-20 text-center h-8"
                                   min="1"
+                                  disabled={loading}
                                 />
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                                  onClick={() => updateItemQuantity(item.productId, item.quantity + 1)}
+                                  disabled={loading}
                                   className="h-8 w-8 p-0 bg-transparent"
                                 >
                                   <Plus className="h-3 w-3" />
@@ -252,6 +204,7 @@ export default function CotizadorPage() {
                           value={contactInfo.name}
                           onChange={(e) => setContactInfo({ ...contactInfo, name: e.target.value })}
                           placeholder="Juan Pérez"
+                          disabled={loading || isSubmitting}
                         />
                       </div>
                       <div className="space-y-2">
@@ -264,6 +217,7 @@ export default function CotizadorPage() {
                           value={contactInfo.company}
                           onChange={(e) => setContactInfo({ ...contactInfo, company: e.target.value })}
                           placeholder="Mi Empresa S.A."
+                          disabled={loading || isSubmitting}
                         />
                       </div>
                     </div>
@@ -280,6 +234,7 @@ export default function CotizadorPage() {
                           value={contactInfo.email}
                           onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                           placeholder="juan@empresa.com"
+                          disabled={loading || isSubmitting}
                         />
                       </div>
                       <div className="space-y-2">
@@ -293,6 +248,7 @@ export default function CotizadorPage() {
                           value={contactInfo.phone}
                           onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
                           placeholder="+593 99 123 4567"
+                          disabled={loading || isSubmitting}
                         />
                       </div>
                     </div>
@@ -301,12 +257,29 @@ export default function CotizadorPage() {
                       <Label htmlFor="notes">Notas Adicionales (Opcional)</Label>
                       <Textarea
                         id="notes"
-                        value={contactInfo.notes}
+                        value={contactInfo.notes || ''}
                         onChange={(e) => setContactInfo({ ...contactInfo, notes: e.target.value })}
                         placeholder="Detalles especiales, fecha de entrega deseada, etc."
                         rows={4}
+                        disabled={loading || isSubmitting}
                       />
                     </div>
+
+                    {/* Error Display */}
+                    {error && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-red-600" />
+                        <span className="text-sm text-red-600">{error}</span>
+                      </div>
+                    )}
+
+                    {/* Success Display */}
+                    {submitSuccess && (
+                      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-green-600">Cotización enviada exitosamente</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -336,6 +309,21 @@ export default function CotizadorPage() {
 
                     <Separator />
 
+                    {/* Validation Errors */}
+                    {!validation.isValid && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-red-600">Por favor corrige:</p>
+                        <ul className="text-xs text-red-600 space-y-1">
+                          {validation.errors.map((error, index) => (
+                            <li key={index} className="flex items-start gap-1">
+                              <span className="text-red-600">•</span>
+                              <span>{error}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p className="flex items-start gap-2">
                         <span className="text-primary">•</span>
@@ -351,9 +339,23 @@ export default function CotizadorPage() {
                       </p>
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full bg-primary hover:bg-primary-hover text-white">
-                      Solicitar Cotización
-                      <ArrowRight className="ml-2 h-5 w-5" />
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full bg-primary hover:bg-primary-hover text-white"
+                      disabled={!validation.isValid || loading || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          Solicitar Cotización
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

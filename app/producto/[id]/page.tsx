@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, ShoppingCart, Check, Package, Clock, Truck, AlertCircle } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Check, Package, Clock, Truck, AlertCircle, CheckCircle } from "lucide-react"
 import { getProductWithTiers, priceForQuantity, ProductWithTiers, PricingTier } from "@/src/lib/data"
+import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
 
 export default function ProductPage() {
   const params = useParams()
@@ -21,6 +22,11 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(100)
+  const [addingToQuote, setAddingToQuote] = useState(false)
+  const [addSuccess, setAddSuccess] = useState(false)
+
+  // Hook para manejar cotizaciones
+  const { addItemToQuote, loading: quoteLoading } = useQuoteBuilder()
 
   useEffect(() => {
     loadProduct()
@@ -49,6 +55,24 @@ export default function ProductPage() {
       setError('Error al cargar el producto')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAddToQuote = async () => {
+    if (!product) return
+
+    try {
+      setAddingToQuote(true)
+      setAddSuccess(false)
+      
+      await addItemToQuote(product.id, product.nombre, product.categoria, quantity)
+      
+      setAddSuccess(true)
+      setTimeout(() => setAddSuccess(false), 3000)
+    } catch (err) {
+      console.error('Error adding to quote:', err)
+    } finally {
+      setAddingToQuote(false)
     }
   }
 
@@ -214,9 +238,28 @@ export default function ProductPage() {
                   </div>
                 )}
 
-                <Button className="w-full" size="lg">
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Agregar a Cotización
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={handleAddToQuote}
+                  disabled={addingToQuote || quoteLoading || !currentPricing?.isValid}
+                >
+                  {addingToQuote ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Agregando...
+                    </>
+                  ) : addSuccess ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      ¡Agregado!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Agregar a Cotización
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

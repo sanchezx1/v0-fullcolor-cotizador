@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { crearLead, crearCotizacion, registrarEvento } from '../services/quotes'
-import { calcularPrecioEscalonado } from '../services/pricing'
+import { calculatePriceForProduct } from '../lib/data'
 
 export interface QuoteItem {
   productId: number
@@ -59,22 +59,24 @@ export function useQuoteBuilder() {
       setLoading(true)
       setError(null)
 
-      // Calcular precio escalonado
-      const precioInfo = await calcularPrecioEscalonado(productId, quantity)
+      // Calcular precio usando la nueva función
+      const priceResult = await calculatePriceForProduct(productId, quantity)
       
-      if (!precioInfo.precioUnitario) {
+      if (!priceResult.product || !priceResult.isValid) {
         throw new Error('No se pudo calcular el precio para este producto')
       }
 
+      const product = priceResult.product
+      
       const newItem: QuoteItem = {
-        productId,
-        name,
-        category,
+        productId: product.id,
+        name: product.nombre,
+        category: product.categoria,
         quantity,
-        pricePerUnit: precioInfo.precioUnitario,
-        total: precioInfo.subtotal,
-        minimumOrder: precioInfo.escalaAplicada?.cantidad_min || 1,
-        isQuantityValid: precioInfo.esMinimoValido
+        pricePerUnit: priceResult.pricePerUnit || 0,
+        total: priceResult.subtotal,
+        minimumOrder: product.minimo_pedido,
+        isQuantityValid: priceResult.isValid
       }
 
       // Verificar si el producto ya existe en la cotización
@@ -107,19 +109,22 @@ export function useQuoteBuilder() {
       const item = quoteItems.find(item => item.productId === productId)
       if (!item) return
 
-      // Recalcular precio con nueva cantidad
-      const precioInfo = await calcularPrecioEscalonado(productId, newQuantity)
+      // Recalcular precio con nueva cantidad usando la nueva función
+      const priceResult = await calculatePriceForProduct(productId, newQuantity)
       
-      if (!precioInfo.precioUnitario) {
+      if (!priceResult.product || !priceResult.isValid) {
         throw new Error('No se pudo calcular el precio para esta cantidad')
       }
 
+      const product = priceResult.product
+      
       const updatedItem: QuoteItem = {
         ...item,
         quantity: newQuantity,
-        pricePerUnit: precioInfo.precioUnitario,
-        total: precioInfo.subtotal,
-        isQuantityValid: precioInfo.esMinimoValido
+        pricePerUnit: priceResult.pricePerUnit || 0,
+        total: priceResult.subtotal,
+        minimumOrder: product.minimo_pedido,
+        isQuantityValid: priceResult.isValid
       }
 
       setQuoteItems(prev =>
