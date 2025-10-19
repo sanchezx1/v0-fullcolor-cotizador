@@ -5,17 +5,13 @@ import { supabase } from './supabaseClient'
  * Llama a la Edge Function que lee datos frescos desde Supabase
  */
 export class PDFGenerationService {
-  private supabaseUrl: string
-  private supabaseAnonKey: string
-
   constructor() {
-    this.supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    this.supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    // Las variables de entorno se cargan automáticamente por el cliente Supabase
   }
 
   /**
    * Genera PDF de cotización usando Edge Function
-   * Genera PDFs reales con Puppeteer, con fallback a simulación
+   * Genera PDFs reales con Puppeteer, sin modo simulación
    */
   async generateQuotePDF(quoteId: number): Promise<{
     success: boolean
@@ -24,7 +20,7 @@ export class PDFGenerationService {
     error?: string
   }> {
     try {
-      console.log('🔍 Intentando generar PDF real para cotización:', quoteId)
+      console.log('🔍 Generando PDF real para cotización:', quoteId)
       
       // Llamar a la Edge Function
       const { data, error } = await supabase.functions.invoke('generate-pdf', {
@@ -32,19 +28,19 @@ export class PDFGenerationService {
       })
 
       if (error) {
-        console.warn('⚠️ Error llamando Edge Function:', error.message)
-        console.log('🔄 Cambiando a modo simulación...')
-        
-        // Fallback a modo simulación
-        return await this.generateSimulatedPDF(quoteId)
+        console.error('❌ Error llamando Edge Function:', error.message)
+        return {
+          success: false,
+          error: `Error de servidor: ${error.message}`
+        }
       }
 
       if (!data.success) {
-        console.warn('⚠️ Edge Function retornó error:', data.error)
-        console.log('🔄 Cambiando a modo simulación...')
-        
-        // Fallback a modo simulación
-        return await this.generateSimulatedPDF(quoteId)
+        console.error('❌ Edge Function retornó error:', data.error)
+        return {
+          success: false,
+          error: `Error generando PDF: ${data.error}`
+        }
       }
 
       console.log('✅ PDF real generado exitosamente:', data.pdfUrl)
@@ -56,75 +52,14 @@ export class PDFGenerationService {
       }
 
     } catch (error) {
-      console.warn('⚠️ Error general en generateQuotePDF:', error)
-      console.log('🔄 Cambiando a modo simulación...')
-      
-      // Fallback a modo simulación
-      return await this.generateSimulatedPDF(quoteId)
-    }
-  }
-
-  /**
-   * Modo simulación como fallback
-   */
-  private async generateSimulatedPDF(quoteId: number): Promise<{
-    success: boolean
-    pdfUrl?: string
-    fileName?: string
-    error?: string
-  }> {
-    try {
-      console.log('🔧 Modo simulación: Generando PDF simulado...')
-      
-      // Simular generación exitosa
-      const simulatedPdfUrl = `https://storage.supabase.co/cotizaciones/cotizacion-${quoteId}-${Date.now()}.pdf`
-      const simulatedFileName = `cotizacion-${quoteId}-${Date.now()}.pdf`
-      
-      // Actualizar estado de la cotización con URL simulada
-      const { error: updateError } = await supabase
-        .from('cotizaciones')
-        .update({ 
-          pdf_url: simulatedPdfUrl,
-          estado: 'generada'
-        })
-        .eq('id', quoteId)
-
-      if (updateError) {
-        console.warn('Error actualizando cotización:', updateError.message)
-      }
-
-      // Registrar evento
-      await supabase
-        .from('eventos')
-        .insert({
-          cotizacion_id: quoteId,
-          tipo: 'pdf_generado',
-          descripcion: `PDF generado (simulado): ${simulatedFileName}`,
-          metadata: { 
-            fileName: simulatedFileName, 
-            url: simulatedPdfUrl, 
-            simulated: true,
-            reason: 'Edge Function no disponible'
-          }
-        })
-
-      console.log('✅ PDF simulado generado:', simulatedPdfUrl)
-      console.log('ℹ️ Nota: Edge Function no disponible, usando simulación')
-      
-      return {
-        success: true,
-        pdfUrl: simulatedPdfUrl,
-        fileName: simulatedFileName
-      }
-
-    } catch (error) {
-      console.error('Error en modo simulación:', error)
+      console.error('❌ Error general en generateQuotePDF:', error)
       return {
         success: false,
         error: `Error interno: ${error.message}`
       }
     }
   }
+
 
   /**
    * Genera PDF y envía por email (opcional)
