@@ -97,7 +97,7 @@ Deno.serve(async (req: Request) => {
       .from('cotizaciones')
       .update({ 
         pdf_url: urlData.publicUrl,
-        estado: 'generada'
+        estado: 'enviada'
       })
       .eq('id', quoteId)
 
