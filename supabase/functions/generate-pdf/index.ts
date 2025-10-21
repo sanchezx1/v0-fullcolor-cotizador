@@ -9,7 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 /**
  * Edge Function para generar PDF de cotización
- * Genera PDFs profesionales usando implementación simple y robusta
+ * Genera PDFs profesionales usando jsPDF (sin plantillas HTML)
  */
 Deno.serve(async (req: Request) => {
   try {
@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Obtener datos del request
-    const { quoteId, preview } = await req.json()
+    const { quoteId } = await req.json()
     
     if (!quoteId) {
       return new Response(
@@ -54,21 +54,6 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log('🔍 Generando PDF profesional para cotización:', quoteId)
-
-    // Si es preview, devolver solo el HTML renderizado
-    if (preview) {
-      console.log('📝 Generando preview HTML de la plantilla')
-      const cotizacionData = await getCotizacionData(quoteId)
-      const htmlContent = await generateHTMLFromTemplate(cotizacionData)
-      
-      return new Response(htmlContent, {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'text/html'
-        }
-      })
-    }
 
     // Generar PDF profesional directamente
     const pdfBuffer = await generateProfessionalPDF(quoteId)
@@ -117,14 +102,46 @@ Deno.serve(async (req: Request) => {
 
     console.log('✅ PDF profesional generado exitosamente:', urlData.publicUrl)
 
+    // ⚡ ENVIAR EMAIL AUTOMÁTICAMENTE
+    let emailStatus = {
+      sent: false,
+      recipient: null,
+      error: null
+    }
+
+    try {
+      console.log('📧 Enviando email automáticamente...')
+      
+      const emailResponse = await supabase.functions.invoke('send-email', {
+        body: { quoteId }
+      })
+
+      if (emailResponse.error) {
+        throw emailResponse.error
+      }
+
+      if (emailResponse.data?.success) {
+        emailStatus.sent = true
+        emailStatus.recipient = emailResponse.data.recipient
+        console.log('✅ Email enviado automáticamente a:', emailResponse.data.recipient)
+      }
+    } catch (emailError) {
+      // No bloquear la generación del PDF si falla el email
+      console.warn('⚠️ Error enviando email (no crítico):', emailError.message)
+      emailStatus.error = emailError.message
+    }
+
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: true,
         pdfUrl: urlData.publicUrl,
         fileName,
-        quoteId
+        quoteId,
+        emailSent: emailStatus.sent,
+        emailRecipient: emailStatus.recipient,
+        emailError: emailStatus.error
       }),
-      { 
+      {
         status: 200,
         headers: corsHeaders
       }
@@ -148,7 +165,7 @@ Deno.serve(async (req: Request) => {
 
 /**
  * Genera PDF profesional usando datos reales de Supabase
- * Respeta el diseño de la plantilla cotizacion.html
+ * Utiliza jsPDF para crear el documento directamente
  */
 async function generateProfessionalPDF(quoteId: number): Promise<Uint8Array> {
   try {
@@ -312,214 +329,17 @@ function calculateTotals(items: any[]) {
 }
 
 /**
- * Genera HTML usando la plantilla existente con datos reales
- */
-async function generateHTMLFromTemplate(data: any): Promise<string> {
-  console.log('📝 Generando HTML desde plantilla con datos reales')
-  
-  // Plantilla HTML existente (copiada desde templates/cotizacion.html)
-  const template = `<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <title>Cotización {{COTIZACION_NUMERO}}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{--azul:#0066a1;--amarillo:#f5c700;--gris:#e5e7eb;--txt:#1a1a1a}
-    *{box-sizing:border-box} body{margin:0;color:var(--txt);font-family:Inter,Helvetica,Arial,sans-serif}
-    .page{width:210mm; min-height:297mm; padding:16mm 18mm}
-    .row{display:flex;align-items:flex-start;justify-content:space-between}
-    .muted{color:#6b7280}
-    .h2{font-size:14px;font-weight:700}
-    .bar{height:3px;background:var(--azul);margin-top:12px}
-    .card{border:1px solid var(--gris);border-radius:8px;padding:12px}
-    table{border-collapse:collapse;width:100%}
-    th,td{border-bottom:1px solid #eef0f2;padding:10px 8px;font-size:12px;vertical-align:top}
-    th{font-weight:700;background:#fafbfc}
-    .right{text-align:right}
-    .logo{height:28px}
-    .img{width:64px;height:48px;object-fit:cover;border:1px solid var(--gris);border-radius:6px}
-    .total{font-size:16px;font-weight:800}
-    .footnote{font-size:10px;color:#6b7280}
-    .subtitle{font-size:11px}
-  </style>
-</head>
-<body>
-  <div class="page">
-    <!-- HEADER -->
-    <div class="row">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img class="logo" src="{{EMPRESA_LOGO_URL}}" alt="logo empresa" />
-        <div class="muted subtitle">Líderes en Servicios Gráficos Digitales</div>
-      </div>
-      <div style="text-align:right">
-        <div class="h2">COTIZACIÓN</div>
-        <div class="muted">Nº: {{COTIZACION_NUMERO}}</div>
-        <div class="muted">Fecha: {{COTIZACION_FECHA}}</div>
-      </div>
-    </div>
-    <div class="bar"></div>
-
-    <!-- INFO BOXES -->
-    <div class="row" style="gap:14px; margin-top:12px">
-      <div class="card" style="flex:1">
-        <div class="h2" style="margin-bottom:8px">Cliente</div>
-        <div style="font-size:12px;line-height:1.5">
-          <strong>{{CLIENTE_NOMBRE}}</strong><br/>
-          RUC/Cédula: {{CLIENTE_DOCUMENTO}}<br/>
-          {{CLIENTE_DIRECCION}}<br/>
-          — {{CLIENTE_TELEFONO}}<br/>
-          {{CLIENTE_EMAIL}}
-        </div>
-      </div>
-      <div class="card" style="flex:1">
-        <div class="h2" style="margin-bottom:8px">Emisor</div>
-        <div style="font-size:12px;line-height:1.5">
-          <strong>{{EMPRESA_NOMBRE}}</strong><br/>
-          {{EMPRESA_DIRECCION}}<br/>
-          {{EMPRESA_TELEFONO}}<br/>
-          {{EMPRESA_EMAIL}}
-        </div>
-      </div>
-    </div>
-
-    <!-- TÍTULO PRESUPUESTO -->
-    <div class="h2" style="margin-top:24px;margin-bottom:8px">Presupuesto</div>
-
-    <!-- TABLA ITEMS -->
-    <table>
-      <thead>
-        <tr>
-          <th style="width:60px">Cant.</th>
-          <th style="width:80px">Imagen</th>
-          <th>Producto</th>
-          <th style="width:120px" class="right">P. Unit (sin IVA)</th>
-          <th style="width:70px" class="right">IVA</th>
-          <th style="width:120px" class="right">Subtotal</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{ITEMS_ROWS}}
-      </tbody>
-    </table>
-
-    <!-- RESÚMENES -->
-    <table style="margin-top:12px">
-      <tbody>
-        <tr><td style="width:85%"></td><td class="right"><strong>SUBTOTAL</strong></td><td class="right">{{RESUMEN_SUBTOTAL}}</td></tr>
-        <tr><td></td><td class="right">IVA 0%</td><td class="right">{{RESUMEN_IVA0}}</td></tr>
-        <tr><td></td><td class="right">IVA 15%</td><td class="right">{{RESUMEN_IVA15}}</td></tr>
-        <tr><td></td><td class="right total">TOTAL</td><td class="right total">{{RESUMEN_TOTAL}}</td></tr>
-      </tbody>
-    </table>
-
-    <!-- OBSERVACIONES -->
-    <div style="margin:12px 0 8px 0"><strong>Observaciones:</strong> {{OBSERVACIONES}}</div>
-
-    <!-- FOOTNOTE -->
-    <div class="footnote" style="margin-top:24px">
-      * Precios en USD. Validez {{COTIZACION_VALIDEZ_DIAS}} días. Tiempos sujetos a aprobación de artes y abono.
-      No incluye flete salvo indicación.
-    </div>
-  </div>
-</body>
-</html>`
-
-  const cotizacion = data.cotizacion
-  const items = data.items
-  const totals = data.totals
-  const lead = cotizacion.leads
-
-  // Generar filas de items
-  const itemsRows = items.map(item => {
-    const imagen = item.productos?.imagen_url 
-      ? `<img class="img" src="${item.productos.imagen_url}" alt="${item.productos.nombre}" />`
-      : '<div class="img" style="background:#f3f4f6;display:flex;align-items:center;justify-content:center;color:#9ca3af;">Sin imagen</div>'
-    
-    const precioUnitario = item.precio_unitario_aplicado.toFixed(2)
-    const subtotal = (item.cantidad * item.precio_unitario_aplicado).toFixed(2)
-    const iva = (item.cantidad * item.precio_unitario_aplicado * 0.15).toFixed(2)
-
-    return `
-      <tr>
-        <td>${item.cantidad}</td>
-        <td>${imagen}</td>
-        <td>
-          <strong>${item.productos.nombre}</strong><br/>
-          <span class="muted">${item.productos.categoria}</span>
-        </td>
-        <td class="right">$${precioUnitario}</td>
-        <td class="right">$${iva}</td>
-        <td class="right">$${subtotal}</td>
-      </tr>
-    `
-  }).join('')
-
-  // Configuración de la empresa
-  const empresaConfig = {
-    nombre: 'FullColor',
-    direccion: 'Quito, Ecuador',
-    telefono: '+593 99 123 4567',
-    email: 'info@fullcolor.com',
-    logoUrl: '/logo-fullcolor.png'
-  }
-
-  // Reemplazar placeholders
-  const replacements: Record<string, string> = {
-    // Empresa
-    '{{EMPRESA_LOGO_URL}}': empresaConfig.logoUrl,
-    '{{EMPRESA_NOMBRE}}': empresaConfig.nombre,
-    '{{EMPRESA_DIRECCION}}': empresaConfig.direccion,
-    '{{EMPRESA_TELEFONO}}': empresaConfig.telefono,
-    '{{EMPRESA_EMAIL}}': empresaConfig.email,
-
-    // Cotización
-    '{{COTIZACION_NUMERO}}': `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
-    '{{COTIZACION_FECHA}}': new Date(cotizacion.created_at).toLocaleDateString('es-ES'),
-    '{{COTIZACION_VALIDEZ_DIAS}}': cotizacion.validez_dias.toString(),
-
-    // Cliente
-    '{{CLIENTE_NOMBRE}}': lead.nombre,
-    '{{CLIENTE_DOCUMENTO}}': lead.ruc_cedula || 'No especificado',
-    '{{CLIENTE_DIRECCION}}': lead.ciudad || 'No especificado',
-    '{{CLIENTE_TELEFONO}}': lead.telefono || 'No especificado',
-    '{{CLIENTE_EMAIL}}': lead.email,
-
-    // Items
-    '{{ITEMS_ROWS}}': itemsRows,
-
-    // Totales
-    '{{RESUMEN_SUBTOTAL}}': `$${totals.subtotal.toFixed(2)}`,
-    '{{RESUMEN_IVA0}}': `$${totals.iva0.toFixed(2)}`,
-    '{{RESUMEN_IVA15}}': `$${totals.iva15.toFixed(2)}`,
-    '{{RESUMEN_TOTAL}}': `$${totals.total.toFixed(2)}`,
-
-    // Observaciones
-    '{{OBSERVACIONES}}': lead.notas || cotizacion.notas || 'Sin observaciones especiales'
-  }
-
-  // Reemplazar todos los placeholders
-  let html = template
-  Object.entries(replacements).forEach(([placeholder, value]) => {
-    html = html.replace(new RegExp(placeholder, 'g'), value)
-  })
-
-  console.log('✅ HTML generado con plantilla y datos reales')
-  return html
-}
-
-/**
- * Genera PDF directamente desde datos estructurados
- * Respeta el diseño visual de cotizacion.html
+ * Genera PDF directamente desde datos estructurados usando jsPDF
  */
 async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
-  console.log('📄 Generando PDF con datos reales (diseño cotizacion.html)...')
+  console.log('📄 Generando PDF con jsPDF usando datos reales...')
   
   try {
-    // Importar jsPDF
+    // Importar jsPDF y autoTable
     const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1')
+    const autoTable = (await import('https://esm.sh/jspdf-autotable@3.8.2')).default
     
-    console.log('✅ jsPDF importado correctamente')
+    console.log('✅ jsPDF y autoTable importados correctamente')
     
     // Crear PDF con formato A4
     const doc = new jsPDF({
@@ -533,143 +353,236 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     const totals = cotizacionData.totals
     const lead = cotizacion.leads
     
-    const data = {
-      cotizacionNumero: `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
-      fecha: new Date(cotizacion.created_at).toLocaleDateString('es-ES'),
-      clienteNombre: lead.nombre,
-      clienteEmpresa: lead.empresa || '',
-      clienteEmail: lead.email,
-      clienteTelefono: lead.telefono || '',
-      clienteRuc: lead.ruc_cedula || '',
-      clienteCiudad: lead.ciudad || '',
-      items: items.map((item: any) => ({
-        cantidad: item.cantidad.toString(),
-        nombre: item.productos.nombre,
-        categoria: item.productos.categoria,
-        precioUnitario: item.precio_unitario_aplicado.toFixed(2),
-        iva: (item.cantidad * item.precio_unitario_aplicado * 0.15).toFixed(2),
-        subtotal: (item.cantidad * item.precio_unitario_aplicado).toFixed(2)
-      })),
-      subtotal: totals.subtotal.toFixed(2),
-      iva0: totals.iva0.toFixed(2),
-      iva15: totals.iva15.toFixed(2),
-      total: totals.total.toFixed(2)
-    }
+    const cotizacionNumero = cotizacion.id.toString().padStart(6, '0')
+    const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-ES')
     
-    console.log('✅ Datos preparados:', { items: data.items.length, cliente: data.clienteNombre })
+    console.log('✅ Datos preparados:', { items: items.length, cliente: lead.nombre })
     
-    // Crear PDF usando el diseño de la plantilla
-    // Header
-    doc.setFillColor(0, 102, 161)
-    doc.rect(0, 0, 210, 12, 'F')
+    // COLORES DE MARCA FULLCOLOR
+    const colorAzul = [0, 102, 161]      // #0066a1
+    const colorAmarillo = [245, 199, 0]   // #f5c700
+    const colorGris = [128, 128, 128]
+    const colorGrisClaro = [240, 240, 240]
     
-    doc.setTextColor(255, 255, 255)
+    // ============================================
+    // CABECERA (Header)
+    // ============================================
+    
+    // Logo FullColor (simulado con texto estilizado)
     doc.setFontSize(18)
-    doc.text('COTIZACIÓN FULLCOLOR', 105, 8, { align: 'center' })
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
+    doc.text('PromoStore', 15, 20)
     
-    // Línea azul
-    doc.setDrawColor(0, 102, 161)
-    doc.setLineWidth(0.8)
-    doc.line(10, 15, 200, 15)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
+    doc.text('Artículos promocionales', 15, 25)
+    doc.text('memorables', 15, 28)
     
-    // Info cotización
-    doc.setTextColor(0, 102, 161)
-    doc.setFontSize(12)
-    doc.text('COTIZACIÓN', 150, 22)
+    // Caja de información a la derecha
+    const boxX = 130
+    const boxY = 12
+    const boxWidth = 70
+    const boxHeight = 40
     
+    // Borde de la caja
+    doc.setDrawColor(200, 200, 200)
+    doc.setLineWidth(0.3)
+    doc.rect(boxX, boxY, boxWidth, boxHeight)
+    
+    // Contenido de la caja
+    let currentY = boxY + 6
+    
+    // "De"
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    doc.text('De', boxX + 3, currentY)
+    
+    doc.setFont('helvetica', 'bold')
     doc.setTextColor(0, 0, 0)
-    doc.setFontSize(10)
-    doc.text(`Nº: ${data.cotizacionNumero}`, 150, 28)
-    doc.text(`Fecha: ${data.fecha}`, 150, 33)
-    
-    // Cliente
-    doc.setTextColor(0, 102, 161)
-    doc.setFontSize(11)
-    doc.text('Cliente', 15, 25)
-    
-    doc.setTextColor(0, 0, 0)
-    doc.setFontSize(10)
-    doc.text(data.clienteNombre, 15, 31)
-    
-    // Presupuesto
-    doc.setTextColor(0, 102, 161)
-    doc.setFontSize(12)
-    doc.text('Presupuesto', 15, 50)
-    
-    // Tabla de productos - Headers
-    doc.setFillColor(250, 251, 252)
-    doc.rect(10, 55, 190, 8, 'F')
-    
-    doc.setTextColor(0, 102, 161)
-    doc.setFontSize(9)
-    doc.text('Cant.', 12, 60)
-    doc.text('Producto', 35, 60)
-    doc.text('P. Unit', 130, 60)
-    doc.text('IVA', 155, 60)
-    doc.text('Subtotal', 175, 60)
+    doc.text('Promostore.ec', boxX + 25, currentY)
+    currentY += 5
     
     // Línea separadora
-    doc.setDrawColor(229, 231, 235)
-    doc.line(10, 64, 200, 64)
+    doc.setDrawColor(230, 230, 230)
+    doc.line(boxX + 3, currentY - 1, boxX + boxWidth - 3, currentY - 1)
+    currentY += 4
     
-    // Items
+    // "Cliente"
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    doc.text('Cliente', boxX + 3, currentY)
+    
+    doc.setFont('helvetica', 'bold')
     doc.setTextColor(0, 0, 0)
-    doc.setFontSize(9)
-    let yPos = 70
+    doc.text(lead.nombre || 'N/A', boxX + 25, currentY)
+    currentY += 4
     
-    data.items.forEach(item => {
-      doc.text(item.cantidad, 12, yPos)
-      doc.text(item.nombre, 35, yPos)
-      doc.text(item.categoria, 35, yPos + 4)
-      doc.text(`$${item.precioUnitario}`, 130, yPos)
-      doc.text(`$${item.iva}`, 155, yPos)
-      doc.text(`$${item.subtotal}`, 175, yPos)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.text(lead.telefono || '', boxX + 25, currentY)
+    currentY += 3
+    doc.text(lead.ciudad || '', boxX + 25, currentY)
+    currentY += 3
+    doc.text(lead.email || '', boxX + 25, currentY)
+    currentY += 3
+    doc.text(lead.ruc_cedula || '', boxX + 25, currentY)
+    currentY += 5
+    
+    // Línea separadora
+    doc.setDrawColor(230, 230, 230)
+    doc.line(boxX + 3, currentY - 1, boxX + boxWidth - 3, currentY - 1)
+    currentY += 4
+    
+    // "Fecha de creación"
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    doc.text('Fecha de', boxX + 3, currentY)
+    currentY += 4
+    doc.text('creación', boxX + 3, currentY)
+    
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(0, 0, 0)
+    doc.text(fechaCreacion, boxX + 25, currentY - 2)
+    
+    // ============================================
+    // TÍTULO "Presupuesto #XXXXXX"
+    // ============================================
+    
+    doc.setFontSize(22)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(0, 0, 0)
+    doc.text(`Presupuesto #${cotizacionNumero}`, 15, 65)
+    
+    // ============================================
+    // TABLA DE PRODUCTOS (AutoTable)
+    // ============================================
+    
+    // Preparar datos de la tabla
+    const tableData = items.map((item: any) => {
+      const producto = item.productos
       
-      yPos += 12
+      // Preparar líneas del producto
+      let productoText = producto.nombre || 'Sin nombre'
+      
+      // Detalles opcionales (SKU, impresión, color, lados)
+      const detalles: string[] = []
+      if (producto.categoria) detalles.push(producto.categoria)
+      
+      const detallesText = detalles.length > 0 ? detalles.join(' | ') : ''
+      
+      return [
+        productoText + (detallesText ? '\n' + detallesText : ''),
+        `$${item.precio_unitario_aplicado.toFixed(2)}`,
+        item.cantidad.toString(),
+        `$${(item.cantidad * item.precio_unitario_aplicado).toFixed(2)}`
+      ]
     })
     
-    // Línea antes de totales
-    doc.line(10, yPos, 200, yPos)
-    yPos += 6
+    // Generar tabla con autoTable
+    autoTable(doc, {
+      startY: 75,
+      head: [['Producto', 'Precio por unidad', 'Cantidad', 'Subtotal']],
+      body: tableData,
+      theme: 'striped',
+      styles: {
+        font: 'helvetica',
+        fontSize: 9,
+        cellPadding: 4,
+        lineColor: [220, 220, 220],
+        lineWidth: 0.1
+      },
+      headStyles: {
+        fillColor: colorAzul,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'left',
+        fontSize: 10
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0]
+      },
+      alternateRowStyles: {
+        fillColor: colorGrisClaro
+      },
+      columnStyles: {
+        0: { cellWidth: 90, halign: 'left', fontStyle: 'bold' },   // Producto (negrita)
+        1: { cellWidth: 35, halign: 'right' },                      // Precio
+        2: { cellWidth: 30, halign: 'right' },                      // Cantidad
+        3: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }   // Subtotal (negrita)
+      },
+      margin: { left: 15, right: 15 }
+    })
     
-    // Totales
-    doc.setFontSize(10)
-    doc.text('SUBTOTAL:', 145, yPos)
-    doc.text(`$${data.subtotal}`, 180, yPos, { align: 'right' })
+    // ============================================
+    // BLOQUE DE TOTALES (Tabla secundaria)
+    // ============================================
     
-    yPos += 6
-    doc.text('IVA 0%:', 145, yPos)
-    doc.text(`$${data.iva0}`, 180, yPos, { align: 'right' })
+    const finalY = (doc as any).lastAutoTable.finalY || 150
     
-    yPos += 6
-    doc.text('IVA 15%:', 145, yPos)
-    doc.text(`$${data.iva15}`, 180, yPos, { align: 'right' })
+    // Tabla de totales alineada a la derecha
+    autoTable(doc, {
+      startY: finalY + 10,
+      body: [
+        ['Subtotal:', `$${totals.subtotal.toFixed(2)}`],
+        ['IVA:', `$${totals.iva15.toFixed(2)}`],
+        ['Total:', `$${totals.total.toFixed(2)}`]
+      ],
+      theme: 'plain',
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 2
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0]
+      },
+      columnStyles: {
+        0: { cellWidth: 30, halign: 'right', fontStyle: 'normal' },
+        1: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
+      },
+      margin: { left: 135 },
+      didParseCell: function(data) {
+        // Línea arriba del Total
+        if (data.row.index === 2 && data.section === 'body') {
+          data.cell.styles.lineWidth = { top: 0.5 }
+          data.cell.styles.lineColor = [0, 0, 0]
+        }
+      }
+    })
     
-    yPos += 8
-    doc.setTextColor(0, 102, 161)
-    doc.setFontSize(13)
-    doc.text('TOTAL:', 145, yPos)
-    doc.text(`$${data.total}`, 180, yPos, { align: 'right' })
+    // ============================================
+    // PIE DE PÁGINA (Footer)
+    // ============================================
     
-    // Footer
-    doc.setTextColor(107, 114, 128)
-    doc.setFontSize(8)
-    doc.text('* Precios en USD. Validez 30 días. Tiempos sujetos a aprobación de artes y abono.', 105, 280, { align: 'center' })
-    doc.text('No incluye flete salvo indicación.', 105, 285, { align: 'center' })
+    const pageHeight = doc.internal.pageSize.height
+    const footerY = pageHeight - 15
     
+    // Línea divisoria tenue
+    doc.setDrawColor(220, 220, 220)
+    doc.setLineWidth(0.2)
+    doc.line(15, footerY - 5, 195, footerY - 5)
+    
+    // Texto del footer
     doc.setFontSize(7)
-    doc.text('FullColor - Servicios Gráficos Digitales', 105, 292, { align: 'center' })
-    doc.text('Quito, Ecuador | +593 99 123 4567 | info@fullcolor.com', 105, 296, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    
+    doc.text('Precios sujetos a cambios sin previo aviso', 15, footerY)
+    doc.text('WhatsApp: +593 99 123 4567 | Email: info@promostore.ec', 15, footerY + 4)
     
     // Generar PDF
     const pdfOutput = doc.output('arraybuffer')
     const pdfBytes = new Uint8Array(pdfOutput)
     
-    console.log('✅ PDF generado usando diseño de plantilla cotizacion.html')
+    console.log('✅ PDF generado con jsPDF exitosamente')
     return pdfBytes
     
   } catch (error) {
-    console.error('❌ Error convirtiendo HTML a PDF:', error)
+    console.error('❌ Error generando PDF con jsPDF:', error)
     throw error
   }
 }
