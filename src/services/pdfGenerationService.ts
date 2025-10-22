@@ -17,6 +17,9 @@ export class PDFGenerationService {
     success: boolean
     pdfUrl?: string
     fileName?: string
+    emailSent?: boolean
+    emailRecipient?: string
+    emailError?: string
     error?: string
   }> {
     try {
@@ -45,10 +48,20 @@ export class PDFGenerationService {
 
       console.log('✅ PDF real generado exitosamente:', data.pdfUrl)
       
+      // Incluir información del email automático
+      if (data.emailSent) {
+        console.log('📧 Email enviado automáticamente a:', data.emailRecipient)
+      } else if (data.emailError) {
+        console.warn('⚠️ Email no enviado:', data.emailError)
+      }
+      
       return {
         success: true,
         pdfUrl: data.pdfUrl,
-        fileName: data.fileName
+        fileName: data.fileName,
+        emailSent: data.emailSent || false,
+        emailRecipient: data.emailRecipient,
+        emailError: data.emailError
       }
 
     } catch (error) {
