@@ -306,10 +306,10 @@ export default function CotizacionesListPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{cotizacion.lead.nombre}</div>
-                      {cotizacion.lead.empresa && (
+                      <div className="font-medium">{cotizacion.leads.nombre}</div>
+                      {cotizacion.leads.empresa && (
                         <div className="text-sm text-muted-foreground">
-                          {cotizacion.lead.empresa}
+                          {cotizacion.leads.empresa}
                         </div>
                       )}
                     </div>
@@ -323,7 +323,7 @@ export default function CotizacionesListPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    ${cotizacion.total.toFixed(2)}
+                    ${(cotizacion.total || 0).toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

@@ -65,6 +65,13 @@ export default function EditarProductoPage() {
     try {
       setLoading(true)
       const data = await getProducto(productoId)
+      
+      if (!data) {
+        toast.error('Producto no encontrado')
+        router.push('/admin/productos')
+        return
+      }
+      
       setProducto(data)
       setFormData({
         nombre: data.nombre,
@@ -183,7 +190,7 @@ export default function EditarProductoPage() {
           imagen_url: undefined
         })
         setFormData({ ...formData, imagen_url: '' })
-        setProducto({ ...producto, imagen_url: null })
+        setProducto({ ...producto, imagen_url: undefined })
         toast.success('Imagen eliminada')
       }
     } catch (error) {

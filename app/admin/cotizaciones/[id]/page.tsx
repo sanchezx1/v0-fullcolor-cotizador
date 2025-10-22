@@ -338,37 +338,44 @@ export default function CotizacionDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {cotizacion.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {item.producto.imagen_url && (
-                            <img
-                              src={item.producto.imagen_url}
-                              alt={item.producto.nombre}
-                              className="w-10 h-10 object-cover rounded"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{item.producto.nombre}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {item.producto.categoria}
-                            </p>
+                  {cotizacion.items.map((item) => {
+                    // Calcular valores seguros
+                    const precioUnitario = item.precio_unitario || 0
+                    const subtotal = item.subtotal || 0
+                    const ivaCalculado = subtotal * 0.15
+                    
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {item.producto.imagen_url && (
+                              <img
+                                src={item.producto.imagen_url}
+                                alt={item.producto.nombre}
+                                className="w-10 h-10 object-cover rounded"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium">{item.producto.nombre}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {item.producto.categoria}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{item.cantidad}</TableCell>
-                      <TableCell className="text-right">
-                        ${item.precio_unitario.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        ${item.subtotal.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        ${item.iva.toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right">{item.cantidad || 0}</TableCell>
+                        <TableCell className="text-right">
+                          ${precioUnitario.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          ${subtotal.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          ${ivaCalculado.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
 
@@ -376,15 +383,15 @@ export default function CotizacionDetailPage() {
               <div className="mt-6 space-y-2 border-t pt-4">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal:</span>
-                  <span>${cotizacion.subtotal.toFixed(2)}</span>
+                  <span>${(cotizacion.subtotal || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>IVA 15%:</span>
-                  <span>${cotizacion.iva.toFixed(2)}</span>
+                  <span>${(cotizacion.iva || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total:</span>
-                  <span>${cotizacion.total.toFixed(2)}</span>
+                  <span>${(cotizacion.total || 0).toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

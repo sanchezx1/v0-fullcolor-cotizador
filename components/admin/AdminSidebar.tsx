@@ -10,7 +10,10 @@ import {
   Users, 
   Activity, 
   Settings,
-  ExternalLink
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  X
 } from 'lucide-react'
 
 const navigation = [
@@ -22,62 +25,173 @@ const navigation = [
   { name: 'Configuración', href: '/admin/configuracion', icon: Settings },
 ]
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  open: boolean
+  collapsed: boolean
+  onClose: () => void
+  onToggleCollapse: () => void
+}
+
+export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: AdminSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-64 flex-col fixed inset-y-0 z-50 bg-gray-900">
-      {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center px-6 border-b border-gray-800">
-        <Link href="/admin" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">FC</span>
-          </div>
-          <div>
-            <h1 className="text-white font-bold text-lg">FullColor</h1>
-            <p className="text-gray-400 text-xs">Panel Admin</p>
-          </div>
-        </Link>
+    <>
+      {/* Desktop Sidebar */}
+      <div 
+        className={cn(
+          'hidden lg:flex h-full flex-col fixed inset-y-0 z-50 transition-all duration-300',
+          collapsed ? 'w-20' : 'w-64'
+        )}
+        style={{ background: 'linear-gradient(180deg, #003d6b 0%, #0066a1 100%)' }}
+      >
+        {/* Logo */}
+        <div className="flex h-16 shrink-0 items-center border-b border-white/10 px-4">
+          <Link href="/admin" className="flex items-center gap-3 min-w-0">
+            <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-lg">
+              <span className="font-bold text-xl" style={{ color: '#0066a1' }}>FC</span>
+            </div>
+            {!collapsed && (
+              <div className="min-w-0 overflow-hidden">
+                <h1 className="text-white font-bold text-lg truncate">FullColor</h1>
+                <p className="text-white/70 text-xs truncate">Panel de Administración</p>
+              </div>
+            )}
+          </Link>
+        </div>
+
+        {/* Collapse button */}
+        <div className="flex justify-end px-2 py-2">
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f5c700]"
+            aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 px-3 py-2 overflow-y-auto">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || 
+              (item.href !== '/admin' && pathname?.startsWith(item.href))
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  isActive
+                    ? 'text-[#003d6b]'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white',
+                  collapsed && 'justify-center'
+                )}
+                style={isActive ? { backgroundColor: '#f5c700' } : undefined}
+                title={collapsed ? item.name : undefined}
+              >
+                <item.icon className={cn(
+                  'h-5 w-5 shrink-0',
+                  isActive ? 'text-[#003d6b]' : 'text-white/70 group-hover:text-white'
+                )} />
+                {!collapsed && <span className="truncate">{item.name}</span>}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-white/10 p-4">
+          <Link
+            href="/"
+            target="_blank"
+            className={cn(
+              'flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors',
+              collapsed && 'justify-center'
+            )}
+            title={collapsed ? 'Ver Sitio' : undefined}
+          >
+            <ExternalLink className="h-4 w-4 shrink-0" />
+            {!collapsed && <span>Ver Sitio</span>}
+          </Link>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || 
-            (item.href !== '/admin' && pathname?.startsWith(item.href))
+      {/* Mobile Sidebar (Drawer) */}
+      <div 
+        className={cn(
+          'lg:hidden fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+        style={{ background: 'linear-gradient(180deg, #003d6b 0%, #0066a1 100%)' }}
+      >
+        {/* Logo & Close button */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-4">
+          <Link href="/admin" className="flex items-center gap-3" onClick={onClose}>
+            <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shadow-lg">
+              <span className="font-bold text-xl" style={{ color: '#0066a1' }}>FC</span>
+            </div>
+            <div>
+              <h1 className="text-white font-bold text-lg">FullColor</h1>
+              <p className="text-white/70 text-xs">Panel de Administración</p>
+            </div>
+          </Link>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#f5c700]"
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              )}
-            >
-              <item.icon className={cn(
-                'h-5 w-5 shrink-0',
-                isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
-              )} />
-              {item.name}
-            </Link>
-          )
-        })}
-      </nav>
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto h-[calc(100vh-8rem)]">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || 
+              (item.href !== '/admin' && pathname?.startsWith(item.href))
 
-      {/* Footer */}
-      <div className="border-t border-gray-800 p-4">
-        <Link
-          href="/"
-          target="_blank"
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
-        >
-          <ExternalLink className="h-4 w-4" />
-          Ver Sitio
-        </Link>
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  isActive
+                    ? 'text-[#003d6b]'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
+                )}
+                style={isActive ? { backgroundColor: '#f5c700' } : undefined}
+              >
+                <item.icon className={cn(
+                  'h-5 w-5 shrink-0',
+                  isActive ? 'text-[#003d6b]' : 'text-white/70 group-hover:text-white'
+                )} />
+                {item.name}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-white/10 p-4">
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ver Sitio
+          </Link>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

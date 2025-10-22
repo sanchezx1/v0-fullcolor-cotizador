@@ -81,6 +81,12 @@ export interface ItemCotizacion {
   created_at: string
 }
 
+export interface CotizacionConRelaciones extends Cotizacion {
+  leads: Lead
+  items_cotizacion?: ItemCotizacion[]
+  eventos?: Evento[]
+}
+
 export interface CotizacionCompleta extends Cotizacion {
   lead: Lead
   items: (ItemCotizacion & { producto: Producto })[]

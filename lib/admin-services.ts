@@ -192,7 +192,7 @@ export async function deletePrecioEscalonado(id: number): Promise<void> {
 
 // ============= LEADS =============
 
-export async function getLeads(filtros?: FiltrosLeads): Promise<PaginatedResponse<Lead>> {
+export async function getLeads(filtros?: FiltrosLeads): Promise<PaginatedResponse<LeadConEstadisticas>> {
   let query = supabase
     .from('leads')
     .select('*', { count: 'exact' })
@@ -220,8 +220,34 @@ export async function getLeads(filtros?: FiltrosLeads): Promise<PaginatedRespons
 
   if (error) throw error
 
+  // Agregar estadísticas a cada lead
+  const leadsConEstadisticas = await Promise.all(
+    (data || []).map(async (lead) => {
+      const { data: cotizaciones } = await supabase
+        .from('cotizaciones')
+        .select('*')
+        .eq('lead_id', lead.id)
+
+      const total_cotizaciones = cotizaciones?.length || 0
+      const aprobadas = cotizaciones?.filter(c => c.estado === 'aprobada') || []
+      const total_ventas = aprobadas.reduce((sum, c) => sum + c.total, 0)
+      const tasa_conversion = total_cotizaciones > 0 ? (aprobadas.length / total_cotizaciones) * 100 : 0
+
+      const fechas = cotizaciones?.map(c => c.created_at).sort() || []
+
+      return {
+        ...lead,
+        total_cotizaciones,
+        total_ventas,
+        tasa_conversion,
+        primera_cotizacion: fechas[0],
+        ultima_cotizacion: fechas[fechas.length - 1]
+      }
+    })
+  )
+
   return {
-    data: data || [],
+    data: leadsConEstadisticas,
     total: count || 0,
     page,
     perPage,
@@ -317,10 +343,10 @@ export async function verificarEmailUnico(email: string, leadId?: number): Promi
 
 // ============= COTIZACIONES =============
 
-export async function getCotizaciones(filtros?: FiltrosCotizaciones): Promise<PaginatedResponse<Cotizacion & { lead: Lead }>> {
+export async function getCotizaciones(filtros?: FiltrosCotizaciones): Promise<PaginatedResponse<CotizacionConRelaciones>> {
   let query = supabase
     .from('cotizaciones')
-    .select('*, lead:leads(*)', { count: 'exact' })
+    .select('*, leads(*)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   // Filtros
@@ -378,7 +404,23 @@ export async function getCotizacion(id: number): Promise<CotizacionCompleta | nu
     .single()
 
   if (error) throw error
-  return data
+  
+  if (!data) return null
+  
+  // Mapear campos de BD a estructura esperada por el frontend
+  const mapped = {
+    ...data,
+    items: data.items?.map((item: any) => ({
+      ...item,
+      // Mapear precio_unitario_aplicado a precio_unitario
+      precio_unitario: item.precio_unitario_aplicado || item.precio_unitario || 0,
+      subtotal: item.subtotal || 0,
+      // Calcular IVA si no existe
+      iva: item.iva || (item.subtotal || 0) * 0.15
+    })) || []
+  }
+  
+  return mapped
 }
 
 export async function createCotizacion(cotizacion: {
@@ -412,14 +454,14 @@ export async function createCotizacion(cotizacion: {
 
   if (cotError) throw cotError
 
-  // Crear items
+  // Crear items - usar nombres correctos de columnas de BD
   const items = cotizacion.items.map(item => ({
     cotizacion_id: nuevaCotizacion.id,
     producto_id: item.producto_id,
     cantidad: item.cantidad,
-    precio_unitario: item.precio_unitario,
-    subtotal: item.cantidad * item.precio_unitario,
-    iva: item.cantidad * item.precio_unitario * 0.15
+    precio_unitario_aplicado: item.precio_unitario, // Mapear a nombre correcto en BD
+    subtotal: item.cantidad * item.precio_unitario
+    // NO incluir iva - no existe en la tabla
   }))
 
   const { error: itemsError } = await supabase
@@ -473,14 +515,14 @@ export async function updateCotizacion(
     // Eliminar items antiguos
     await supabase.from('items_cotizacion').delete().eq('cotizacion_id', id)
 
-    // Insertar nuevos items
+    // Insertar nuevos items - usar nombres correctos de columnas de BD
     const items = cotizacion.items.map(item => ({
       cotizacion_id: id,
       producto_id: item.producto_id,
       cantidad: item.cantidad,
-      precio_unitario: item.precio_unitario,
-      subtotal: item.cantidad * item.precio_unitario,
-      iva: item.cantidad * item.precio_unitario * 0.15
+      precio_unitario_aplicado: item.precio_unitario, // Mapear a nombre correcto en BD
+      subtotal: item.cantidad * item.precio_unitario
+      // NO incluir iva - no existe en la tabla
     }))
 
     await supabase.from('items_cotizacion').insert(items)
