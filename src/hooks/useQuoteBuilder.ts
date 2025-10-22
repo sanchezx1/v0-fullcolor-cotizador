@@ -251,8 +251,13 @@ export function useQuoteBuilder() {
       clearQuote()
 
       return { success: true, quoteId: cotizacion.id }
-    } catch (err) {
-      console.error('Error submitting quote:', err)
+    } catch (err: any) {
+      console.error('❌ Error submitting quote:', err)
+      console.error('❌ Error detallado:', {
+        message: err?.message,
+        stack: err?.stack,
+        name: err?.name
+      })
       const errorMessage = err instanceof Error ? err.message : 'Error al enviar la cotización'
       setError(errorMessage)
       return { success: false, error: errorMessage }
