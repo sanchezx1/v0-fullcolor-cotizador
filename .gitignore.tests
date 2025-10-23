@@ -1,0 +1,36 @@
+# ============================================================================
+# TESTING & CI FILES
+# Agregar este contenido al .gitignore principal del proyecto
+# ============================================================================
+
+# Jest
+coverage/
+*.coverage
+.nyc_output/
+jest-results.json
+junit.xml
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+*.trace.zip
+
+# Test artifacts
+tests/screenshots/
+tests/videos/
+*.snap
+
+# CI/CD artifacts
+.github/workflows/*.log
+
+# Environment variables for tests
+.env.test.local
+.env.test
+
+# IDE test configs
+.idea/runConfigurations/
+
+# Logs de tests
+test.log
+debug.log

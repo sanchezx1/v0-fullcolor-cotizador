@@ -107,11 +107,16 @@ ALTER TABLE public.eventos ENABLE ROW LEVEL SECURITY;
 -- PASO 5: Políticas RLS para PRODUCTOS
 -- ============================================
 
--- Eliminar políticas públicas antiguas (las de desarrollo)
+-- Eliminar TODAS las políticas existentes de productos
 DROP POLICY IF EXISTS "Anyone can read productos" ON public.productos;
 DROP POLICY IF EXISTS "Anyone can insert productos" ON public.productos;
 DROP POLICY IF EXISTS "Anyone can update productos" ON public.productos;
 DROP POLICY IF EXISTS "Anyone can delete productos" ON public.productos;
+DROP POLICY IF EXISTS "Public read access to productos" ON public.productos;
+DROP POLICY IF EXISTS "Admins full read access to productos" ON public.productos;
+DROP POLICY IF EXISTS "Admins can insert productos" ON public.productos;
+DROP POLICY IF EXISTS "Admins can update productos" ON public.productos;
+DROP POLICY IF EXISTS "Admins can delete productos" ON public.productos;
 
 -- Política: Lectura pública para el catálogo (anónimos y autenticados)
 CREATE POLICY "Public read access to productos"
@@ -119,31 +124,9 @@ ON public.productos FOR SELECT
 TO anon, authenticated
 USING (activo = true);
 
--- Política: Admins pueden ver todos los productos (incluso inactivos)
-CREATE POLICY "Admins full read access to productos"
-ON public.productos FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-
--- Política: Solo admins pueden insertar productos
-CREATE POLICY "Admins can insert productos"
-ON public.productos FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-
--- Política: Solo admins pueden actualizar productos
-CREATE POLICY "Admins can update productos"
-ON public.productos FOR UPDATE
+-- Política: Admins pueden gestionar todos los productos (CRUD completo)
+CREATE POLICY "Admins manage productos"
+ON public.productos FOR ALL
 TO authenticated
 USING (
   EXISTS (
@@ -158,23 +141,17 @@ WITH CHECK (
   )
 );
 
--- Política: Solo admins pueden eliminar productos
-CREATE POLICY "Admins can delete productos"
-ON public.productos FOR DELETE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-
 -- ============================================
 -- PASO 6: Políticas RLS para PRECIOS_ESCALONADOS
 -- ============================================
 
+-- Eliminar todas las políticas existentes
 DROP POLICY IF EXISTS "Public read precios_escalonados" ON public.precios_escalonados;
 DROP POLICY IF EXISTS "Admins manage precios_escalonados" ON public.precios_escalonados;
+DROP POLICY IF EXISTS "Anyone can read precios_escalonados" ON public.precios_escalonados;
+DROP POLICY IF EXISTS "Anyone can insert precios_escalonados" ON public.precios_escalonados;
+DROP POLICY IF EXISTS "Anyone can update precios_escalonados" ON public.precios_escalonados;
+DROP POLICY IF EXISTS "Anyone can delete precios_escalonados" ON public.precios_escalonados;
 
 -- Lectura pública (para cotizador)
 CREATE POLICY "Public read precios_escalonados"
@@ -203,8 +180,13 @@ WITH CHECK (
 -- PASO 7: Políticas RLS para LEADS
 -- ============================================
 
+-- Eliminar todas las políticas existentes
 DROP POLICY IF EXISTS "Anon can create leads" ON public.leads;
 DROP POLICY IF EXISTS "Admins manage leads" ON public.leads;
+DROP POLICY IF EXISTS "Anyone can read leads" ON public.leads;
+DROP POLICY IF EXISTS "Anyone can insert leads" ON public.leads;
+DROP POLICY IF EXISTS "Anyone can update leads" ON public.leads;
+DROP POLICY IF EXISTS "Anyone can delete leads" ON public.leads;
 
 -- Anónimos pueden crear leads (desde cotizador público)
 CREATE POLICY "Anon can create leads"
@@ -233,8 +215,13 @@ WITH CHECK (
 -- PASO 8: Políticas RLS para COTIZACIONES
 -- ============================================
 
+-- Eliminar todas las políticas existentes
 DROP POLICY IF EXISTS "Anon can create cotizaciones" ON public.cotizaciones;
 DROP POLICY IF EXISTS "Admins manage cotizaciones" ON public.cotizaciones;
+DROP POLICY IF EXISTS "Anyone can read cotizaciones" ON public.cotizaciones;
+DROP POLICY IF EXISTS "Anyone can insert cotizaciones" ON public.cotizaciones;
+DROP POLICY IF EXISTS "Anyone can update cotizaciones" ON public.cotizaciones;
+DROP POLICY IF EXISTS "Anyone can delete cotizaciones" ON public.cotizaciones;
 
 -- Anónimos pueden crear cotizaciones (desde formulario público)
 CREATE POLICY "Anon can create cotizaciones"
@@ -263,8 +250,13 @@ WITH CHECK (
 -- PASO 9: Políticas RLS para ITEMS_COTIZACION
 -- ============================================
 
+-- Eliminar todas las políticas existentes
 DROP POLICY IF EXISTS "Anon can create items_cotizacion" ON public.items_cotizacion;
 DROP POLICY IF EXISTS "Admins manage items_cotizacion" ON public.items_cotizacion;
+DROP POLICY IF EXISTS "Anyone can read items_cotizacion" ON public.items_cotizacion;
+DROP POLICY IF EXISTS "Anyone can insert items_cotizacion" ON public.items_cotizacion;
+DROP POLICY IF EXISTS "Anyone can update items_cotizacion" ON public.items_cotizacion;
+DROP POLICY IF EXISTS "Anyone can delete items_cotizacion" ON public.items_cotizacion;
 
 -- Anónimos pueden crear items (parte de crear cotización)
 CREATE POLICY "Anon can create items_cotizacion"
@@ -293,8 +285,13 @@ WITH CHECK (
 -- PASO 10: Políticas RLS para EVENTOS
 -- ============================================
 
+-- Eliminar todas las políticas existentes
 DROP POLICY IF EXISTS "System can create eventos" ON public.eventos;
 DROP POLICY IF EXISTS "Admins read eventos" ON public.eventos;
+DROP POLICY IF EXISTS "Anyone can read eventos" ON public.eventos;
+DROP POLICY IF EXISTS "Anyone can insert eventos" ON public.eventos;
+DROP POLICY IF EXISTS "Anyone can update eventos" ON public.eventos;
+DROP POLICY IF EXISTS "Anyone can delete eventos" ON public.eventos;
 
 -- Sistema puede crear eventos (desde triggers/functions)
 CREATE POLICY "System can create eventos"
@@ -317,7 +314,17 @@ USING (
 -- PASO 11: Políticas RLS para STORAGE
 -- ============================================
 
--- Eliminar políticas públicas antiguas
+-- Eliminar políticas de storage manualmente (la vista storage.policies puede no estar disponible)
+DROP POLICY IF EXISTS "Public read productos bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins upload to productos bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins update productos bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins delete from productos bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Public read cotizaciones bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins upload to cotizaciones bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins update cotizaciones bucket" ON storage.objects;
+DROP POLICY IF EXISTS "Admins delete from cotizaciones bucket" ON storage.objects;
+
+-- Eliminar políticas antiguas si existen
 DROP POLICY IF EXISTS "productos_select_policy" ON storage.objects;
 DROP POLICY IF EXISTS "productos_insert_policy" ON storage.objects;
 DROP POLICY IF EXISTS "productos_update_policy" ON storage.objects;
@@ -442,8 +449,8 @@ BEGIN
   RAISE NOTICE '║     RESUMEN DE POLÍTICAS CREADAS                       ║';
   RAISE NOTICE '╚════════════════════════════════════════════════════════╝';
   RAISE NOTICE '';
-  RAISE NOTICE 'profiles:               4 políticas (view own, update own, admins view all)';
-  RAISE NOTICE 'productos:              5 políticas (public read, admins CRUD)';
+  RAISE NOTICE 'profiles:               3 políticas (view own, update own, admins view all)';
+  RAISE NOTICE 'productos:              2 políticas (public read, admins manage)';
   RAISE NOTICE 'precios_escalonados:    2 políticas (public read, admins manage)';
   RAISE NOTICE 'leads:                  2 políticas (anon create, admins manage)';
   RAISE NOTICE 'cotizaciones:           2 políticas (anon create, admins manage)';
@@ -453,6 +460,9 @@ BEGIN
   RAISE NOTICE 'storage.cotizaciones:   4 políticas (public read, admins write)';
   RAISE NOTICE '';
   RAISE NOTICE '🔒 Seguridad aplicada correctamente';
+  RAISE NOTICE '';
+  RAISE NOTICE '⚠️  IMPORTANTE: Ahora ejecuta create_admin_profile.sql';
+  RAISE NOTICE '   para asignar rol admin al usuario existente';
   RAISE NOTICE '';
 END $$;
 

@@ -75,9 +75,13 @@ export default function ProductosPage() {
         total: result.total,
         totalPages: result.totalPages
       }))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cargando productos:', error)
-      toast.error('Error al cargar productos')
+      const errorMessage = error?.message || 'Error desconocido al cargar productos'
+      toast.error(`❌ Error al cargar productos`, {
+        description: errorMessage,
+        duration: 5000,
+      })
     } finally {
       setLoading(false)
     }

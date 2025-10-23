@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "nombre": "Tarjetas de Presentación Premium",
+    "descripcion": "Tarjetas de presentación en papel couché 300g, impresión full color, laminado mate",
+    "categoria": "papeleria_corporativa",
+    "sku": "CARD-PREM-001",
+    "minimo_pedido": 100,
+    "activo": true,
+    "imagen_url": "https://via.placeholder.com/400x300/1e40af/ffffff?text=Tarjetas+Premium",
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "nombre": "Tarjetas de Presentación Estándar",
+    "descripcion": "Tarjetas de presentación en papel couché 250g, impresión full color",
+    "categoria": "papeleria_corporativa",
+    "sku": "CARD-STD-001",
+    "minimo_pedido": 100,
+    "activo": true,
+    "imagen_url": "https://via.placeholder.com/400x300/1e40af/ffffff?text=Tarjetas+Estándar",
+    "created_at": "2025-01-15T10:05:00Z"
+  },
+  {
+    "id": 3,
+    "nombre": "Carpetas Corporativas",
+    "descripcion": "Carpetas tamaño carta, cartulina plegable 300g, impresión full color",
+    "categoria": "papeleria_corporativa",
+    "sku": "FOLD-CORP-001",
+    "minimo_pedido": 50,
+    "activo": true,
+    "imagen_url": "https://via.placeholder.com/400x300/1e40af/ffffff?text=Carpetas",
+    "created_at": "2025-01-15T10:10:00Z"
+  },
+  {
+    "id": 4,
+    "nombre": "Camisetas Personalizadas",
+    "descripcion": "Camisetas 100% algodón, impresión serigrafía 1 color",
+    "categoria": "merchandising",
+    "sku": "TSHIRT-001",
+    "minimo_pedido": 25,
+    "activo": true,
+    "imagen_url": "https://via.placeholder.com/400x300/1e40af/ffffff?text=Camisetas",
+    "created_at": "2025-01-15T10:15:00Z"
+  },
+  {
+    "id": 5,
+    "nombre": "Bolígrafos Metálicos",
+    "descripcion": "Bolígrafos metálicos con logo grabado, tinta azul",
+    "categoria": "merchandising",
+    "sku": "PEN-METAL-001",
+    "minimo_pedido": 100,
+    "activo": true,
+    "imagen_url": "https://via.placeholder.com/400x300/1e40af/ffffff?text=Bolígrafos",
+    "created_at": "2025-01-15T10:20:00Z"
+  },
+  {
+    "id": 6,
+    "nombre": "Producto Inactivo",
+    "descripcion": "Este producto está desactivado para pruebas",
+    "categoria": "papeleria_corporativa",
+    "sku": "INACTIVE-001",
+    "minimo_pedido": 100,
+    "activo": false,
+    "imagen_url": "https://via.placeholder.com/400x300/666666/ffffff?text=Inactivo",
+    "created_at": "2025-01-15T10:25:00Z"
+  }
+]

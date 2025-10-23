@@ -1,0 +1,114 @@
+[
+  {
+    "id": 1,
+    "producto_id": 1,
+    "cantidad_min": 100,
+    "precio_unitario": 0.25,
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "producto_id": 1,
+    "cantidad_min": 500,
+    "precio_unitario": 0.18,
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 3,
+    "producto_id": 1,
+    "cantidad_min": 1000,
+    "precio_unitario": 0.12,
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "producto_id": 1,
+    "cantidad_min": 2500,
+    "precio_unitario": 0.08,
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 5,
+    "producto_id": 2,
+    "cantidad_min": 100,
+    "precio_unitario": 0.20,
+    "created_at": "2025-01-15T10:05:00Z"
+  },
+  {
+    "id": 6,
+    "producto_id": 2,
+    "cantidad_min": 500,
+    "precio_unitario": 0.15,
+    "created_at": "2025-01-15T10:05:00Z"
+  },
+  {
+    "id": 7,
+    "producto_id": 2,
+    "cantidad_min": 1000,
+    "precio_unitario": 0.10,
+    "created_at": "2025-01-15T10:05:00Z"
+  },
+  {
+    "id": 8,
+    "producto_id": 3,
+    "cantidad_min": 50,
+    "precio_unitario": 1.50,
+    "created_at": "2025-01-15T10:10:00Z"
+  },
+  {
+    "id": 9,
+    "producto_id": 3,
+    "cantidad_min": 100,
+    "precio_unitario": 1.20,
+    "created_at": "2025-01-15T10:10:00Z"
+  },
+  {
+    "id": 10,
+    "producto_id": 3,
+    "cantidad_min": 250,
+    "precio_unitario": 1.00,
+    "created_at": "2025-01-15T10:10:00Z"
+  },
+  {
+    "id": 11,
+    "producto_id": 4,
+    "cantidad_min": 25,
+    "precio_unitario": 8.50,
+    "created_at": "2025-01-15T10:15:00Z"
+  },
+  {
+    "id": 12,
+    "producto_id": 4,
+    "cantidad_min": 50,
+    "precio_unitario": 7.00,
+    "created_at": "2025-01-15T10:15:00Z"
+  },
+  {
+    "id": 13,
+    "producto_id": 4,
+    "cantidad_min": 100,
+    "precio_unitario": 6.00,
+    "created_at": "2025-01-15T10:15:00Z"
+  },
+  {
+    "id": 14,
+    "producto_id": 5,
+    "cantidad_min": 100,
+    "precio_unitario": 0.75,
+    "created_at": "2025-01-15T10:20:00Z"
+  },
+  {
+    "id": 15,
+    "producto_id": 5,
+    "cantidad_min": 500,
+    "precio_unitario": 0.60,
+    "created_at": "2025-01-15T10:20:00Z"
+  },
+  {
+    "id": 16,
+    "producto_id": 5,
+    "cantidad_min": 1000,
+    "precio_unitario": 0.50,
+    "created_at": "2025-01-15T10:20:00Z"
+  }
+]

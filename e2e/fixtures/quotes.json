@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "lead_id": 1,
+    "numero": "COT-00001",
+    "estado": "pendiente",
+    "total": 132.25,
+    "subtotal": 115.00,
+    "validez_dias": 30,
+    "canal": "web",
+    "notas": "Primera cotización de prueba",
+    "created_at": "2025-01-20T14:30:00Z"
+  },
+  {
+    "id": 2,
+    "lead_id": 2,
+    "numero": "COT-00002",
+    "estado": "enviada",
+    "total": 138.00,
+    "subtotal": 120.00,
+    "validez_dias": 30,
+    "canal": "web",
+    "notas": null,
+    "created_at": "2025-01-21T09:15:00Z"
+  },
+  {
+    "id": 3,
+    "lead_id": 1,
+    "numero": "COT-00003",
+    "estado": "aprobada",
+    "total": 690.00,
+    "subtotal": 600.00,
+    "validez_dias": 30,
+    "canal": "whatsapp",
+    "notas": "Cotización aprobada por el cliente",
+    "created_at": "2025-01-22T16:45:00Z"
+  }
+]

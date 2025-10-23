@@ -3,6 +3,8 @@
  * Todas las operaciones CRUD centralizadas aquí
  */
 
+'use client'
+
 import { supabase } from './supabase-client'
 import type {
   Producto,
@@ -27,47 +29,62 @@ import type {
 // ============= PRODUCTOS =============
 
 export async function getProductos(filtros?: FiltrosProductos): Promise<PaginatedResponse<ProductoConPrecios>> {
-  let query = supabase
-    .from('productos')
-    .select('*, precios_escalonados(*)', { count: 'exact' })
-    .order('created_at', { ascending: false })
+  try {
+    // Verificar autenticación
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new Error('Usuario no autenticado. Por favor inicia sesión.')
+    }
 
-  // Filtros
-  if (filtros?.search) {
-    query = query.or(`nombre.ilike.%${filtros.search}%,sku.ilike.%${filtros.search}%`)
-  }
-  if (filtros?.categoria) {
-    query = query.eq('categoria', filtros.categoria)
-  }
-  if (filtros?.activo !== undefined && filtros?.activo !== 'all') {
-    query = query.eq('activo', filtros.activo)
-  }
+    let query = supabase
+      .from('productos')
+      .select('*, precios_escalonados(*)', { count: 'exact' })
+      .order('created_at', { ascending: false })
 
-  // Paginación
-  const page = filtros?.page || 1
-  const perPage = filtros?.perPage || 20
-  const from = (page - 1) * perPage
-  const to = from + perPage - 1
-  query = query.range(from, to)
+    // Filtros
+    if (filtros?.search) {
+      query = query.or(`nombre.ilike.%${filtros.search}%,sku.ilike.%${filtros.search}%`)
+    }
+    if (filtros?.categoria) {
+      query = query.eq('categoria', filtros.categoria)
+    }
+    if (filtros?.activo !== undefined && filtros?.activo !== 'all') {
+      query = query.eq('activo', filtros.activo)
+    }
 
-  const { data, error, count } = await query
+    // Paginación
+    const page = filtros?.page || 1
+    const perPage = filtros?.perPage || 20
+    const from = (page - 1) * perPage
+    const to = from + perPage - 1
+    query = query.range(from, to)
 
-  if (error) throw error
+    const { data, error, count } = await query
 
-  // Calcular precio base (el más bajo de cada producto)
-  const productos = data?.map(p => ({
-    ...p,
-    precio_base: p.precios_escalonados?.length > 0
-      ? Math.min(...p.precios_escalonados.map(pe => pe.precio_unitario))
-      : 0
-  })) || []
+    if (error) {
+      console.error('Error detallado de Supabase:', error)
+      throw new Error(`Error al obtener productos: ${error.message || 'Error desconocido'}`)
+    }
 
-  return {
-    data: productos,
-    total: count || 0,
-    page,
-    perPage,
-    totalPages: Math.ceil((count || 0) / perPage)
+    // Calcular precio base (el más bajo de cada producto)
+    const productos = data?.map(p => ({
+      ...p,
+      precio_base: p.precios_escalonados?.length > 0
+        ? Math.min(...p.precios_escalonados.map((pe: any) => pe.precio_unitario))
+        : 0
+    })) || []
+
+    return {
+      data: productos,
+      total: count || 0,
+      page,
+      perPage,
+      totalPages: Math.ceil((count || 0) / perPage)
+    }
+  } catch (error: any) {
+    console.error('Error en getProductos:', error)
+    throw new Error(error.message || 'Error al cargar productos')
   }
 }
 
@@ -85,7 +102,7 @@ export async function getProducto(id: number): Promise<ProductoConPrecios | null
   return {
     ...data,
     precio_base: data.precios_escalonados?.length > 0
-      ? Math.min(...data.precios_escalonados.map(pe => pe.precio_unitario))
+      ? Math.min(...data.precios_escalonados.map((pe: any) => pe.precio_unitario))
       : 0
   }
 }

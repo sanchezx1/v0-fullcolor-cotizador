@@ -27,23 +27,42 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
-      toast.success('¡Bienvenido!')
+      
+      // Notificación de éxito
+      toast.success('✅ Inicio de sesión exitoso', {
+        description: `Bienvenido al panel de administración`,
+        duration: 3000,
+      })
+      
       router.push(redirectTo)
       router.refresh()
     } catch (error: any) {
       console.error('Error login:', error)
       
-      // Mensajes de error específicos
-      let errorMessage = 'Credenciales incorrectas'
+      // Mensajes de error específicos y detallados
+      let errorTitle = '❌ Error de autenticación'
+      let errorDescription = 'No se pudo iniciar sesión'
+      
       if (error.message?.includes('Invalid login credentials')) {
-        errorMessage = 'Email o contraseña incorrectos'
+        errorTitle = '❌ Credenciales incorrectas'
+        errorDescription = 'El correo electrónico o la contraseña no son válidos. Por favor, verifica tus datos e intenta nuevamente.'
       } else if (error.message?.includes('Email not confirmed')) {
-        errorMessage = 'Por favor confirma tu email primero'
+        errorTitle = '⚠️ Email no confirmado'
+        errorDescription = 'Por favor confirma tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.'
+      } else if (error.message?.includes('User not found')) {
+        errorTitle = '❌ Usuario no encontrado'
+        errorDescription = 'No existe una cuenta con este correo electrónico. Contacta al administrador del sistema.'
+      } else if (error.message?.includes('Too many requests')) {
+        errorTitle = '⏱️ Demasiados intentos'
+        errorDescription = 'Has excedido el límite de intentos de inicio de sesión. Por favor, espera unos minutos e intenta nuevamente.'
       } else if (error.message) {
-        errorMessage = error.message
+        errorDescription = error.message
       }
       
-      toast.error(errorMessage)
+      toast.error(errorTitle, {
+        description: errorDescription,
+        duration: 5000,
+      })
     } finally {
       setLoading(false)
     }
