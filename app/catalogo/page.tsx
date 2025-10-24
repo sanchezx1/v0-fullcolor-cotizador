@@ -108,15 +108,19 @@ export default function CatalogoPage() {
 
   if (loading && products.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-12 bg-gray-200 rounded"></div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded"></div>
-              ))}
+      <div className="relative min-h-screen overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#1d4ed8_0%,_transparent_55%)] opacity-30" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_#f97316_0%,_transparent_45%)] opacity-20" />
+        <div className="relative container mx-auto px-4 py-16">
+          <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/5 p-12 backdrop-blur">
+            <div className="space-y-6 text-white">
+              <div className="h-8 w-2/3 rounded-full bg-white/20" />
+              <div className="h-12 rounded-2xl bg-white/10" />
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="h-64 rounded-2xl bg-white/10" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -126,15 +130,15 @@ export default function CatalogoPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Error al cargar productos
-            </h1>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button onClick={loadProducts}>
+      <div className="relative min-h-screen overflow-hidden bg-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#1d4ed8_0%,_transparent_55%)] opacity-30" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_#f97316_0%,_transparent_45%)] opacity-20" />
+        <div className="relative container mx-auto px-4 py-16">
+          <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-white/10 p-10 text-center text-white backdrop-blur">
+            <AlertCircle className="mx-auto mb-6 h-16 w-16 text-red-400" />
+            <h1 className="mb-3 text-3xl font-bold">Error al cargar productos</h1>
+            <p className="mb-8 text-sm text-white/70">{error}</p>
+            <Button onClick={loadProducts} size="lg" className="rounded-full">
               Reintentar
             </Button>
           </div>
@@ -144,144 +148,211 @@ export default function CatalogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Catálogo de Productos
-          </h1>
-          <p className="text-gray-600">
-            Descubre nuestra amplia gama de productos de impresión y merchandising
-          </p>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                />
+    <div className="relative min-h-screen overflow-hidden bg-slate-950">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#1d4ed8_0%,_transparent_55%)] opacity-30" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_#f97316_0%,_transparent_45%)] opacity-20" />
+      <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(15,23,42,0.9)_0%,_rgba(15,23,42,0.6)_50%,_rgba(15,23,42,0.9)_100%)]" />
+      <div className="relative">
+        <div className="container mx-auto flex flex-col gap-12 px-4 py-16">
+          {/* Header */}
+          <div className="grid gap-6 lg:grid-cols-[3fr,2fr] lg:items-center">
+            <div className="space-y-6 text-white">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80 backdrop-blur">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                Catálogo actualizado en tiempo real
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
+                  Encuentra el material perfecto para tu próxima campaña
+                </h1>
+                <p className="max-w-xl text-base text-white/70">
+                  Explora nuestro portafolio de soluciones de impresión y merchandising personalizable.
+                  Filtra por categoría, ordena por relevancia y descubre detalles clave en cada producto.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[{ label: "Categorías activas", value: categories.length || 0 }, { label: "Productos disponibles", value: sortedProducts.length }, { label: "Tiempo estimado de respuesta", value: "< 24h" }].map(({ label, value }) => (
+                  <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 backdrop-blur">
+                    <p className="mb-1 text-xs uppercase tracking-[0.2em] text-white/50">{label}</p>
+                    <p className="text-2xl font-semibold text-white">{value}</p>
+                  </div>
+                ))}
               </div>
             </div>
-
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las categorías</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Nombre</SelectItem>
-                <SelectItem value="category">Categoría</SelectItem>
-                <SelectItem value="price">Precio</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="relative hidden overflow-hidden rounded-3xl border border-white/10 bg-white/10 p-8 text-white backdrop-blur lg:block">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.4)_0%,_transparent_60%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(140deg,_rgba(255,255,255,0.12)_0%,_rgba(255,255,255,0)_50%)]" />
+              <div className="relative space-y-6">
+                <h2 className="text-2xl font-semibold">Filtros inteligentes</h2>
+                <p className="text-sm text-white/70">
+                  Nuestros filtros dinámicos te permiten localizar materiales por aplicación, formato o presupuesto en cuestión de segundos.
+                </p>
+                <ul className="space-y-3 text-sm text-white/70">
+                  <li className="flex items-center gap-3"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Selecciona múltiples categorías y ordena por prioridad.</li>
+                  <li className="flex items-center gap-3"><span className="h-1.5 w-1.5 rounded-full bg-sky-400" /> Visualiza mínimos de producción antes de cotizar.</li>
+                  <li className="flex items-center gap-3"><span className="h-1.5 w-1.5 rounded-full bg-orange-400" /> Accede a fichas técnicas con un solo clic.</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            Mostrando {sortedProducts.length} producto{sortedProducts.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+          {/* Filters */}
+          <Card className="border-white/10 bg-white/5 backdrop-blur">
+            <CardContent className="flex flex-col gap-6 p-6">
+              <div className="grid gap-4 md:grid-cols-[1.6fr,1fr,1fr]">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+                  <Input
+                    placeholder="Buscar por nombre, uso o descripción"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="h-12 rounded-2xl border-white/10 bg-white/10 pl-11 text-white placeholder:text-white/40 focus-visible:ring-white/40"
+                  />
+                </div>
+                <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+                  <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/10 text-white placeholder:text-white/50 focus:ring-0">
+                    <SelectValue placeholder="Categoría" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 text-white">
+                    <SelectItem value="all">Todas las categorías</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/10 text-white placeholder:text-white/50 focus:ring-0">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 text-white">
+                    <SelectItem value="name">Nombre</SelectItem>
+                    <SelectItem value="category">Categoría</SelectItem>
+                    <SelectItem value="price">Precio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {/* Products Grid */}
-        {sortedProducts.length === 0 ? (
-          <div className="text-center py-12">
-            <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No se encontraron productos
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Intenta ajustar tus filtros de búsqueda
+              {(searchQuery || selectedCategory !== "all") && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
+                  <span className="text-white/60">Filtros activos:</span>
+                  {searchQuery && (
+                    <Badge variant="secondary" className="rounded-full border border-white/20 bg-white/10 text-white">
+                      Búsqueda: "{searchQuery}"
+                    </Badge>
+                  )}
+                  {selectedCategory !== "all" && (
+                    <Badge variant="secondary" className="rounded-full border border-white/20 bg-white/10 text-white">
+                      Categoría: {selectedCategory}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-8 rounded-full border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setSelectedCategory("all")
+                      loadProducts()
+                    }}
+                  >
+                    Limpiar filtros
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Results Count */}
+          <div className="flex flex-wrap items-center justify-between gap-4 text-white/60">
+            <p className="text-sm">
+              Mostrando <span className="font-semibold text-white">{sortedProducts.length}</span> producto{sortedProducts.length !== 1 ? 's' : ''}
             </p>
-            <Button onClick={() => {
-              setSearchQuery("")
-              setSelectedCategory("all")
-              loadProducts()
-            }}>
-              Limpiar filtros
-            </Button>
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Inventario en constante actualización
+            </div>
           </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProducts.map((product) => (
-              <Link key={product.id} href={`/producto/${product.id}`}>
-                <Card className="group overflow-hidden hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 h-full border-border/50 hover:border-primary/30">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-                    <img
-                      src={product.imagen_url || "/placeholder.svg?height=300&width=400"}
-                      alt={product.nombre}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Ver detalles</span>
-                        <ArrowRight className="w-4 h-4" />
+
+          {/* Products Grid */}
+          {sortedProducts.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 py-16 text-center text-white/70">
+              <AlertCircle className="mx-auto mb-6 h-16 w-16 text-white/40" />
+              <h3 className="mb-3 text-2xl font-semibold text-white">No se encontraron productos</h3>
+              <p className="mx-auto mb-8 max-w-md text-sm">
+                Ajusta los filtros o restablece la búsqueda para explorar todo nuestro catálogo disponible.
+              </p>
+              <Button
+                onClick={() => {
+                  setSearchQuery("")
+                  setSelectedCategory("all")
+                  loadProducts()
+                }}
+                className="rounded-full"
+              >
+                Restaurar catálogo
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {sortedProducts.map((product) => (
+                <Link key={product.id} href={`/producto/${product.id}`}>
+                  <Card className="group h-full overflow-hidden border-white/10 bg-white/5 transition-all duration-500 hover:-translate-y-1 hover:border-white/30 hover:bg-white/10">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <img
+                        src={product.imagen_url || "/placeholder.svg?height=300&width=400"}
+                        alt={product.nombre}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/0 to-slate-950/50" />
+                      <div className="absolute inset-x-0 bottom-0 flex translate-y-6 flex-col gap-3 px-5 pb-5 text-white transition-all duration-500 group-hover:translate-y-0">
+                        <div className="flex items-center gap-2 text-xs text-white/70">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 backdrop-blur">
+                            <ArrowRight className="h-3 w-3" /> Ver ficha completa
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <Badge variant="secondary" className="text-xs">
+                    <CardContent className="flex h-full flex-col gap-4 p-5">
+                      <Badge variant="secondary" className="w-fit rounded-full border border-white/10 bg-white/10 text-xs font-medium uppercase tracking-wider text-white">
                         {product.categoria}
                       </Badge>
-                      <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
-                        {product.nombre}
-                      </h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {product.descripcion}
-                      </p>
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-xs text-muted-foreground">
-                          Mínimo: {product.minimo_pedido} {product.unidad}
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-sky-200">
+                          {product.nombre}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-white/70 line-clamp-3">
+                          {product.descripcion}
+                        </p>
+                      </div>
+                      <div className="mt-auto flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
+                        <span>
+                          Mínimo de pedido
+                          <span className="ml-2 font-semibold text-white">{product.minimo_pedido} {product.unidad}</span>
                         </span>
-                        <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button size="sm" className="rounded-full bg-white text-slate-900 hover:bg-slate-200">
                           Cotizar
                         </Button>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Loading overlay for subsequent loads */}
-        {loading && products.length > 0 && (
-          <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              <span>Cargando...</span>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Loading overlay for subsequent loads */}
+      {loading && products.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur">
+          <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/10 px-6 py-3 text-white">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            <span className="text-sm font-medium">Actualizando resultados...</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
