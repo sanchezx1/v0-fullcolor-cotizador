@@ -171,3 +171,49 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-28] - Home Hero Redesign
+
+**Descripcion:** Nuevo hero responsivo con carrusel adaptativo, indicadores con barras, flechas accesibles en escritorio y bloque cromatico móvil alineado a la identidad FullColor.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision
+
+### [2025-10-28] - Home Hero Ajustes
+
+**Descripcion:** Ajustes desktop overlay directo, safe-area lateral, textos únicos por slide y CTA primario único con slide navideña destacada.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision

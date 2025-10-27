@@ -1,7 +1,6 @@
 ﻿"use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +8,6 @@ import {
   AlertCircle,
   ArrowRight,
   Boxes,
-  CheckCircle2,
   Clock,
   FileText,
   PenTool,
@@ -18,27 +16,11 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react"
+import Link from "next/link"
+import { HomeHero } from "@/components/home-hero"
 import { WhatsAppHelp } from "@/components/whatsapp-help"
 import { listProducts } from "@/src/lib/data"
 import { Producto } from "@/src/services/supabaseClient"
-
-const heroHighlights = [
-  {
-    icon: Clock,
-    title: "Respuesta en menos de 24 h",
-    description: "Equipo comercial dedicado a tu proyecto",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Control de calidad",
-    description: "Revisiones de color y materiales a medida",
-  },
-  {
-    icon: Truck,
-    title: "Envios nacionales",
-    description: "Cobertura en Ecuador con aliados logisticos",
-  },
-]
 
 const steps = [
   {
@@ -201,97 +183,7 @@ export default function HomePage() {
         message="Hola FullColor, me gustaria cotizar un proyecto."
       />
 
-      <section className="relative">
-        <div className="container mx-auto px-4 pb-20 pt-16 md:pt-20">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_1fr]">
-            <div className="relative space-y-8">
-              <h1 className="text-pretty text-4xl font-semibold text-slate-900 sm:text-5xl lg:text-6xl">
-                Impulsa tu marca con merchandising y impresos listos para sorprender.
-              </h1>
-              <p className="max-w-xl text-lg leading-relaxed text-slate-600">
-                Acompanamos todo el proceso para que cotizar sea simple. Personaliza materiales,
-                asegura tiempos y recibe soporte experto desde el primer briefing.
-              </p>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Button
-                  size="lg"
-                  asChild
-                  className="rounded-full px-8 py-6 text-base shadow-lg shadow-primary/20 transition hover:-translate-y-0.5"
-                >
-                  <Link href="/cotizador" aria-label="Solicitar cotizacion en linea">
-                    Solicitar cotizacion
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  asChild
-                  className="rounded-full border-primary/30 px-8 py-6 text-base text-primary hover:border-primary hover:bg-primary/10"
-                >
-                  <Link href="/catalogo" aria-label="Ver catalogo de productos FullColor">
-                    Ver catalogo
-                  </Link>
-                </Button>
-              </div>
-              <ul className="grid gap-4 sm:grid-cols-2">
-                {heroHighlights.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <li
-                      key={item.title}
-                      className="flex items-start gap-3 rounded-3xl bg-white/70 p-5 shadow-[0_12px_60px_-32px_rgba(0,102,161,0.45)] backdrop-blur"
-                    >
-                      <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                        <Icon className="h-6 w-6" aria-hidden="true" />
-                      </span>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-600">{item.description}</p>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-            <Card className="relative overflow-hidden rounded-[32px] border-none bg-white/90 shadow-xl shadow-primary/15 backdrop-blur">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10" />
-              <div className="relative space-y-6 p-8">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">
-                    Experiencia FullColor
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-                    Tu proyecto acompanado de principio a fin
-                  </h2>
-                </div>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3 rounded-2xl bg-white/70 p-4 text-sm shadow-inner">
-                    <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
-                    <span>
-                      Asesoria especializada en materiales y acabados segun industria y objetivo.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3 rounded-2xl bg-white/70 p-4 text-sm shadow-inner">
-                    <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
-                    <span>
-                      Produccion bajo estandares ISO y evaluacion cromatica en cada tiraje.
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3 rounded-2xl bg-white/70 p-4 text-sm shadow-inner">
-                    <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
-                    <span>Trazabilidad y seguimiento en linea hasta la entrega final.</span>
-                  </li>
-                </ul>
-                <div className="rounded-3xl border border-primary/20 bg-white/80 p-5 text-sm text-slate-600">
-                  <strong className="font-semibold text-slate-900">Necesitas algo urgente?</strong>{" "}
-                  Agenda una llamada y coordinamos produccion express segun disponibilidad.
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </section>
+      <HomeHero />
 
       <section className="bg-white py-16 md:py-20">
         <div className="container mx-auto px-4">
