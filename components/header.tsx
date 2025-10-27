@@ -18,7 +18,7 @@ export function Header() {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-6 absolute left-1/2 transform -translate-x-1/2">
           <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
             Inicio
           </Link>
