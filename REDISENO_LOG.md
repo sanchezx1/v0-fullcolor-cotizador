@@ -125,3 +125,26 @@ npm run build
 
 **Última actualización:** 2025-10-23  
 **Próxima revisión:** Al completar primer componente rediseñado
+
+### [2025-10-27] - Home Rediseno
+
+**Descripcion:** Rediseno integral de la pagina principal para resaltar el hero, pasos de cotizacion, beneficios, testimonios y FAQs con experiencia mobile-first y jerarquia clara.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision

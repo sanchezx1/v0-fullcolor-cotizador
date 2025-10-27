@@ -1,6 +1,6 @@
-# 🤖 AGENTS - FullColor Cotizador
+# AGENTS - FullColor Cotizador
 
-## 📋 Contexto del Proyecto
+## Contexto del Proyecto
 
 **FullColor Cotizador** es un sistema de cotización para servicios gráficos digitales.
 
@@ -11,7 +11,7 @@
 
 ---
 
-## 🎨 Agente: Front-Designer
+## Agente: Front-Designer
 
 ### Responsabilidades
 Rediseño visual completo del frontend con enfoque **mobile-first**, manteniendo funcionalidad existente.
@@ -19,24 +19,24 @@ Rediseño visual completo del frontend con enfoque **mobile-first**, manteniendo
 ### Identidad de Marca FullColor
 
 **Colores principales:**
-- 🔵 **Azul**: `#0066CC` (primario)
-- 🟡 **Amarillo**: `#FFD700` (acento)
+- **Azul**: `#0066CC` (primario)
+- **Amarillo**: `#FFD700` (acento)
 
 **Colores de apoyo:**
-- ⚪ **Blanco**: `#FFFFFF`
-- ⚫ **Gris**: `#6B7280` (texto secundario)
-- 🌑 **Gris oscuro**: `#1F2937` (fondos)
+- **Blanco**: `#FFFFFF`
+- **Gris**: `#6B7280` (texto secundario)
+- **Gris oscuro**: `#1F2937` (fondos)
 
 ### Principios de Diseño
 
 #### 1. Mobile-First
-- Diseñar primero para móvil (320px+)
-- Escalar progresivamente a tablet y desktop
+- Diseñar primero para móvil 
+- Escalar progresivamente a desktop
 - Touch targets mínimo 44x44px
 
 #### 2. Moderno e Intuitivo
 - Interfaces limpias y espaciadas
-- Tipografía legible (16px mínimo en móvil)
+- Tipografía legible 
 - Jerarquía visual clara
 - Animaciones sutiles y performantes
 
@@ -69,7 +69,7 @@ Rediseño visual completo del frontend con enfoque **mobile-first**, manteniendo
 - ✅ Refactor visual de componentes
 - ✅ Mejoras de CSS/Tailwind
 - ✅ Animaciones con Framer Motion o CSS
-- ✅ Nuevos componentes UI (shadcn/ui)
+- ✅ Nuevos componentes UI 
 - ✅ Reorganización de layouts
 - ✅ Optimización de imágenes
 - ✅ Mocks para desarrollo local sin `.env`
@@ -120,7 +120,7 @@ Rediseño visual completo del frontend con enfoque **mobile-first**, manteniendo
 
 ---
 
-## 📦 Pull Requests
+## Pull Requests
 
 ### Tamaño
 - **Pequeños y enfocados** (1-3 componentes por PR)
@@ -148,16 +148,14 @@ Rediseño visual completo del frontend con enfoque **mobile-first**, manteniendo
 
 ---
 
-## 🎯 Objetivos del Rediseño
+## Objetivos del Rediseño
 
 1. **UX mejorada** - Flujo más intuitivo
 2. **Mobile-first** - Experiencia perfecta en móviles
 3. **Moderna** - Diseño 2025, tendencias actuales
 4. **Performante** - Sin degradar velocidad
-5. **Accesible** - WCAG 2.1 AA compliant
-6. **Consistente** - Identidad FullColor en cada página
+5. **Consistente** - Identidad FullColor en cada página
 
 ---
 
-**Última actualización:** Octubre 2025  
-**Versión:** 1.0.0
+
