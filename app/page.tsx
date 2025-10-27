@@ -16,11 +16,8 @@ import {
   PhoneCall,
   Quote,
   ShieldCheck,
-  Sparkles,
   Truck,
 } from "lucide-react"
-import { CategoryChips } from "@/components/category-chips"
-import { FeaturedCards } from "@/components/featured-cards"
 import { WhatsAppHelp } from "@/components/whatsapp-help"
 import { listProducts } from "@/src/lib/data"
 import { Producto } from "@/src/services/supabaseClient"
@@ -208,9 +205,6 @@ export default function HomePage() {
         <div className="container mx-auto px-4 pb-20 pt-16 md:pt-20">
           <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.15fr_1fr]">
             <div className="relative space-y-8">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary">
-                <Sparkles className="h-4 w-4" /> Produccion grafica profesional
-              </span>
               <h1 className="text-pretty text-4xl font-semibold text-slate-900 sm:text-5xl lg:text-6xl">
                 Impulsa tu marca con merchandising y impresos listos para sorprender.
               </h1>
@@ -455,36 +449,6 @@ export default function HomePage() {
 
       <section className="py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">
-              Inspira tu proximo pedido
-            </h2>
-            <p className="mt-4 text-base text-slate-600">
-              Casos destacados de merchandising y material impreso que cumplieron objetivos de marca.
-            </p>
-          </div>
-          <div className="mt-12">
-            <FeaturedCards />
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-16 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="mx-auto mb-10 max-w-3xl text-center">
-            <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">Categorias clave</h2>
-            <p className="mt-4 text-base text-slate-600">
-              Filtra por linea de producto para llegar directo a lo que necesitas cotizar.
-            </p>
-          </div>
-          <div className="rounded-[32px] border border-primary/10 bg-gradient-to-br from-white via-white to-primary/5 p-6 shadow-[0_18px_60px_-45px_rgba(0,102,161,0.6)]">
-            <CategoryChips />
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-20">
-        <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-3xl text-center">
             <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">
               Clientes que confian en FullColor
@@ -598,12 +562,6 @@ export default function HomePage() {
               </details>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="bg-white py-12">
-        <div className="container mx-auto px-4">
-          <WhatsAppHelp message="Hola FullColor, necesito apoyo con mi cotizacion." />
         </div>
       </section>
     </div>

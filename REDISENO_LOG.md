@@ -148,3 +148,26 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-27] - Home Ajustes posteriores
+
+**Descripcion:** Retiro del chip hero, secciones Inspira tu proximo pedido, Categorias clave y CTA inline de chat para simplificar la portada segun feedback.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision
