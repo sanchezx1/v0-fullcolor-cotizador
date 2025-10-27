@@ -217,3 +217,49 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-28] - Home Hero QA
+
+**Descripcion:** Eliminacion de barra translucida, ajuste de paneles móviles igualados, flecha izquierda accesible y retiro de texto "FullColor" en slides.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision
+
+### [2025-10-28] - Home Hero Copy Center Mobile
+
+**Descripcion:** Centramos tipografía y CTA de panel móvil del hero, manteniendo alineación izquierda en desktop.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision

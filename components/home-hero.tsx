@@ -90,7 +90,7 @@ export function HomeHero() {
           key={slide.id}
           className={cn(
             "h-1.5 w-12 rounded-full transition-colors duration-300",
-            index === activeIndex ? "bg-[#F5C700] shadow-[0_0_14px_rgba(245,199,0,0.55)]" : "bg-white/50 lg:bg-[#0068A5]/30"
+            index === activeIndex ? "bg-[#F5C700]" : "bg-white/40 lg:bg-[#0068A5]/30"
           )}
           role="presentation"
         />
@@ -120,17 +120,26 @@ export function HomeHero() {
                   loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
-              <div className="-mt-8 rounded-t-[32px] bg-[#0068A5] px-6 py-8 text-white shadow-[0_20px_60px_-32px_rgba(0,104,165,0.85)]">
+              <div className="-mt-8 flex min-h-[320px] flex-col justify-between rounded-t-[32px] bg-[#0068A5] px-6 py-8 text-white text-center">
                 <div className="space-y-4">
-                  <p className="text-sm font-medium text-[#F5C700]">FullColor</p>
-                  <h1 className="text-3xl font-semibold leading-tight">{slide.title}</h1>
-                  <p className="text-base leading-relaxed text-white/90">{slide.subtitle}</p>
+                  <h1 className="text-3xl font-semibold leading-tight sm:text-left">{slide.title}</h1>
+                  <p
+                    className="text-base leading-relaxed text-white/90 sm:text-left"
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {slide.subtitle}
+                  </p>
                 </div>
-                <div className="mt-6 flex flex-col gap-3">
+                <div className="mt-6 flex justify-center sm:justify-start">
                   <Button
                     asChild
                     size="lg"
-                    className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 shadow-lg shadow-[#F5C700]/40 transition hover:bg-[#f2c000]"
+                    className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
                   >
                     <Link href={slide.primaryCta.href}>{slide.primaryCta.label}</Link>
                   </Button>
@@ -165,19 +174,16 @@ export function HomeHero() {
                 aria-hidden="true"
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0068A5]/90 via-[#0068A5]/55 to-transparent" />
-              <div className="relative z-10 flex h-full items-center pl-36 pr-16">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0068A5]/88 via-[#0068A5]/52 to-transparent" />
+              <div className="relative z-10 flex h-full items-center pl-40 pr-16">
                 <div className="max-w-2xl text-white">
-                  <p className="text-sm font-medium text-[#F5C700] uppercase tracking-[0.3em]">
-                    FullColor
-                  </p>
-                  <h2 className="mt-6 text-5xl font-semibold leading-tight text-white">{slide.title}</h2>
+                  <h2 className="text-5xl font-semibold leading-tight text-white">{slide.title}</h2>
                   <p className="mt-6 text-lg leading-relaxed text-white/85">{slide.subtitle}</p>
                   <div className="mt-9">
                     <Button
                       asChild
                       size="lg"
-                      className="rounded-full bg-[#F5C700] px-9 py-6 text-base font-semibold text-slate-900 shadow-lg shadow-[#F5C700]/40 transition hover:bg-[#f2c000]"
+                      className="rounded-full bg-[#F5C700] px-9 py-6 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
                     >
                       <Link href={slide.primaryCta.href}>{slide.primaryCta.label}</Link>
                     </Button>
@@ -191,7 +197,7 @@ export function HomeHero() {
         <button
           type="button"
           onClick={() => goToSlide(activeIndex - 1)}
-          className="group absolute left-6 top-1/2 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
+          className="group absolute left-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
           aria-label="Slide anterior"
         >
           <ChevronLeft className="h-6 w-6" aria-hidden="true" />
@@ -199,7 +205,7 @@ export function HomeHero() {
         <button
           type="button"
           onClick={() => goToSlide(activeIndex + 1)}
-          className="group absolute right-6 top-1/2 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
+          className="group absolute right-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
           aria-label="Slide siguiente"
         >
           <ChevronRight className="h-6 w-6" aria-hidden="true" />
