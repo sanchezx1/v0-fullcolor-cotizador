@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import {
   AlertCircle,
-  ArrowRight,
   Boxes,
   Clock,
   FileText,
@@ -21,6 +18,7 @@ import { HomeHero } from "@/components/home-hero"
 import { WhatsAppHelp } from "@/components/whatsapp-help"
 import { listProducts } from "@/src/lib/data"
 import { Producto } from "@/src/services/supabaseClient"
+import { FeaturedProductsCarousel } from "@/components/featured-products-carousel"
 
 const steps = [
   {
@@ -239,75 +237,8 @@ export default function HomePage() {
               </Button>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {featuredProducts.map((product) => (
-                <Card
-                  key={product.id}
-                  className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-100 bg-white shadow-[0_18px_60px_-45px_rgba(0,102,161,0.65)] transition hover:-translate-y-1 hover:shadow-primary/25"
-                >
-                  <Link
-                    href={`/producto/${product.id}`}
-                    className="relative block aspect-[4/3] overflow-hidden"
-                    aria-label={`Ver detalles del producto ${product.nombre}`}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/65 via-slate-900/20 to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <img
-                      src={product.imagen_url || "/placeholder.svg?height=300&width=400"}
-                      alt={product.nombre}
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-slate-700 backdrop-blur">
-                      <span>{product.categoria}</span>
-                      <ArrowRight className="h-4 w-4 text-primary" aria-hidden="true" />
-                    </div>
-                  </Link>
-                  <CardContent className="flex flex-1 flex-col gap-4 p-6">
-                    <div className="space-y-2">
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full border border-primary/20 bg-primary/10 text-xs text-primary"
-                      >
-                        Minimo {product.minimo_pedido} {product.unidad}
-                      </Badge>
-                      <h3 className="text-lg font-semibold leading-tight text-slate-900">
-                        {product.nombre}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-slate-600 line-clamp-3">
-                        {product.descripcion}
-                      </p>
-                    </div>
-                    <div className="mt-auto flex flex-wrap items-center gap-3">
-                      <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Precio segun cantidad
-                      </span>
-                      <Button
-                        size="sm"
-                        className="rounded-full px-5 py-2 text-sm shadow-sm shadow-primary/20 transition group-hover:-translate-y-0.5"
-                        asChild
-                      >
-                        <Link href={`/producto/${product.id}`}>Cotizar</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <FeaturedProductsCarousel products={featuredProducts} />
           )}
-
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button
-              variant="outline"
-              size="lg"
-              asChild
-              className="rounded-full border-primary/30 px-8 py-6 text-base text-primary hover:border-primary hover:bg-primary/10"
-            >
-              <Link href="/catalogo">Ver todo el catalogo</Link>
-            </Button>
-            <span className="text-sm text-slate-500">
-              Mas de 150 referencias en papeleria, promocionales y gran formato.
-            </span>
-          </div>
         </div>
       </section>
 
@@ -373,7 +304,7 @@ export default function HomePage() {
 
       <section className="bg-white py-16 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="mx-auto max-w-5xl rounded-[36px] border border-primary/10 bg-gradient-to-r from-primary/90 via-primary/80 to-primary px-8 py-12 text-white shadow-[0_28px_80px_-40px_rgba(0,102,161,0.9)]">
+          <div className="mx-auto max-w-5xl rounded-3xl border border-primary/10 bg-gradient-to-r from-primary/90 via-primary/80 to-primary px-8 py-12 text-white shadow-[0_28px_80px_-40px_rgba(0,102,161,0.9)]">
             <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-center">
               <div className="space-y-4">
                 <h2 className="text-3xl font-semibold md:text-4xl">

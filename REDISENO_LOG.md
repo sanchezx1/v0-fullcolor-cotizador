@@ -263,3 +263,26 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-28] - Carrusel Productos Destacados
+
+**Descripcion:** Seccion de destacados ahora es un carrusel responsive con tarjetas minimalistas, precios minimos calculados y navegacion por flechas/barritas.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision

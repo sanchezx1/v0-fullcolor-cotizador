@@ -120,7 +120,7 @@ export function HomeHero() {
                   loading={index === 0 ? "eager" : "lazy"}
                 />
               </div>
-              <div className="-mt-8 flex min-h-[320px] flex-col justify-between rounded-t-[32px] bg-[#0068A5] px-6 py-8 text-white text-center">
+              <div className="-mt-8 flex min-h-[320px] flex-col justify-between rounded-t-3xl bg-[#0068A5] px-6 py-8 text-white text-center">
                 <div className="space-y-4">
                   <h1 className="text-3xl font-semibold leading-tight sm:text-left">{slide.title}</h1>
                   <p
