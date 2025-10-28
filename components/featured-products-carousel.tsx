@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { AnimatedPagerIndicator } from "@/components/animated-pager-indicator"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Producto, PrecioEscalonado } from "@/src/services/supabaseClient"
 import { getProductWithTiers, ProductWithTiers } from "@/src/lib/data"
@@ -23,13 +24,12 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
   const [enrichedProducts, setEnrichedProducts] = useState<EnrichedProduct[]>([])
   const [loadingTiers, setLoadingTiers] = useState(false)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const metricsRef = useRef({ itemWidthWithGap: 0 })
+  const metricsRef = useRef({ itemWidthWithGap: 0, baseOffset: 0 })
   const [itemsPerPage, setItemsPerPage] = useState(1)
   const [activeCardIndex, setActiveCardIndex] = useState(0)
-  const [indicatorMetrics, setIndicatorMetrics] = useState({ dot: 0, step: 0, offset: 0 })
-  const indicatorsRef = useRef<HTMLDivElement>(null)
+  const [pageProgress, setPageProgress] = useState(0)
 
-    useEffect(() => {
+  useEffect(() => {
     let active = true
 
     const loadPricing = async () => {
@@ -83,142 +83,122 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
     return () => mediaQuery.removeEventListener("change", updateItemsPerPage)
   }, [])
 
-  const updateMetrics = () => {
+  const totalPages = useMemo(() => {
+    if (!enrichedProducts.length) return 0
+    return Math.max(1, Math.ceil(enrichedProducts.length / itemsPerPage))
+  }, [enrichedProducts.length, itemsPerPage])
+  const maxIndex = Math.max(0, enrichedProducts.length - itemsPerPage)
+  const canScrollPrev = activeCardIndex > 0
+  const canScrollNext = activeCardIndex < maxIndex
+
+  const handleScroll = useCallback(() => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+    const { itemWidthWithGap, baseOffset } = metricsRef.current
+    if (!itemWidthWithGap) return
+
+    const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth)
+    const startOffset = Math.min(baseOffset, maxScroll)
+    const endOffset = maxScroll
+    const currentScroll = viewport.scrollLeft
+    const clampedScroll = Math.min(Math.max(currentScroll, startOffset), endOffset)
+    const normalizedScroll = Math.max(0, currentScroll - baseOffset)
+
+    const rawIndex = normalizedScroll / itemWidthWithGap
+    const index = Math.round(rawIndex)
+    const safeIndex = Math.max(0, Math.min(index, maxIndex))
+    setActiveCardIndex((prev) => (prev === safeIndex ? prev : safeIndex))
+
+    const pageRange = Math.max(0, totalPages - 1)
+    if (pageRange === 0) {
+      setPageProgress((prev) => (prev === 0 ? prev : 0))
+      return
+    }
+
+    const denominator = Math.max(endOffset - startOffset, 1)
+    const progressRatio = (clampedScroll - startOffset) / denominator
+    const scaledProgress = Math.max(0, Math.min(progressRatio * pageRange, pageRange))
+    setPageProgress((prev) => (Math.abs(prev - scaledProgress) < 0.001 ? prev : scaledProgress))
+  }, [maxIndex, totalPages])
+
+  const updateMetrics = useCallback(() => {
     const viewport = viewportRef.current
     if (!viewport) return
     const firstCard = viewport.querySelector<HTMLElement>("[data-carousel-card]")
-    if (!firstCard) return
-    const firstRect = firstCard.getBoundingClientRect()
-    const secondCard = firstCard.nextElementSibling as HTMLElement | null
-    let gap = 0
-    if (secondCard) {
-      const secondRect = secondCard.getBoundingClientRect()
-      gap = secondRect.left - firstRect.right
+    if (!firstCard) {
+      metricsRef.current.itemWidthWithGap = 0
+      metricsRef.current.baseOffset = 0
+      handleScroll()
+      return
     }
-    metricsRef.current.itemWidthWithGap = firstRect.width + gap
-  }
+
+    const secondCard = firstCard.nextElementSibling as HTMLElement | null
+    const cardWidth = firstCard.offsetWidth
+    const gap = secondCard ? Math.max(0, secondCard.offsetLeft - firstCard.offsetLeft - cardWidth) : 0
+
+    const baseOffset = Math.max(
+      0,
+      firstCard.offsetLeft - (viewport.clientWidth - cardWidth) / 2
+    )
+
+    metricsRef.current.itemWidthWithGap = cardWidth + gap
+    metricsRef.current.baseOffset = baseOffset
+    handleScroll()
+  }, [handleScroll])
 
   useEffect(() => {
     updateMetrics()
     const handleResize = () => updateMetrics()
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [enrichedProducts])
+  }, [updateMetrics, enrichedProducts])
 
   useEffect(() => {
     setActiveCardIndex(0)
+    setPageProgress(0)
     const viewport = viewportRef.current
     if (viewport) {
-      viewport.scrollTo({ left: 0, behavior: "smooth" })
+      const { baseOffset } = metricsRef.current
+      viewport.scrollTo({ left: baseOffset, behavior: "auto" })
+      if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(() => handleScroll())
+      } else {
+        handleScroll()
+      }
     }
-  }, [itemsPerPage, enrichedProducts.length])
-
-  const totalPages = useMemo(() => {
-    if (!enrichedProducts.length) return 0
-    return Math.max(1, Math.ceil(enrichedProducts.length / itemsPerPage))
-  }, [enrichedProducts.length, itemsPerPage])
-
-  useLayoutEffect(() => {
-    const container = indicatorsRef.current
-    if (!container) return
-
-    const update = () => {
-      const dots = container.querySelectorAll<HTMLButtonElement>('button[data-indicator-dot]')
-      if (!dots.length) return
-
-      const containerRect = container.getBoundingClientRect()
-      const firstRect = dots[0].getBoundingClientRect()
-      const secondRect = dots[1]?.getBoundingClientRect()
-
-      const dot = firstRect.width
-      const step = secondRect ? secondRect.left - firstRect.left : 0
-      const offset = firstRect.left - containerRect.left
-
-      setIndicatorMetrics((prev) => {
-        if (prev.dot === dot && prev.step === step && prev.offset === offset) return prev
-        return { dot, step, offset }
-      })
-    }
-
-    update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
-  }, [itemsPerPage, totalPages])
-
-  const activePage = totalPages ? Math.min(totalPages - 1, Math.floor(activeCardIndex / itemsPerPage)) : 0
-  const maxIndex = Math.max(0, enrichedProducts.length - itemsPerPage)
-  const canScrollPrev = activeCardIndex > 0
-  const canScrollNext = activeCardIndex < maxIndex
-
-  const pillWidth = indicatorMetrics.step > 0
-    ? Math.max(indicatorMetrics.dot * 2.4, indicatorMetrics.step + indicatorMetrics.dot)
-    : indicatorMetrics.dot
-  const pillTranslate = indicatorMetrics.offset
-    + activePage * indicatorMetrics.step
-    + indicatorMetrics.dot / 2
-    - pillWidth / 2
-
+  }, [itemsPerPage, enrichedProducts.length, handleScroll])
 
   useEffect(() => {
     const viewport = viewportRef.current
     if (!viewport) return
 
-    const handleScroll = () => {
-      const { itemWidthWithGap } = metricsRef.current
-      if (!itemWidthWithGap) return
-      const index = Math.round(viewport.scrollLeft / itemWidthWithGap)
-      const safeIndex = Math.max(0, Math.min(index, maxIndex))
-      setActiveCardIndex(safeIndex)
-    }
-
     handleScroll()
-    viewport.addEventListener("scroll", handleScroll)
-    return () => viewport.removeEventListener("scroll", handleScroll)
-  }, [maxIndex])
+    const onScroll = () => handleScroll()
 
-  useLayoutEffect(() => {
-    const container = indicatorsRef.current
-    if (!container) return
-    const dots = container.querySelectorAll<HTMLButtonElement>('button[data-indicator-dot]')
-    if (!dots.length) return
+    viewport.addEventListener("scroll", onScroll, { passive: true })
+    return () => viewport.removeEventListener("scroll", onScroll)
+  }, [handleScroll])
 
-    const containerRect = container.getBoundingClientRect()
-    const firstDot = dots[0]
-    const secondDot = dots[1]
-    const dotWidth = firstDot.offsetWidth
-    let gap = dotWidth
-    if (secondDot) {
-      const rect1 = firstDot.getBoundingClientRect()
-      const rect2 = secondDot.getBoundingClientRect()
-      gap = rect2.left - rect1.left - dotWidth
-    }
-    const offset = firstDot.getBoundingClientRect().left - containerRect.left
-
-    setIndicatorMetrics((prev) => {
-      if (prev.dot === dotWidth && prev.gap === gap && prev.offset === offset) return prev
-      return { dot: dotWidth, gap, offset }
-    })
-  }, [totalPages, itemsPerPage])
-
-  const scrollByPage = (direction: number) => {
+  const scrollToCard = (target: number, behavior: ScrollBehavior = "smooth") => {
     const viewport = viewportRef.current
     if (!viewport) return
-    const { itemWidthWithGap } = metricsRef.current
-    if (!itemWidthWithGap) return
-    const targetIndex = Math.max(0, Math.min(activeCardIndex + direction * itemsPerPage, maxIndex))
-    const left = targetIndex * itemWidthWithGap
-    viewport.scrollTo({ left, behavior: "smooth" })
-    setActiveCardIndex(targetIndex)
+    const cards = viewport.querySelectorAll<HTMLElement>("[data-carousel-card]")
+    if (!cards.length) return
+    const clamped = Math.max(0, Math.min(target, cards.length - 1))
+    const card = cards[clamped]
+    const baseOffset = metricsRef.current.baseOffset
+    const centerOffset = (viewport.clientWidth - card.clientWidth) / 2
+    const targetLeft =
+      itemsPerPage === 1
+        ? card.offsetLeft - centerOffset
+        : card.offsetLeft - baseOffset
+
+    viewport.scrollTo({ left: Math.max(0, targetLeft), behavior })
   }
 
-  const scrollToPage = (pageIndex: number) => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-    const { itemWidthWithGap } = metricsRef.current
-    if (!itemWidthWithGap) return
-
-    const targetIndex = Math.max(0, Math.min(pageIndex * itemsPerPage, maxIndex))
-    viewport.scrollTo({ left: targetIndex * itemWidthWithGap, behavior: "smooth" })
+  const scrollByPage = (direction: number) => {
+    const targetIndex = Math.max(0, Math.min(activeCardIndex + direction * itemsPerPage, maxIndex))
+    scrollToCard(targetIndex)
     setActiveCardIndex(targetIndex)
   }
 
@@ -236,7 +216,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
         <div
           ref={viewportRef}
           className={cn(
-            "flex gap-6 overflow-x-auto scroll-smooth pb-6 justify-center lg:justify-start mx-auto w-full max-w-[1120px]",
+            "flex gap-6 overflow-x-auto scroll-smooth pb-6 justify-center lg:justify-start mx-auto w-full max-w-[1120px] px-8 sm:px-10 lg:px-0",
             "snap-x snap-mandatory",
             "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           )}
@@ -349,45 +329,8 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
       </div>
 
       {totalPages > 0 ? (
-        <div
-          className="relative mt-6 flex justify-center"
-          ref={indicatorsRef}
-          role="tablist"
-          aria-label="Páginas de productos destacados"
-        >
-          {indicatorMetrics.dot > 0 ? (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 z-0 h-2.5 -translate-y-1/2 rounded-full bg-[#0068A5] transition-all duration-300 ease-out"
-              style={{
-                width: indicatorMetrics.dot * 2.8,
-                transform: `translateX(${
-                  indicatorMetrics.offset + activePage * (indicatorMetrics.dot + indicatorMetrics.step)
-                }px) translateY(-50%)`,
-              }}
-            />
-          ) : null}
-          <div className="flex gap-2.5">
-            {Array.from({ length: totalPages }).map((_, index) => {
-              const isActive = index === activePage
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  data-indicator-dot
-                  onClick={() => scrollToPage(index)}
-                  aria-label={`Ver grupo ${index + 1} de productos destacados`}
-                  aria-current={isActive}
-                  className={cn(
-                    "relative z-10 h-2.5 w-2.5 rounded-full transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0068A5]",
-                    isActive ? "bg-transparent" : "bg-slate-300 hover:bg-slate-400"
-                  )}
-                >
-                  <span className="sr-only">Productos destacados página {index + 1}</span>
-                </button>
-              )
-            })}
-          </div>
+        <div className="flex justify-center">
+          <AnimatedPagerIndicator pageCount={totalPages} progress={pageProgress} className="mt-6" />
         </div>
       ) : null}
 

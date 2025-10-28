@@ -286,3 +286,26 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-29] - Indicador Carrusel Productos Destacados
+
+**Descripcion:** Reimplementamos el indicador del carrusel de productos destacados con una burbuja animada tipo "worm" que se estira suavemente entre puntos fijos sin desplazar el layout y mantiene el contenedor centrado.
+
+**Impacto en contratos:** Ninguno.
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- PR: #pendiente
+- Capturas: pendiente
+
+**Estado:** En revision
