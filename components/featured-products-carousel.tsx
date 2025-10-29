@@ -74,7 +74,8 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)")
     const updateItemsPerPage = () => {
-      setItemsPerPage(mediaQuery.matches ? 3 : 1)
+      const newItemsPerPage = mediaQuery.matches ? 3 : 1
+      setItemsPerPage(newItemsPerPage)
     }
 
     updateItemsPerPage()
@@ -85,6 +86,8 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
 
   const totalPages = useMemo(() => {
     if (!enrichedProducts.length) return 0
+    // En móvil (itemsPerPage=1), cada producto es una página
+    // En desktop (itemsPerPage=3), agrupamos de 3 en 3
     return Math.max(1, Math.ceil(enrichedProducts.length / itemsPerPage))
   }, [enrichedProducts.length, itemsPerPage])
   const maxIndex = Math.max(0, enrichedProducts.length - itemsPerPage)
@@ -115,11 +118,21 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
       return
     }
 
-    const denominator = Math.max(endOffset - startOffset, 1)
-    const progressRatio = (clampedScroll - startOffset) / denominator
-    const scaledProgress = Math.max(0, Math.min(progressRatio * pageRange, pageRange))
-    setPageProgress((prev) => (Math.abs(prev - scaledProgress) < 0.001 ? prev : scaledProgress))
-  }, [maxIndex, totalPages])
+    // Mejorar cálculo de progress para móvil: mapear directamente el índice de tarjeta a página
+    // En móvil cada tarjeta = 1 página, en desktop cada grupo de 3 = 1 página
+    let progress: number
+    if (itemsPerPage === 1) {
+      // Móvil: progress basado directamente en el índice de la tarjeta
+      progress = safeIndex
+    } else {
+      // Desktop: progress basado en scroll proporcional
+      const denominator = Math.max(endOffset - startOffset, 1)
+      const progressRatio = (clampedScroll - startOffset) / denominator
+      progress = Math.max(0, Math.min(progressRatio * pageRange, pageRange))
+    }
+    
+    setPageProgress((prev) => (Math.abs(prev - progress) < 0.001 ? prev : progress))
+  }, [maxIndex, totalPages, itemsPerPage])
 
   const updateMetrics = useCallback(() => {
     const viewport = viewportRef.current
@@ -136,15 +149,16 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
     const cardWidth = firstCard.offsetWidth
     const gap = secondCard ? Math.max(0, secondCard.offsetLeft - firstCard.offsetLeft - cardWidth) : 0
 
-    const baseOffset = Math.max(
-      0,
-      firstCard.offsetLeft - (viewport.clientWidth - cardWidth) / 2
-    )
+    // En móvil (itemsPerPage=1), baseOffset debe ser 0 para empezar en el primer producto
+    // En desktop (itemsPerPage=3), centramos las tarjetas
+    const baseOffset = itemsPerPage === 1 
+      ? 0 
+      : Math.max(0, firstCard.offsetLeft - (viewport.clientWidth - cardWidth) / 2)
 
     metricsRef.current.itemWidthWithGap = cardWidth + gap
     metricsRef.current.baseOffset = baseOffset
     handleScroll()
-  }, [handleScroll])
+  }, [handleScroll, itemsPerPage])
 
   useEffect(() => {
     updateMetrics()
@@ -158,15 +172,19 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
     setPageProgress(0)
     const viewport = viewportRef.current
     if (viewport) {
-      const { baseOffset } = metricsRef.current
-      viewport.scrollTo({ left: baseOffset, behavior: "auto" })
-      if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
-        window.requestAnimationFrame(() => handleScroll())
-      } else {
-        handleScroll()
-      }
+      const timeoutId = setTimeout(() => {
+        updateMetrics()
+        // Scroll al baseOffset calculado (0 en móvil, centrado en desktop)
+        viewport.scrollTo({ left: metricsRef.current.baseOffset, behavior: "auto" })
+        if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+          window.requestAnimationFrame(() => handleScroll())
+        } else {
+          handleScroll()
+        }
+      }, 50)
+      return () => clearTimeout(timeoutId)
     }
-  }, [itemsPerPage, enrichedProducts.length, handleScroll])
+  }, [itemsPerPage, enrichedProducts.length, handleScroll, updateMetrics])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -216,9 +234,11 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
         <div
           ref={viewportRef}
           className={cn(
-            "flex gap-6 overflow-x-auto scroll-smooth pb-6 justify-center lg:justify-start mx-auto w-full max-w-[1120px] px-8 sm:px-10 lg:px-0",
+            "flex gap-6 overflow-x-auto pb-6 justify-start mx-auto w-full max-w-[1120px] px-4 sm:px-10 lg:px-0",
             "snap-x snap-mandatory",
-            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            "scroll-smooth",
+            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            "[scroll-snap-type:x_mandatory] [scroll-snap-stop:always]"
           )}
         >
           {loadingTiers && !enrichedProducts.length ? (
@@ -237,7 +257,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
                 <div
                   key={product.id}
                   data-carousel-card
-                  className="flex basis-full flex-shrink-0 snap-center flex-col items-center gap-3 w-[88vw] max-w-[320px] sm:w-[320px] sm:max-w-[320px] md:w-[320px] md:max-w-[320px] md:basis-[320px] lg:w-[360px] lg:max-w-[360px] lg:basis-[360px]"
+                  className="flex basis-full flex-shrink-0 snap-start flex-col items-center gap-3 w-[calc(100vw-2rem)] max-w-[320px] sm:w-[320px] sm:max-w-[320px] md:w-[320px] md:max-w-[320px] md:basis-[320px] lg:w-[360px] lg:max-w-[360px] lg:basis-[360px]"
                 >
                   <Link
                     href={`/producto/${product.id}`}

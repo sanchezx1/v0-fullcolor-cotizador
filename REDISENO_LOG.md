@@ -1,19 +1,19 @@
-# 📝 REDISEÑO LOG - FullColor Cotizador
+# ðŸ“� REDISEÃ‘O LOG - FullColor Cotizador
 
-## 🎯 Propósito
+## ðŸŽ¯ PropÃ³sito
 
-Bitácora incremental del rediseño de frontend. **Cada tarea de UI completada debe registrarse aquí** antes de hacer merge del PR.
+BitÃ¡cora incremental del rediseÃ±o de frontend. **Cada tarea de UI completada debe registrarse aquÃ­** antes de hacer merge del PR.
 
 ---
 
-## 📋 Plantilla de Entrada
+## ðŸ“‹ Plantilla de Entrada
 
 ```markdown
-### [YYYY-MM-DD] - [Área/Componente]
+### [YYYY-MM-DD] - [Ã�rea/Componente]
 
-**Descripción:** [Breve descripción de los cambios visuales]
+**DescripciÃ³n:** [Breve descripciÃ³n de los cambios visuales]
 
-**Impacto en contratos:** Ninguno ✅
+**Impacto en contratos:** Ninguno âœ…
 
 **Rutas afectadas:**
 - `/ruta/1`
@@ -28,38 +28,38 @@ Bitácora incremental del rediseño de frontend. **Cada tarea de UI completada d
 - [ ] PR aprobado
 
 **Artefactos:**
-- PR: #[número]
-- Capturas: [enlace/descripción]
+- PR: #[nÃºmero]
+- Capturas: [enlace/descripciÃ³n]
 
-**Estado:** 🟢 Completado / 🟡 En revisión / 🔴 Pendiente QA
+**Estado:** ðŸŸ¢ Completado / ðŸŸ¡ En revisiÃ³n / ðŸ”´ Pendiente QA
 ```
 
 ---
 
-## 📖 Entradas de Rediseño
+## ðŸ“– Entradas de RediseÃ±o
 
-### [2025-10-23] - Preparación de Guía Mobile-First
+### [2025-10-23] - PreparaciÃ³n de GuÃ­a Mobile-First
 
-**Descripción:** Creación de documentación para agente Front-Designer con principios de diseño, identidad de marca y restricciones del proyecto.
+**DescripciÃ³n:** CreaciÃ³n de documentaciÃ³n para agente Front-Designer con principios de diseÃ±o, identidad de marca y restricciones del proyecto.
 
-**Impacto en contratos:** Ninguno ✅
+**Impacto en contratos:** Ninguno âœ…
 
 **Rutas afectadas:**
-- N/A (solo documentación)
+- N/A (solo documentaciÃ³n)
 
 **Definition of Done:**
 - [x] Archivo `AGENTS.md` creado
 - [x] Archivo `REDISENO_LOG.md` creado
 - [x] Colores de marca documentados
 - [x] Principios de accesibilidad definidos
-- [x] Sintaxis de invocación establecida
+- [x] Sintaxis de invocaciÃ³n establecida
 - [x] Flujo de trabajo clarificado
 
 **Artefactos:**
 - Archivos: `AGENTS.md`, `REDISENO_LOG.md`
-- Commit: Documentación de agente Front-Designer
+- Commit: DocumentaciÃ³n de agente Front-Designer
 
-**Estado:** 🟢 Completado
+**Estado:** ðŸŸ¢ Completado
 
 **Notas:**
 - Establecidos colores principales: Azul #0066CC y Amarillo #FFD700
@@ -69,47 +69,47 @@ Bitácora incremental del rediseño de frontend. **Cada tarea de UI completada d
 
 ---
 
-## 📊 Estadísticas del Rediseño
+## ðŸ“Š EstadÃ­sticas del RediseÃ±o
 
-| Métrica | Valor |
+| MÃ©trica | Valor |
 |---------|-------|
 | **Tareas completadas** | 1 |
-| **Componentes rediseñados** | 0 |
+| **Componentes rediseÃ±ados** | 0 |
 | **PRs mergeados** | 0 |
 | **Rutas mejoradas** | 0 |
-| **Inicio del rediseño** | 2025-10-23 |
+| **Inicio del rediseÃ±o** | 2025-10-23 |
 
 ---
 
-## 🎨 Áreas Pendientes de Rediseño
+## ðŸŽ¨ Ã�reas Pendientes de RediseÃ±o
 
-### Alta Prioridad 🔴
+### Alta Prioridad ðŸ”´
 - [ ] Homepage - Hero section
 - [ ] Cotizador - Flujo mobile
-- [ ] Catálogo - Cards de productos
+- [ ] CatÃ¡logo - Cards de productos
 
-### Media Prioridad 🟡
+### Media Prioridad ðŸŸ¡
 - [ ] Dashboard Admin - KPIs visuales
-- [ ] Formularios - Validación visual
-- [ ] Confirmación - Página de éxito
+- [ ] Formularios - ValidaciÃ³n visual
+- [ ] ConfirmaciÃ³n - PÃ¡gina de Ã©xito
 
-### Baja Prioridad 🟢
-- [ ] Footer - Información de contacto
-- [ ] 404/Error pages - Páginas amigables
+### Baja Prioridad ðŸŸ¢
+- [ ] Footer - InformaciÃ³n de contacto
+- [ ] 404/Error pages - PÃ¡ginas amigables
 - [ ] Loading states - Skeletons modernos
 
 ---
 
-## 📝 Notas Importantes
+## ðŸ“� Notas Importantes
 
 ### Recordatorios
-1. **Cada PR de UI debe añadir una entrada aquí**
+1. **Cada PR de UI debe aÃ±adir una entrada aquÃ­**
 2. **Validar accesibilidad antes de marcar como completo**
-3. **Incluir capturas antes/después en PRs**
-4. **Mantener PRs pequeños (max 300 líneas)**
-5. **Siempre verificar: ¿Rompí algún contrato? No. ✅**
+3. **Incluir capturas antes/despuÃ©s en PRs**
+4. **Mantener PRs pequeÃ±os (max 300 lÃ­neas)**
+5. **Siempre verificar: Â¿RompÃ­ algÃºn contrato? No. âœ…**
 
-### Comandos Útiles
+### Comandos Ãštiles
 ```bash
 # Ejecutar tests
 npm run test:unit
@@ -123,8 +123,8 @@ npm run build
 
 ---
 
-**Última actualización:** 2025-10-23  
-**Próxima revisión:** Al completar primer componente rediseñado
+**Ãšltima actualizaciÃ³n:** 2025-10-23  
+**PrÃ³xima revisiÃ³n:** Al completar primer componente rediseÃ±ado
 
 ### [2025-10-27] - Home Rediseno
 
@@ -174,7 +174,7 @@ npm run build
 
 ### [2025-10-28] - Home Hero Redesign
 
-**Descripcion:** Nuevo hero responsivo con carrusel adaptativo, indicadores con barras, flechas accesibles en escritorio y bloque cromatico m�vil alineado a la identidad FullColor.
+**Descripcion:** Nuevo hero responsivo con carrusel adaptativo, indicadores con barras, flechas accesibles en escritorio y bloque cromatico móvil alineado a la identidad FullColor.
 
 **Impacto en contratos:** Ninguno.
 
@@ -197,7 +197,7 @@ npm run build
 
 ### [2025-10-28] - Home Hero Ajustes
 
-**Descripcion:** Ajustes desktop overlay directo, safe-area lateral, textos �nicos por slide y CTA primario �nico con slide navide�a destacada.
+**Descripcion:** Ajustes desktop overlay directo, safe-area lateral, textos únicos por slide y CTA primario único con slide navideña destacada.
 
 **Impacto en contratos:** Ninguno.
 
@@ -220,7 +220,7 @@ npm run build
 
 ### [2025-10-28] - Home Hero QA
 
-**Descripcion:** Eliminacion de barra translucida, ajuste de paneles m�viles igualados, flecha izquierda accesible y retiro de texto "FullColor" en slides.
+**Descripcion:** Eliminacion de barra translucida, ajuste de paneles móviles igualados, flecha izquierda accesible y retiro de texto "FullColor" en slides.
 
 **Impacto en contratos:** Ninguno.
 
@@ -243,7 +243,7 @@ npm run build
 
 ### [2025-10-28] - Home Hero Copy Center Mobile
 
-**Descripcion:** Centramos tipograf�a y CTA de panel m�vil del hero, manteniendo alineaci�n izquierda en desktop.
+**Descripcion:** Centramos tipografía y CTA de panel móvil del hero, manteniendo alineación izquierda en desktop.
 
 **Impacto en contratos:** Ninguno.
 
@@ -309,3 +309,36 @@ npm run build
 - Capturas: pendiente
 
 **Estado:** En revision
+
+### [2025-10-28] - Fix Carrusel Móvil Productos Destacados
+
+**Descripción:** Corrección de bugs en móvil del carrusel de productos destacados:
+- Reducido a 5 productos destacados (en lugar de 6)
+- Indicadores pill/dots muestran correctamente 5 puntos en móvil (1 producto por página)
+- Animación de la burbuja pill funciona correctamente con progreso basado en índice de tarjeta
+- **Carrusel inicia correctamente en el primer producto (Bolígrafos) con baseOffset=0 en móvil**
+- **Scroll inicial corregido: empieza en scroll left 0 (no centrado)**
+- Tarjetas ocupan ancho completo del viewport: w-[calc(100vw-2rem)] con px-4
+- Snap behavior: snap-start para alineación correcta al inicio
+- Sensibilidad de swipe mejorada con scroll-snap-stop:always para avanzar 1 slide por gesto
+- Navegación completa: los 5 productos son accesibles con swipe
+- Desktop/tablet sin cambios (animación duration-150 ease-out preservada, baseOffset centrado)
+
+**Impacto en contratos:** Ninguno ✅
+
+**Rutas afectadas:**
+- `/`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados (#0066CC para pill activa)
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] PR aprobado
+
+**Artefactos:**
+- Componentes: `featured-products-carousel.tsx`, `page.tsx`
+- Cambios: 5 productos, baseOffset condicional (0 móvil, centrado desktop), ancho tarjetas, padding, snap-start, scroll inicial
+
+**Estado:** 🟢 Completado

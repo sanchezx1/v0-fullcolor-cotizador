@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -138,7 +138,7 @@ export default function HomePage() {
       setError(null)
 
       const products = await listProducts()
-      setFeaturedProducts(products.slice(0, 6))
+      setFeaturedProducts(products.slice(0, 5))
     } catch (err) {
       console.error("Error loading featured products:", err)
       setError("No pudimos cargar el catalogo destacado. Intenta nuevamente.")
