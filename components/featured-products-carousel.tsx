@@ -316,7 +316,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
           )}
         </div>
 
-        <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-16 items-center justify-center pl-6 lg:flex">
+        <div className="pointer-events-none absolute top-0 -left-6 hidden h-[240px] w-16 items-center justify-center lg:flex">
           <button
             type="button"
             onClick={() => scrollByPage(-1)}
@@ -324,14 +324,14 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
             disabled={!canScrollPrev}
             aria-disabled={!canScrollPrev}
             className={cn(
-              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/70 text-[#0068A5] shadow transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
+              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
               !canScrollPrev && "cursor-default opacity-45 pointer-events-none"
             )}
           >
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-16 items-center justify-center pr-6 lg:flex">
+        <div className="pointer-events-none absolute top-0 -right-6 hidden h-[240px] w-16 items-center justify-center lg:flex">
           <button
             type="button"
             onClick={() => scrollByPage(1)}
@@ -339,7 +339,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
             disabled={!canScrollNext}
             aria-disabled={!canScrollNext}
             className={cn(
-              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/50 bg-white/70 text-[#0068A5] shadow transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
+              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
               !canScrollNext && "cursor-default opacity-45 pointer-events-none"
             )}
           >
