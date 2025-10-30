@@ -37,6 +37,8 @@ export default function NuevoProductoPage() {
     activo: true,
     imagen: null as File | null
   })
+  
+  const [skuManual, setSkuManual] = useState(false)
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {}
@@ -48,15 +50,15 @@ export default function NuevoProductoPage() {
       newErrors.nombre = 'El nombre debe tener al menos 3 caracteres'
     }
 
-    // SKU
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'El SKU es requerido'
-    } else if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
-      newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
-    } else {
-      const esUnico = await verificarSkuUnico(formData.sku)
-      if (!esUnico) {
-        newErrors.sku = 'Este SKU ya existe'
+    // SKU (solo validar si se ingresa manualmente)
+    if (skuManual && formData.sku.trim()) {
+      if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
+        newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
+      } else {
+        const esUnico = await verificarSkuUnico(formData.sku)
+        if (!esUnico) {
+          newErrors.sku = 'Este SKU ya existe'
+        }
       }
     }
 
@@ -89,19 +91,16 @@ export default function NuevoProductoPage() {
       // Subir imagen si existe
       let imagen_url: string | undefined
       if (formData.imagen) {
-        const filename = `${formData.sku}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
+        const filename = `${skuManual ? formData.sku : 'temp'}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
         imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
       }
 
-      // Crear producto
+      // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
-        sku: formData.sku,
+        sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        color: formData.color || undefined,
-        lados: formData.lados || undefined,
-        impresion: formData.impresion || undefined,
         activo: formData.activo,
         imagen_url
       })
@@ -135,15 +134,12 @@ export default function NuevoProductoPage() {
         imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
       }
 
-      // Crear producto
+      // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
-        sku: formData.sku,
+        sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        color: formData.color || undefined,
-        lados: formData.lados || undefined,
-        impresion: formData.impresion || undefined,
         activo: formData.activo,
         imagen_url
       })
@@ -187,22 +183,60 @@ export default function NuevoProductoPage() {
 
             {/* SKU */}
             <div className="space-y-2">
-              <Label htmlFor="sku">
-                SKU <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-                placeholder="Ej: TARJ-001"
-                className={errors.sku ? 'border-red-500' : ''}
-              />
-              {errors.sku && (
-                <p className="text-sm text-red-500">{errors.sku}</p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sku">SKU (Código del Producto)</Label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSkuManual(!skuManual)
+                    if (!skuManual) {
+                      setFormData({ ...formData, sku: '' })
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {skuManual ? '← Generar automáticamente' : '✏️ Ingresar manualmente'}
+                </button>
+              </div>
+              
+              {skuManual ? (
+                <>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                    placeholder="Ej: TARJ-001"
+                    className={errors.sku ? 'border-red-500' : ''}
+                  />
+                  {errors.sku && (
+                    <p className="text-sm text-red-500">{errors.sku}</p>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    Solo alfanuméricos y guiones. Debe ser único.
+                  </p>
+                </>
+              ) : (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    🤖 El SKU se generará <span className="font-semibold">automáticamente</span> al guardar el producto.
+                  </p>
+                  {formData.categoria && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Ejemplo para <span className="font-medium">{formData.categoria}</span>: 
+                      <code className="ml-1 px-2 py-0.5 bg-white rounded text-primary font-mono">
+                        {formData.categoria === 'Papelería Corporativa' && 'PAP-001'}
+                        {formData.categoria === 'Publicidad' && 'PUB-001'}
+                        {formData.categoria === 'Promocional' && 'PROM-001'}
+                        {formData.categoria === 'Señalética' && 'SEN-001'}
+                        {formData.categoria === 'Packaging' && 'PACK-001'}
+                        {formData.categoria === 'Textil' && 'TEXT-001'}
+                        {formData.categoria === 'Digital' && 'DIG-001'}
+                        {formData.categoria === 'Otro' && 'PROD-001'}
+                      </code>
+                    </p>
+                  )}
+                </div>
               )}
-              <p className="text-sm text-gray-500">
-                Solo alfanuméricos y guiones. Debe ser único.
-              </p>
             </div>
 
             {/* Descripción */}

@@ -110,6 +110,73 @@ export async function getProductoById(id: number): Promise<ProductoConPrecios | 
 }
 
 /**
+ * Genera un prefijo de SKU basado en la categoría
+ */
+function generarPrefijoSku(categoria: string): string {
+  const prefijos: Record<string, string> = {
+    'Papelería Corporativa': 'PAP',
+    'Publicidad': 'PUB',
+    'Promocional': 'PROM',
+    'Señalética': 'SEN',
+    'Packaging': 'PACK',
+    'Textil': 'TEXT',
+    'Digital': 'DIG',
+    'Otro': 'PROD'
+  }
+  
+  return prefijos[categoria] || 'PROD'
+}
+
+/**
+ * Genera un SKU único automáticamente
+ * Formato: {PREFIJO}-{CONTADOR}
+ * Ejemplo: PAP-001, PUB-042
+ */
+export async function generarSkuAutomatico(categoria: string): Promise<string> {
+  try {
+    const prefijo = generarPrefijoSku(categoria)
+    
+    // Buscar el último SKU con este prefijo
+    const { data, error } = await supabase
+      .from('productos')
+      .select('sku')
+      .ilike('sku', `${prefijo}-%`)
+      .order('sku', { ascending: false })
+      .limit(1)
+    
+    if (error) throw error
+    
+    let contador = 1
+    
+    if (data && data.length > 0) {
+      // Extraer el número del último SKU
+      const ultimoSku = data[0].sku
+      const match = ultimoSku.match(/-(\d+)$/)
+      if (match) {
+        contador = parseInt(match[1], 10) + 1
+      }
+    }
+    
+    // Formatear con ceros a la izquierda (3 dígitos)
+    const numeroFormateado = contador.toString().padStart(3, '0')
+    const nuevoSku = `${prefijo}-${numeroFormateado}`
+    
+    // Verificar que no exista (por si acaso)
+    const existe = await skuExists(nuevoSku)
+    if (existe) {
+      // Si existe, intentar con el siguiente número
+      return generarSkuAutomatico(categoria)
+    }
+    
+    return nuevoSku
+  } catch (error) {
+    console.error('Error generando SKU automático:', error)
+    // Fallback: usar timestamp
+    return `PROD-${Date.now().toString().slice(-6)}`
+  }
+}
+
+/**
  * Verifica si un SKU ya existe (para validación)
  */
 export async function skuExists(sku: string, excludeId?: number): Promise<boolean> {
@@ -143,15 +210,24 @@ export async function createProducto(
   producto: Omit<Producto, 'id' | 'created_at' | 'updated_at'>
 ): Promise<Producto> {
   try {
-    // Verificar SKU único
-    const exists = await skuExists(producto.sku)
-    if (exists) {
-      throw new Error(`El SKU "${producto.sku}" ya existe`)
+    let sku = producto.sku
+    
+    // Si no se proporciona SKU o está vacío, generar automáticamente
+    if (!sku || sku.trim() === '') {
+      console.log('🔢 Generando SKU automático para categoría:', producto.categoria)
+      sku = await generarSkuAutomatico(producto.categoria)
+      console.log('✅ SKU generado:', sku)
+    } else {
+      // Si se proporciona SKU, verificar que sea único
+      const exists = await skuExists(sku)
+      if (exists) {
+        throw new Error(`El SKU "${sku}" ya existe`)
+      }
     }
 
     const { data, error } = await supabase
       .from('productos')
-      .insert(producto)
+      .insert({ ...producto, sku })
       .select()
       .single()
 
