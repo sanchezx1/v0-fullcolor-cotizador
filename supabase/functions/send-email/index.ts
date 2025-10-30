@@ -28,6 +28,154 @@ interface EmailTemplateData {
 }
 
 /**
+ * Genera HTML para email de notificación al admin
+ */
+function generateAdminNotificationHTML(data: EmailTemplateData): string {
+  const itemsHTML = data.items.map(item => `
+    <tr>
+      <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb;">
+        <strong style="color: #1a1a1a; font-size: 14px;">${item.nombre}</strong><br/>
+        <span style="color: #6b7280; font-size: 12px;">${item.categoria}</span>
+      </td>
+      <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #1a1a1a;">
+        ${item.cantidad}
+      </td>
+      <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #1a1a1a;">
+        $${item.precioUnitario.toFixed(2)}
+      </td>
+      <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #0066a1; font-weight: 600;">
+        $${item.subtotal.toFixed(2)}
+      </td>
+    </tr>
+  `).join('')
+
+  return `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Cotización ${data.cotizacionNumero}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #f5c700 0%, #e6b800 100%); padding: 30px 40px; text-align: center;">
+              <h1 style="margin: 0; color: #1a1a1a; font-size: 28px; font-weight: 700;">
+                🔔 Nueva Cotización
+              </h1>
+              <p style="margin: 10px 0 0; color: #1a1a1a; font-size: 14px; font-weight: 600;">
+                ${data.cotizacionNumero}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Contenido -->
+          <tr>
+            <td style="padding: 40px;">
+              
+              <p style="margin: 0 0 20px; color: #4b5563; font-size: 16px; line-height: 1.6;">
+                Se ha recibido una nueva solicitud de cotización desde el sitio web.
+              </p>
+
+              <!-- Info del cliente -->
+              <h3 style="margin: 0 0 16px; color: #1a1a1a; font-size: 18px; font-weight: 600;">
+                👤 Información del Cliente
+              </h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px; background-color: #f9fafb; border-radius: 6px; padding: 16px;">
+                <tr>
+                  <td style="padding: 4px 0;">
+                    <strong style="color: #0066a1; font-size: 14px;">Nombre:</strong>
+                    <span style="color: #1a1a1a; font-size: 14px; margin-left: 8px;">${data.clienteNombre}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;">
+                    <strong style="color: #0066a1; font-size: 14px;">Email:</strong>
+                    <span style="color: #1a1a1a; font-size: 14px; margin-left: 8px;">${data.clienteEmail}</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 4px 0;">
+                    <strong style="color: #0066a1; font-size: 14px;">Fecha:</strong>
+                    <span style="color: #1a1a1a; font-size: 14px; margin-left: 8px;">${data.fecha}</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Productos -->
+              <h3 style="margin: 0 0 16px; color: #1a1a1a; font-size: 18px; font-weight: 600;">
+                📦 Productos Solicitados
+              </h3>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-collapse: collapse;">
+                <thead>
+                  <tr style="background-color: #0066a1;">
+                    <th style="padding: 12px 8px; text-align: left; color: #ffffff; font-size: 13px; font-weight: 600;">Producto</th>
+                    <th style="padding: 12px 8px; text-align: center; color: #ffffff; font-size: 13px; font-weight: 600;">Cantidad</th>
+                    <th style="padding: 12px 8px; text-align: right; color: #ffffff; font-size: 13px; font-weight: 600;">Precio Unit.</th>
+                    <th style="padding: 12px 8px; text-align: right; color: #ffffff; font-size: 13px; font-weight: 600;">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHTML}
+                </tbody>
+              </table>
+
+              <!-- Totales -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr style="border-top: 2px solid #0066a1;">
+                  <td style="padding: 12px 0 0; text-align: right; color: #0066a1; font-size: 18px; font-weight: 700;">
+                    TOTAL:
+                  </td>
+                  <td style="padding: 12px 0 0 20px; text-align: right; color: #0066a1; font-size: 18px; font-weight: 700; width: 120px;">
+                    $${data.total.toFixed(2)}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Botón PDF -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                  <td align="center">
+                    <a href="${data.pdfUrl}" style="display: inline-block; padding: 16px 40px; background-color: #0066a1; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                      📄 Ver PDF de Cotización
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0; color: #6b7280; font-size: 14px; text-align: center;">
+                Responde al cliente lo antes posible para cerrar la venta.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 20px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                Notificación automática del sistema de cotizaciones FullColor
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+}
+
+/**
  * Genera HTML profesional para el email de cotización
  * Diseño responsive con colores de marca FullColor (#0066a1, #f5c700)
  */
@@ -235,13 +383,15 @@ Deno.serve(async (req: Request) => {
     const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY')
     const fromEmail = Deno.env.get('FROM_EMAIL') || 'carlosmatiasflor@gmail.com'
     const fromName = Deno.env.get('FROM_NAME') || 'FullColor'
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || fromEmail
 
     console.log('Environment check:', {
       supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
       supabaseServiceKey: supabaseServiceKey ? 'Present' : 'Missing',
       sendgridApiKey: sendgridApiKey ? 'Present' : 'Missing',
       fromEmail,
-      fromName
+      fromName,
+      adminEmail
     })
 
     // Validar variables de entorno
@@ -466,7 +616,46 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error enviando email: ${sendgridResponse.status} - ${errorText}`)
     }
 
-    console.log('📧 Email enviado exitosamente vía SendGrid')
+    console.log('📧 Email enviado exitosamente vía SendGrid al cliente')
+
+    // 8.5. Enviar notificación al admin
+    console.log('📤 Enviando notificación al admin:', adminEmail)
+    
+    const adminHtmlContent = generateAdminNotificationHTML(emailData)
+    
+    const adminSendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${sendgridApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        personalizations: [{
+          to: [{ email: adminEmail }],
+          subject: `🔔 Nueva Cotización ${emailData.cotizacionNumero} - ${emailData.clienteNombre}`
+        }],
+        from: {
+          email: fromEmail,
+          name: fromName
+        },
+        content: [{
+          type: 'text/html',
+          value: adminHtmlContent
+        }],
+        reply_to: {
+          email: toEmail,  // El admin puede responder directamente al cliente
+          name: emailData.clienteNombre
+        }
+      })
+    })
+
+    if (!adminSendgridResponse.ok) {
+      const errorText = await adminSendgridResponse.text()
+      console.warn('⚠️ Error enviando notificación al admin (no crítico):', errorText)
+      // No lanzar error, el email al cliente ya se envió exitosamente
+    } else {
+      console.log('✅ Notificación enviada al admin:', adminEmail)
+    }
 
     // 9. Registrar evento en la base de datos
     const { error: eventoError } = await supabase
