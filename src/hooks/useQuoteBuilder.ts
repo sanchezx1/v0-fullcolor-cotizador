@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { crearLead, crearCotizacion, registrarEvento } from '../services/quotes'
 import { calculatePriceForProduct } from '../lib/data'
 import { pdfGenerationService } from '../services/pdfGenerationService'
+import { supabase } from '../services/supabaseClient'
 
 export interface QuoteItem {
   productId: number
@@ -35,6 +36,13 @@ export function useQuoteBuilder() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Estado para manejo de conflicto de leads
+  const [leadConflict, setLeadConflict] = useState<{
+    show: boolean
+    existingLead: any
+    newData: any
+  } | null>(null)
 
   // Cargar cotización desde localStorage al inicializar
   useEffect(() => {
@@ -208,15 +216,30 @@ export function useQuoteBuilder() {
       }
 
       // Crear lead
-      const lead = await crearLead({
-        nombre: contactInfo.nombreRazonSocial,
-        email: contactInfo.email,
-        telefono: contactInfo.telefono || '',
-        empresa: contactInfo.nombreRazonSocial, // Usar el mismo nombre como empresa
-        notas: contactInfo.mensaje,
-        ruc_cedula: contactInfo.rucCedula,
-        ciudad: contactInfo.ciudad
-      })
+      let lead
+      try {
+        lead = await crearLead({
+          nombre: contactInfo.nombreRazonSocial,
+          email: contactInfo.email,
+          telefono: contactInfo.telefono || '',
+          empresa: contactInfo.nombreRazonSocial,
+          notas: contactInfo.mensaje,
+          ruc_cedula: contactInfo.rucCedula,
+          ciudad: contactInfo.ciudad
+        })
+      } catch (leadError: any) {
+        // Detectar conflicto de email
+        if (leadError.code === 'LEAD_EMAIL_EXISTS') {
+          setLeadConflict({
+            show: true,
+            existingLead: leadError.existingLead,
+            newData: leadError.newData
+          })
+          setLoading(false)
+          return { success: false, error: 'LEAD_CONFLICT' }
+        }
+        throw leadError
+      }
 
       // Preparar items para la cotización
       const items = quoteItems.map(item => ({
@@ -314,12 +337,133 @@ export function useQuoteBuilder() {
     }
   }
 
+  // Función para actualizar lead usando Edge Function privilegiada
+  const upsertLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; error?: string }> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      if (!leadConflict) {
+        throw new Error('No hay conflicto de lead para resolver')
+      }
+
+      // Llamar a Edge Function upsert-lead
+      const { data, error: fnError } = await supabase.functions.invoke('upsert-lead', {
+        body: leadConflict.newData
+      })
+
+      if (fnError) {
+        throw new Error(`Error actualizando lead: ${fnError.message}`)
+      }
+
+      if (!data.success || !data.lead) {
+        throw new Error('No se pudo actualizar el lead')
+      }
+
+      const lead = data.lead
+      console.log('✅ Lead actualizado/creado:', lead.id)
+
+      // Cerrar modal
+      setLeadConflict(null)
+
+      // Continuar con la creación de cotización
+      const items = quoteItems.map(item => ({
+        productoId: item.productId,
+        cantidad: item.quantity,
+        precioUnitario: item.pricePerUnit,
+        subtotal: item.total
+      }))
+
+      const { cotizacion } = await crearCotizacion({
+        leadId: lead.id,
+        items,
+        canal: 'web',
+        notas: contactInfo.mensaje
+      })
+
+      // Generar PDF automáticamente
+      try {
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        if (pdfResult.success) {
+          console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+        }
+      } catch (pdfError) {
+        console.warn('Error en generación de PDF:', pdfError)
+      }
+
+      clearQuote()
+      return { success: true, quoteId: cotizacion.id }
+    } catch (err: any) {
+      console.error('❌ Error en upsertLeadAndContinue:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar lead'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Función para usar lead existente sin actualizar
+  const useExistingLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; error?: string }> => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      if (!leadConflict) {
+        throw new Error('No hay conflicto de lead para resolver')
+      }
+
+      const lead = leadConflict.existingLead
+      console.log('✅ Usando lead existente:', lead.id)
+
+      // Cerrar modal
+      setLeadConflict(null)
+
+      // Continuar con la creación de cotización
+      const items = quoteItems.map(item => ({
+        productoId: item.productId,
+        cantidad: item.quantity,
+        precioUnitario: item.pricePerUnit,
+        subtotal: item.total
+      }))
+
+      const { cotizacion } = await crearCotizacion({
+        leadId: lead.id,
+        items,
+        canal: 'web',
+        notas: contactInfo.mensaje
+      })
+
+      // Generar PDF automáticamente
+      try {
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        if (pdfResult.success) {
+          console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+        }
+      } catch (pdfError) {
+        console.warn('Error en generación de PDF:', pdfError)
+      }
+
+      clearQuote()
+      return { success: true, quoteId: cotizacion.id }
+    } catch (err: any) {
+      console.error('❌ Error en useExistingLeadAndContinue:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Error al crear cotización'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     quoteItems,
     contactInfo,
     setContactInfo,
     loading,
     error,
+    leadConflict,
+    setLeadConflict,
     addItemToQuote,
     updateItemQuantity,
     removeItemFromQuote,
@@ -329,6 +473,8 @@ export function useQuoteBuilder() {
     calculateTotal,
     validateQuote,
     submitQuote,
+    upsertLeadAndContinue,
+    useExistingLeadAndContinue,
     generatePDF,
     getPDFUrl,
     hasPDF

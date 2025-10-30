@@ -28,41 +28,17 @@ export async function crearLead(leadData: {
       console.log('⚠️ Error al buscar, creando nuevo lead...')
     }
 
-    // Si ya existe, intentar actualizarlo
+    // Si ya existe, lanzar error para que el frontend maneje el conflicto
     if (existingLeads && existingLeads.length > 0) {
       const existingLead = existingLeads[0]
       console.log('📝 Lead existente encontrado:', existingLead.id)
       
-      // Intentar actualizar (puede fallar por RLS si usuario no autenticado)
-      const { data: updatedLeads, error: updateError } = await supabase
-        .from('leads')
-        .update({
-          nombre: leadData.nombre,
-          telefono: leadData.telefono,
-          empresa: leadData.empresa,
-          notas: leadData.notas,
-          ruc_cedula: leadData.ruc_cedula,
-          ciudad: leadData.ciudad,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingLead.id)
-        .select()
-
-      if (updateError) {
-        console.error('⚠️ No se pudo actualizar lead (posible RLS):', updateError.message)
-        // Si falla la actualización (por RLS), usar el lead existente sin actualizar
-        console.log('✅ Usando lead existente sin actualizar:', existingLead.id)
-        return existingLead
-      }
-
-      if (updatedLeads && updatedLeads.length > 0) {
-        console.log('✅ Lead actualizado exitosamente:', updatedLeads[0])
-        return updatedLeads[0]
-      } else {
-        // Si no se devolvió nada, usar el lead existente
-        console.log('⚠️ Update no devolvió registros, usando lead existente')
-        return existingLead
-      }
+      // Lanzar error con tipo específico para que el frontend lo detecte
+      const conflictError = new Error('LEAD_EMAIL_EXISTS') as any
+      conflictError.code = 'LEAD_EMAIL_EXISTS'
+      conflictError.existingLead = existingLead
+      conflictError.newData = leadData
+      throw conflictError
     }
 
     // 2. Si no existe, crear uno nuevo

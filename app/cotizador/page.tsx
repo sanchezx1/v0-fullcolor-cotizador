@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, AlertCircle, CheckCircle } from "lucide-react"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
+import LeadConflictModal from "@/components/lead-conflict-modal"
 
 export default function CotizadorPage() {
   const router = useRouter()
@@ -20,13 +21,17 @@ export default function CotizadorPage() {
     setContactInfo,
     loading,
     error,
+    leadConflict,
+    setLeadConflict,
     updateItemQuantity,
     removeItemFromQuote,
     calculateSubtotal,
     calculateIVA,
     calculateTotal,
     validateQuote,
-    submitQuote
+    submitQuote,
+    upsertLeadAndContinue,
+    useExistingLeadAndContinue
   } = useQuoteBuilder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,8 +48,10 @@ export default function CotizadorPage() {
       
       if (result.success) {
         setSubmitSuccess(true)
-        // Redirigir a página de confirmación con el ID de la cotización
         router.push(`/confirmacion?quoteId=${result.quoteId}`)
+      } else if (result.error === 'LEAD_CONFLICT') {
+        // El modal se mostrará automáticamente por el estado leadConflict
+        console.log('Conflicto de lead detectado, mostrando modal')
       } else {
         console.error('Error submitting quote:', result.error)
       }
@@ -55,10 +62,56 @@ export default function CotizadorPage() {
     }
   }
 
+  const handleUpdateAndContinue = async () => {
+    try {
+      setIsSubmitting(true)
+      const result = await upsertLeadAndContinue()
+      
+      if (result.success) {
+        setSubmitSuccess(true)
+        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+      }
+    } catch (err) {
+      console.error('Error updating lead:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUseExisting = async () => {
+    try {
+      setIsSubmitting(true)
+      const result = await useExistingLeadAndContinue()
+      
+      if (result.success) {
+        setSubmitSuccess(true)
+        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+      }
+    } catch (err) {
+      console.error('Error using existing lead:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const validation = validateQuote()
 
   return (
-    <div className="py-12">
+    <>
+      {/* Modal de conflicto de leads */}
+      {leadConflict && (
+        <LeadConflictModal
+          isOpen={leadConflict.show}
+          existingLead={leadConflict.existingLead}
+          newData={leadConflict.newData}
+          onUseExisting={handleUseExisting}
+          onUpdateAndContinue={handleUpdateAndContinue}
+          onCancel={() => setLeadConflict(null)}
+          isUpdating={isSubmitting}
+        />
+      )}
+
+      <div className="py-12">
       <div className="container mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-balance mb-3">Cotizador de Productos</h1>
@@ -372,5 +425,6 @@ export default function CotizadorPage() {
         )}
       </div>
     </div>
+    </>
   )
 }

@@ -172,6 +172,46 @@ npm run build
 
 **Estado:** En revision
 
+### [2025-10-29] - Manejo de Leads Duplicados con Modal de Confirmación
+
+**Descripción:** Implementación de flujo UX para detectar y resolver conflictos cuando un email ya está registrado. Incluye modal de comparación de datos con diseño FullColor (azul #0066CC, amarillo #FFD700) y Edge Function privilegiada para actualizar leads sin problemas de RLS.
+
+**Impacto en contratos:** Ninguno ✅
+
+**Componentes creados:**
+- `components/lead-conflict-modal.tsx` - Modal responsive con comparación lado a lado
+- `supabase/functions/upsert-lead/index.ts` - Edge Function con Service Role
+
+**Archivos modificados:**
+- `src/services/quotes.ts` - crearLead() lanza error LEAD_EMAIL_EXISTS en lugar de fallback silencioso
+- `src/hooks/useQuoteBuilder.ts` - Estado leadConflict y funciones upsertLeadAndContinue/useExistingLeadAndContinue
+- `app/cotizador/page.tsx` - Integración del modal y handlers
+- `supabase/functions/generate-pdf/index.ts` - Eliminado fallback a datos mock, logs mejorados
+
+**Rutas afectadas:**
+- `/cotizador`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada (roles ARIA, foco visible)
+- [x] Colores de marca aplicados (azul/amarillo FullColor)
+- [x] Sin cambios en backend/contratos
+- [x] Edge Function con Service Role funcional
+- [ ] Tests pasando (pendiente de ejecutar)
+- [ ] Deploy de Edge Function upsert-lead
+- [ ] PR aprobado
+
+**Artefactos:**
+- Edge Function: `supabase/functions/upsert-lead/`
+- Modal: `components/lead-conflict-modal.tsx`
+
+**Próximos pasos:**
+1. Deploy de Edge Function: `supabase functions deploy upsert-lead`
+2. Redeploy de generate-pdf con cambios
+3. Prueba end-to-end con email duplicado
+
+**Estado:** Implementado, pendiente de deploy
+
 ### [2025-10-28] - Home Hero Redesign
 
 **Descripcion:** Nuevo hero responsivo con carrusel adaptativo, indicadores con barras, flechas accesibles en escritorio y bloque cromatico mÃ³vil alineado a la identidad FullColor.
