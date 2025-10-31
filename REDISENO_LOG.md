@@ -738,3 +738,24 @@ npm run build
 - Capturas: pendiente de adjuntar
 
 **Estado:** En revisión
+### 2025-10-30 - Ajustes ficha de producto
+
+**Descripcion:** Se priorizo la pestana de precios en la ficha individual, se elimino la tarjeta de tiempo de entrega y se agrego el enlace "Ver listas de precios" con desplazamiento suave hacia las escalas de precio.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /producto/[id]
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: app/producto/[id]/page.tsx
+
+**Estado:** En revision

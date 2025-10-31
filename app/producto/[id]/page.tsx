@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, ShoppingCart, Check, Package, Clock, Truck, AlertCircle, CheckCircle } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Check, Package, AlertCircle, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import { getProductWithTiers, priceForQuantity, ProductWithTiers, PricingTier } from "@/src/lib/data"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
@@ -28,7 +28,9 @@ export default function ProductPage() {
   const [addingToQuote, setAddingToQuote] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
   const [galleryImages, setGalleryImages] = useState<{ src: string; alt: string }[]>([])
+  const [activeTab, setActiveTab] = useState("pricing")
   const isMountedRef = useRef(true)
+  const pricingSectionRef = useRef<HTMLDivElement | null>(null)
 
   // Hook para manejar cotizaciones
   const { addItemToQuote, loading: quoteLoading } = useQuoteBuilder()
@@ -86,6 +88,13 @@ export default function ProductPage() {
       duration: 6000,
       closeButton: false
     })
+  }
+
+  const handleScrollToPricing = () => {
+    setActiveTab("pricing")
+    if (pricingSectionRef.current) {
+      pricingSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
   }
 
   const loadProduct = async () => {
@@ -317,6 +326,13 @@ export default function ProductPage() {
                     )}
                   </div>
                 )}
+                <button
+                  type="button"
+                  onClick={handleScrollToPricing}
+                  className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700] focus-visible:ring-offset-2 transition-colors"
+                >
+                  Ver listas de precios
+                </button>
 
                 <Button 
                   className="w-full" 
@@ -344,62 +360,17 @@ export default function ProductPage() {
               </CardContent>
             </Card>
 
-            {/* Delivery Info */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <Truck className="w-5 h-5 text-primary" />
-                  <div>
-                    <p className="font-medium">Tiempo de entrega</p>
-                    <p className="text-sm text-muted-foreground">3-5 días hábiles</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
         {/* Product Details Tabs */}
-        <div className="mt-12">
-          <Tabs defaultValue="description" className="w-full">
+        <div className="mt-12" ref={pricingSectionRef}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="pricing">Precios</TabsTrigger>
               <TabsTrigger value="description">Descripción</TabsTrigger>
               <TabsTrigger value="specifications">Especificaciones</TabsTrigger>
-              <TabsTrigger value="pricing">Precios</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="description" className="mt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-gray-700 leading-relaxed">
-                    {product.descripcion}
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="specifications" className="mt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Categoría:</span>
-                        <span className="font-medium">{product.categoria}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Unidad:</span>
-                        <span className="font-medium">{product.unidad}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Mínimo de pedido:</span>
-                        <span className="font-medium">{minQuantity} {product.unidad}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="pricing" className="mt-6">
               <Card>
@@ -442,6 +413,39 @@ export default function ProductPage() {
                         </Card>
                       )
                     })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="description" className="mt-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-gray-700 leading-relaxed">
+                    {product.descripcion}
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="specifications" className="mt-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Categoría:</span>
+                        <span className="font-medium">{product.categoria}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Unidad:</span>
+                        <span className="font-medium">{product.unidad}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mínimo de pedido:</span>
+                        <span className="font-medium">{minQuantity} {product.unidad}</span>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
