@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { Toaster } from "@/components/ui/sonner"
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -19,6 +20,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
       <Header />
       <main className="min-h-screen">{children}</main>
       <Footer />
+      <Toaster richColors closeButton duration={5000} />
     </>
   )
 }

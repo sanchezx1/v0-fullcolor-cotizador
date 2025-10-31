@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,8 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, ShoppingCart, Check, Package, Clock, Truck, AlertCircle, CheckCircle } from "lucide-react"
+import { toast } from "sonner"
 import { getProductWithTiers, priceForQuantity, ProductWithTiers, PricingTier } from "@/src/lib/data"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
+import { ProductImageCarousel } from "@/components/product-image-carousel"
+import { fetchProductGallery } from "@/src/lib/product-gallery"
 
 export default function ProductPage() {
   const params = useParams()
@@ -24,37 +27,116 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(100)
   const [addingToQuote, setAddingToQuote] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
+  const [galleryImages, setGalleryImages] = useState<{ src: string; alt: string }[]>([])
+  const isMountedRef = useRef(true)
 
   // Hook para manejar cotizaciones
   const { addItemToQuote, loading: quoteLoading } = useQuoteBuilder()
 
   useEffect(() => {
+    isMountedRef.current = true
     loadProduct()
+
+    return () => {
+      isMountedRef.current = false
+    }
   }, [productId])
+
+  const showQuoteToast = () => {
+    toast.custom((id) => (
+      <div className="w-full max-w-sm rounded-2xl border border-primary/10 bg-white p-4 shadow-lg ring-1 ring-black/5 transition-all duration-300 ease-out dark:bg-slate-900">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-primary">Producto agregado</p>
+              <p className="text-sm text-slate-600 dark:text-slate-200">Que deseas hacer ahora?</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                size="sm"
+                className="w-full bg-primary text-white hover:bg-primary-hover focus-visible:ring-[#FFD700] sm:w-auto"
+                onClick={() => {
+                  toast.dismiss(id)
+                  router.push("/cotizador")
+                }}
+              >
+                Finalizar cotizacion
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="w-full border border-primary/30 bg-white/80 text-primary hover:bg-primary/10 hover:text-primary focus-visible:ring-[#FFD700] dark:border-primary/40 dark:bg-slate-900 sm:w-auto"
+                onClick={() => {
+                  toast.dismiss(id)
+                  router.push("/catalogo")
+                }}
+              >
+                Seguir comprando
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      closeButton: false
+    })
+  }
 
   const loadProduct = async () => {
     try {
       setLoading(true)
       setError(null)
-      
       const productData = await getProductWithTiers(productId)
-      
       if (!productData) {
-        setError('Producto no encontrado')
+        if (isMountedRef.current) {
+          setError('Producto no encontrado')
+        }
         return
       }
-
+      if (!isMountedRef.current) {
+        return
+      }
       setProduct(productData)
-      
+      const fallbackGallery = productData.imagen_url
+        ? [{ src: productData.imagen_url, alt: productData.nombre }]
+        : []
+      setGalleryImages(fallbackGallery)
+      const galleryItems = await fetchProductGallery(productData.id)
+      if (!isMountedRef.current) {
+        return
+      }
+      if (galleryItems.length > 0) {
+        const merged = new Map<string, { src: string; alt: string }>()
+        fallbackGallery.forEach((item) => merged.set(item.src, item))
+        galleryItems.forEach((item, index) => {
+          if (!merged.has(item.url)) {
+            merged.set(item.url, {
+              src: item.url,
+              alt: `${productData.nombre} - vista ${index + 1}`,
+            })
+          }
+        })
+        setGalleryImages(Array.from(merged.values()))
+      }
       // Establecer cantidad inicial basada en el mínimo de pedido
       if (productData.pricingTiers.length > 0) {
         setQuantity(productData.pricingTiers[0].cantidad_min)
       }
     } catch (err) {
       console.error('Error loading product:', err)
-      setError('Error al cargar el producto')
+      if (isMountedRef.current) {
+        setError('Error al cargar el producto')
+      }
     } finally {
-      setLoading(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 
@@ -66,9 +148,10 @@ export default function ProductPage() {
       setAddSuccess(false)
       
       await addItemToQuote(product.id, product.nombre, product.categoria, quantity)
-      
+
       setAddSuccess(true)
       setTimeout(() => setAddSuccess(false), 3000)
+      showQuoteToast()
     } catch (err) {
       console.error('Error adding to quote:', err)
     } finally {
@@ -164,13 +247,10 @@ export default function ProductPage() {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Product Image */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-lg overflow-hidden bg-white shadow-lg">
-              <img
-                src={product.imagen_url || "/placeholder.svg?height=500&width=500"}
-                alt={product.nombre}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ProductImageCarousel
+              images={galleryImages}
+              aspectRatioClassName="aspect-square"
+            />
           </div>
 
           {/* Product Info */}

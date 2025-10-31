@@ -6,6 +6,13 @@
 'use client'
 
 import { supabase } from './supabase-client'
+import {
+  buildProductGalleryPath,
+  createGalleryFileName,
+  getProductGalleryBucket,
+  getProductGalleryFolder,
+  isGalleryImage,
+} from './product-gallery'
 import type {
   Producto,
   ProductoConPrecios,
@@ -906,4 +913,85 @@ export async function deleteImagen(url: string, bucket: string = 'productos'): P
     .remove([path])
 
   if (error) throw error
+}
+
+export interface ProductoGaleriaItem {
+  path: string
+  url: string
+}
+
+export async function listProductoGaleria(productoId: number): Promise<ProductoGaleriaItem[]> {
+  const bucket = getProductGalleryBucket()
+  const folder = getProductGalleryFolder(productoId)
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list(folder, {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'name', order: 'asc' }
+    })
+
+  if (error) {
+    console.error('Error al listar galer��a de producto:', error)
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  return data
+    .filter((item) => !item.name.endsWith('/') && isGalleryImage(item.name))
+    .map((item) => {
+      const path = buildProductGalleryPath(productoId, item.name)
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(path)
+
+      return {
+        path,
+        url: publicUrlData.publicUrl
+      }
+    })
+}
+
+export async function uploadProductoGaleriaImagen(productoId: number, file: File): Promise<ProductoGaleriaItem> {
+  const bucket = getProductGalleryBucket()
+  const fileName = createGalleryFileName(file.name)
+  const path = buildProductGalleryPath(productoId, fileName)
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    })
+
+  if (error) {
+    console.error('Error subiendo imagen de galer��a:', error)
+    throw error
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path)
+
+  return {
+    path,
+    url: publicUrlData.publicUrl
+  }
+}
+
+export async function deleteProductoGaleriaImagen(path: string): Promise<void> {
+  const bucket = getProductGalleryBucket()
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .remove([path])
+
+  if (error) {
+    console.error('Error eliminando imagen de galer��a:', error)
+    throw error
+  }
 }

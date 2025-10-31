@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
@@ -15,23 +15,31 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ImageUpload } from '@/components/admin/ImageUpload'
+import { ProductGalleryManager, type GalleryDisplayItem } from '@/components/admin/ProductGalleryManager'
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { getProducto, updateProducto, verificarSkuUnico, uploadImagen, deleteImagen } from '@/lib/admin-services'
+  getProducto,
+  updateProducto,
+  verificarSkuUnico,
+  listProductoGaleria,
+  uploadProductoGaleriaImagen,
+  deleteProductoGaleriaImagen,
+  deleteImagen,
+} from '@/lib/admin-services'
 import { CATEGORIAS_PRODUCTO } from '@/lib/admin-types'
 import type { ProductoConPrecios } from '@/lib/admin-types'
 import { toast } from 'sonner'
 import { Loader2, DollarSign } from 'lucide-react'
 import Link from 'next/link'
+
+type GalleryItemState = {
+  id: string
+  src: string
+  status: 'existing' | 'new'
+  path?: string
+  file?: File
+  isPrimary: boolean
+  pendingRemoval?: boolean
+}
 
 export default function EditarProductoPage() {
   const router = useRouter()
@@ -42,8 +50,6 @@ export default function EditarProductoPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [showDeleteImageDialog, setShowDeleteImageDialog] = useState(false)
-
   const [formData, setFormData] = useState({
     nombre: '',
     sku: '',
@@ -53,9 +59,9 @@ export default function EditarProductoPage() {
     lados: '',
     impresion: '',
     activo: true,
-    imagen: null as File | null,
     imagen_url: ''
   })
+  const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
 
   useEffect(() => {
     loadProducto()
@@ -82,9 +88,10 @@ export default function EditarProductoPage() {
         lados: data.lados || '',
         impresion: data.impresion || '',
         activo: data.activo,
-        imagen: null,
         imagen_url: data.imagen_url || ''
       })
+
+      await loadGalleryForProduct(data)
     } catch (error) {
       console.error('Error cargando producto:', error)
       toast.error('Error al cargar producto')
@@ -131,6 +138,247 @@ export default function EditarProductoPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const extractStoragePath = (url?: string | null): string | null => {
+    if (!url) return null
+    const parts = url.split('/productos/')
+    return parts[1] || null
+  }
+
+  const loadGalleryForProduct = async (productData: ProductoConPrecios | null) => {
+    if (!productData) {
+      setGalleryItems([])
+      return
+    }
+
+    try {
+      const storedItems = await listProductoGaleria(productData.id)
+
+      let items: GalleryItemState[] = storedItems.map((item) => ({
+        id: item.path,
+        src: item.url,
+        status: 'existing',
+        path: item.path,
+        isPrimary: false,
+      }))
+
+      const primaryFromGallery = items.find((item) => item.src === productData.imagen_url)
+
+      if (productData.imagen_url && !primaryFromGallery) {
+        const derivedPath = extractStoragePath(productData.imagen_url)
+        items = [
+          ...items,
+          {
+            id: derivedPath ?? `producto-${productData.id}-principal`,
+            src: productData.imagen_url,
+            status: 'existing',
+            path: derivedPath ?? undefined,
+            isPrimary: false,
+          },
+        ]
+      }
+
+      if (items.length > 0) {
+        const primaryId =
+          items.find((item) => item.src === productData.imagen_url)?.id ?? items[0].id
+
+        items = items.map((item) => ({
+          ...item,
+          isPrimary: item.id === primaryId,
+        }))
+      }
+
+      setGalleryItems(items)
+    } catch (error) {
+      console.error('Error cargando galer��a del producto:', error)
+      if (productData.imagen_url) {
+        const derivedPath = extractStoragePath(productData.imagen_url)
+        setGalleryItems([
+          {
+            id: derivedPath ?? `producto-${productData.id}-principal`,
+            src: productData.imagen_url,
+            status: 'existing',
+            path: derivedPath ?? undefined,
+            isPrimary: true,
+          },
+        ])
+      } else {
+        setGalleryItems([])
+      }
+    }
+  }
+
+  const createGalleryId = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+    return `gallery-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+
+  const ensurePrimarySelection = (items: GalleryItemState[]): GalleryItemState[] => {
+    const active = items.filter((item) => !item.pendingRemoval)
+    if (active.length === 0) {
+      return items.map((item) => ({ ...item, isPrimary: false }))
+    }
+    const primary = active.find((item) => item.isPrimary) ?? active[0]
+    return items.map((item) => ({
+      ...item,
+      isPrimary: item.id === primary.id,
+    }))
+  }
+
+  const handleGalleryAdd = (files: File[]) => {
+    if (!files || files.length === 0) return
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    const accepted: File[] = []
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" no es un archivo de imagen válido`)
+        return
+      }
+      if (file.size > MAX_SIZE) {
+        toast.error(`"${file.name}" excede el tamaño máximo de 5MB`)
+        return
+      }
+      accepted.push(file)
+    })
+
+    if (accepted.length === 0) return
+
+    const newItems = accepted.map((file) => ({
+      id: createGalleryId(),
+      src: URL.createObjectURL(file),
+      file,
+      status: 'new' as const,
+      isPrimary: false,
+    }))
+
+    setGalleryItems((prev) => {
+      const appended = [...prev, ...newItems]
+      return ensurePrimarySelection(appended)
+    })
+  }
+
+  const handleGalleryRemove = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target) return prev
+
+      if (target.status === 'new') {
+        if (target.file) {
+          URL.revokeObjectURL(target.src)
+        }
+        const filtered = prev.filter((item) => item.id !== id)
+        return ensurePrimarySelection(filtered)
+      }
+
+      if (target.pendingRemoval) {
+        return prev
+      }
+
+      const updated = prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              pendingRemoval: true,
+              isPrimary: false,
+            }
+          : item
+      )
+
+      return ensurePrimarySelection(updated)
+    })
+  }
+
+  const handleGalleryRestore = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target) return prev
+
+      const updated = prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              pendingRemoval: false,
+            }
+          : item
+      )
+
+      return ensurePrimarySelection(updated)
+    })
+  }
+
+  const handleGallerySetPrimary = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target || target.pendingRemoval) return prev
+
+      return prev.map((item) => ({
+        ...item,
+        isPrimary: item.id === id,
+      }))
+    })
+  }
+
+  const galleryDisplayItems = useMemo<GalleryDisplayItem[]>(() => {
+    return galleryItems.map((item) => ({
+      id: item.id,
+      src: item.src,
+      isPrimary: item.isPrimary,
+      status: item.status,
+      pendingRemoval: item.pendingRemoval,
+    }))
+  }, [galleryItems])
+
+  const syncGalleryChanges = async (productoId: number): Promise<string | undefined> => {
+    const uploadedMap = new Map<string, { url: string; path: string }>()
+
+    for (const item of galleryItems) {
+      if (item.status === 'new' && !item.pendingRemoval && item.file) {
+        const result = await uploadProductoGaleriaImagen(productoId, item.file)
+        uploadedMap.set(item.id, result)
+        URL.revokeObjectURL(item.src)
+      }
+    }
+
+    for (const item of galleryItems) {
+      if (item.pendingRemoval) {
+        if (item.path) {
+          await deleteProductoGaleriaImagen(item.path)
+        } else if (item.src) {
+          await deleteImagen(item.src, 'productos')
+        }
+      }
+    }
+
+    const activeItems = galleryItems
+      .map((item) => {
+        if (item.status === 'new' && uploadedMap.has(item.id)) {
+          const uploaded = uploadedMap.get(item.id)!
+          return {
+            ...item,
+            src: uploaded.url,
+            path: uploaded.path,
+          }
+        }
+        return item
+      })
+      .filter((item) => !item.pendingRemoval)
+
+    if (activeItems.length === 0) {
+      return undefined
+    }
+
+    const primaryItem = activeItems.find((item) => item.isPrimary) ?? activeItems[0]
+
+    if (primaryItem.status === 'new') {
+      return uploadedMap.get(primaryItem.id)?.url
+    }
+
+    return primaryItem.src
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -143,21 +391,8 @@ export default function EditarProductoPage() {
     try {
       setSaving(true)
 
-      let imagen_url = formData.imagen_url
+      const primaryImageUrl = await syncGalleryChanges(productoId)
 
-      // Si hay una nueva imagen, subirla
-      if (formData.imagen) {
-        // Eliminar imagen anterior si existe
-        if (producto?.imagen_url) {
-          await deleteImagen(producto.imagen_url, 'productos')
-        }
-
-        // Subir nueva imagen
-        const filename = `${formData.sku}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
-        imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
-      }
-
-      // Actualizar producto
       await updateProducto(productoId, {
         nombre: formData.nombre,
         sku: formData.sku,
@@ -167,10 +402,11 @@ export default function EditarProductoPage() {
         lados: formData.lados || undefined,
         impresion: formData.impresion || undefined,
         activo: formData.activo,
-        imagen_url: imagen_url || undefined
+        imagen_url: primaryImageUrl ?? null
       })
 
       toast.success('Producto actualizado exitosamente')
+      await loadProducto()
       router.push('/admin/productos')
     } catch (error: any) {
       console.error('Error actualizando producto:', error)
@@ -179,25 +415,6 @@ export default function EditarProductoPage() {
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleDeleteImage = async () => {
-    try {
-      if (producto?.imagen_url) {
-        await deleteImagen(producto.imagen_url, 'productos')
-        await updateProducto(productoId, {
-          ...formData,
-          imagen_url: undefined
-        })
-        setFormData({ ...formData, imagen_url: '' })
-        setProducto({ ...producto, imagen_url: undefined })
-        toast.success('Imagen eliminada')
-      }
-    } catch (error) {
-      console.error('Error eliminando imagen:', error)
-      toast.error('Error al eliminar imagen')
-    }
-    setShowDeleteImageDialog(false)
   }
 
   if (loading) {
@@ -313,55 +530,22 @@ export default function EditarProductoPage() {
               )}
             </div>
 
-            {/* Imagen */}
-            <div className="space-y-2">
-              <Label>Imagen del Producto</Label>
-              {formData.imagen_url && !formData.imagen ? (
-                <div className="space-y-3">
-                  <div className="relative w-48 h-48 border rounded-lg overflow-hidden">
-                    <img
-                      src={formData.imagen_url}
-                      alt={formData.nombre}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById('file-input')?.click()}
-                    >
-                      Cambiar imagen
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowDeleteImageDialog(true)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Eliminar imagen
-                    </Button>
-                  </div>
-                  <input
-                    id="file-input"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) setFormData({ ...formData, imagen: file })
-                    }}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <ImageUpload
-                  value={formData.imagen || undefined}
-                  onChange={(file) => setFormData({ ...formData, imagen: file })}
-                  currentImageUrl={formData.imagen_url}
-                />
-              )}
+            {/* Galería de Imágenes */}
+            <div className="space-y-3">
+              <div>
+                <Label>Galería de Imágenes</Label>
+                <p className="text-sm text-gray-500">
+                  Administra todas las vistas del producto. Marca una imagen como principal para resaltarla en el catálogo.
+                </p>
+              </div>
+              <ProductGalleryManager
+                items={galleryDisplayItems}
+                onAddFiles={handleGalleryAdd}
+                onSetPrimary={handleGallerySetPrimary}
+                onRemove={handleGalleryRemove}
+                onRestore={handleGalleryRestore}
+                disabled={saving}
+              />
             </div>
 
             {/* Atributos opcionales */}
@@ -462,25 +646,7 @@ export default function EditarProductoPage() {
       </div>
 
       {/* Dialog de confirmación para eliminar imagen */}
-      <AlertDialog open={showDeleteImageDialog} onOpenChange={setShowDeleteImageDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar imagen actual?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción eliminará permanentemente la imagen del producto.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteImage}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Sí, eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
     </>
   )
 }

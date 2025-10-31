@@ -573,3 +573,168 @@ npm run build
 - Cambios: Grid (grid-cols-2), tipografÃ­a responsive, padding y spacing
 
 **Estado:** ðŸŸ¢ Completado
+### [2025-10-30] - Confirmación: Recordatorio de correo
+
+**Descripción:** Se añadió un mensaje complementario bajo el encabezado de éxito para recordar al usuario revisar spam o correo no deseado.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- `/confirmacion`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [ ] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: `app/confirmacion/page.tsx`
+
+**Estado:** En revisión
+
+**Notas:**
+- Se preservó la jerarquía visual original y se ajustó el espaciado del bloque principal.
+### [2025-10-30] - Header Mobile Menu
+
+**Descripcion:** Implementacion de menu hamburguesa mobile-first con panel lateral animado y CTA destacada en colores de marca.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: components/header.tsx
+
+**Estado:** En revision
+### [2025-10-30] - Header Quote Notifications
+
+**Descripcion:** Integracion de indicador dinamico de productos y aviso contextual al agregar articulos, manteniendo coherencia mobile-first.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /
+- /producto/[id]
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: components/header.tsx
+- Archivo: app/producto/[id]/page.tsx
+- Archivo: src/hooks/useQuoteBuilder.ts
+- Archivo: components/ConditionalLayout.tsx
+
+**Estado:** En revision
+
+**Notas:**
+- Badge con animacion suave reutilizable entre mobile y desktop.
+- Toast ofrece CTA rapidas para completar la cotizacion sin interrumpir la navegacion.
+- Conteo muestra productos unicos sin duplicar cantidades.
+- CTA Seguir comprando redirige al catalogo para continuar navegacion.
+- Actualizacion: Menu mobile ahora ocupa pantalla completa con fondo blanco y enlaces de texto para mejorar legibilidad.
+
+- Se sumó un emoji de advertencia para llamar la atención sin romper el tono de la interfaz.
+### [2025-10-30] - Header Mobile Menu Overlay Fix
+
+**Descripcion:** Fondo solido blanco para el desplegable mobile y ocultar logo base al abrirlo para evitar duplicidad visual.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: components/header.tsx
+
+**Estado:** En revision
+### [2025-10-30] - Header Mobile Solid Overlay & Sticky
+
+**Descripcion:** Drawer mobile ahora usa fondo blanco solido sin transparencia y el header permanece fijo en scroll para mantener acceso rapido.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: components/header.tsx
+
+**Estado:** En revision
+### [2025-10-30] - Header Mobile Menu Layout Tweak
+
+**Descripcion:** Ajuste del drawer mobile para elevar los enlaces de navegacion y mejorar jerarquia visual.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: components/header.tsx
+
+**Estado:** En revision
+### 2025-10-30 - Galería de Productos
+
+**Descripción:** Se habilitó una galería multi-imagen con carrusel responsivo en la ficha pública y un gestor completo de galería en la creación y edición de productos dentro del panel administrativo.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /producto/[id]
+- /admin/productos/nuevo
+- /admin/productos/[id]
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Capturas: pendiente de adjuntar
+
+**Estado:** En revisión

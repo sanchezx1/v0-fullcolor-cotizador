@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
@@ -15,11 +15,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ImageUpload } from '@/components/admin/ImageUpload'
-import { createProducto, verificarSkuUnico, uploadImagen } from '@/lib/admin-services'
+import { ProductGalleryManager, type GalleryDisplayItem } from '@/components/admin/ProductGalleryManager'
+import { createProducto, verificarSkuUnico, updateProducto, uploadProductoGaleriaImagen } from '@/lib/admin-services'
 import { CATEGORIAS_PRODUCTO } from '@/lib/admin-types'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+
+type GalleryItemState = {
+  id: string
+  src: string
+  file?: File
+  status: 'new' | 'existing'
+  path?: string
+  isPrimary: boolean
+  pendingRemoval?: boolean
+}
 
 export default function NuevoProductoPage() {
   const router = useRouter()
@@ -34,9 +44,9 @@ export default function NuevoProductoPage() {
     color: '',
     lados: '',
     impresion: '',
-    activo: true,
-    imagen: null as File | null
+    activo: true
   })
+  const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
   
   const [skuManual, setSkuManual] = useState(false)
 
@@ -76,6 +86,139 @@ export default function NuevoProductoPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const createGalleryId = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+    return `gallery-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+
+  const handleGalleryAdd = (files: File[]) => {
+    if (!files || files.length === 0) {
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    const accepted: File[] = []
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" no es un archivo de imagen válido`)
+        return
+      }
+      if (file.size > MAX_SIZE) {
+        toast.error(`"${file.name}" excede el tamaño máximo de 5MB`)
+        return
+      }
+      accepted.push(file)
+    })
+
+    if (accepted.length === 0) {
+      return
+    }
+
+    const newItems = accepted.map((file) => ({
+      id: createGalleryId(),
+      src: URL.createObjectURL(file),
+      file,
+      status: 'new' as const,
+      isPrimary: false,
+    }))
+
+    setGalleryItems((prev) => {
+      const appended = [...prev, ...newItems]
+      const active = appended.filter((item) => !item.pendingRemoval)
+
+      if (!active.some((item) => item.isPrimary) && active.length > 0) {
+        const primaryId = active[0].id
+        return appended.map((item) => ({
+          ...item,
+          isPrimary: item.id === primaryId,
+        }))
+      }
+
+      return appended
+    })
+  }
+
+  const handleGalleryRemove = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target) return prev
+
+      if (target.file) {
+        URL.revokeObjectURL(target.src)
+      }
+
+      const filtered = prev.filter((item) => item.id !== id)
+      const active = filtered.filter((item) => !item.pendingRemoval)
+
+      if (target.isPrimary && active.length > 0) {
+        const primaryId = active[0].id
+        return filtered.map((item) => ({
+          ...item,
+          isPrimary: item.id === primaryId,
+        }))
+      }
+
+      return filtered
+    })
+  }
+
+  const handleGallerySetPrimary = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target || target.pendingRemoval) {
+        return prev
+      }
+
+      return prev.map((item) => ({
+        ...item,
+        isPrimary: item.id === id,
+      }))
+    })
+  }
+
+  const galleryDisplayItems = useMemo<GalleryDisplayItem[]>(() => {
+    return galleryItems.map((item) => ({
+      id: item.id,
+      src: item.src,
+      isPrimary: item.isPrimary,
+      status: item.status,
+      pendingRemoval: item.pendingRemoval,
+    }))
+  }, [galleryItems])
+
+  const syncGalleryWithStorage = async (productoId: number): Promise<string | undefined> => {
+    const itemsToKeep = galleryItems.filter((item) => !item.pendingRemoval)
+
+    if (itemsToKeep.length === 0) {
+      return undefined
+    }
+
+    const uploadedMap = new Map<string, string>()
+
+    for (const item of itemsToKeep) {
+      if (item.status === 'new' && item.file) {
+        const { url } = await uploadProductoGaleriaImagen(productoId, item.file)
+        uploadedMap.set(item.id, url)
+        URL.revokeObjectURL(item.src)
+      }
+    }
+
+    const primaryItem = itemsToKeep.find((item) => item.isPrimary) ?? itemsToKeep[0]
+
+    if (!primaryItem) {
+      return undefined
+    }
+
+    if (primaryItem.status === 'new') {
+      return uploadedMap.get(primaryItem.id)
+    }
+
+    return primaryItem.src
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -88,22 +231,20 @@ export default function NuevoProductoPage() {
     try {
       setLoading(true)
 
-      // Subir imagen si existe
-      let imagen_url: string | undefined
-      if (formData.imagen) {
-        const filename = `${skuManual ? formData.sku : 'temp'}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
-        imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
-      }
-
       // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
         sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        activo: formData.activo,
-        imagen_url
+        activo: formData.activo
       })
+
+      const primaryImageUrl = await syncGalleryWithStorage(producto.id)
+
+      if (primaryImageUrl) {
+        await updateProducto(producto.id, { imagen_url: primaryImageUrl })
+      }
 
       toast.success('Producto creado exitosamente')
       router.push('/admin/productos')
@@ -127,22 +268,20 @@ export default function NuevoProductoPage() {
     try {
       setLoading(true)
 
-      // Subir imagen si existe
-      let imagen_url: string | undefined
-      if (formData.imagen) {
-        const filename = `${formData.sku}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
-        imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
-      }
-
-      // Crear producto (SKU se genera automáticamente si está vacío)
+            // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
         sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        activo: formData.activo,
-        imagen_url
+        activo: formData.activo
       })
+
+      const primaryImageUrl = await syncGalleryWithStorage(producto.id)
+
+      if (primaryImageUrl) {
+        await updateProducto(producto.id, { imagen_url: primaryImageUrl })
+      }
 
       toast.success('Producto creado exitosamente')
       router.push(`/admin/productos/${producto.id}/precios`)
@@ -284,12 +423,20 @@ export default function NuevoProductoPage() {
               )}
             </div>
 
-            {/* Imagen */}
-            <div className="space-y-2">
-              <Label>Imagen del Producto</Label>
-              <ImageUpload
-                value={formData.imagen || undefined}
-                onChange={(file) => setFormData({ ...formData, imagen: file })}
+            {/* Galería de Imágenes */}
+            <div className="space-y-3">
+              <div>
+                <Label>Galería de Imágenes</Label>
+                <p className="text-sm text-gray-500">
+                  Sube varias vistas del producto. La imagen principal se mostrará en el catálogo público.
+                </p>
+              </div>
+              <ProductGalleryManager
+                items={galleryDisplayItems}
+                onAddFiles={handleGalleryAdd}
+                onSetPrimary={handleGallerySetPrimary}
+                onRemove={handleGalleryRemove}
+                disabled={loading}
               />
             </div>
 

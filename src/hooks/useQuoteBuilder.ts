@@ -58,11 +58,21 @@ export function useQuoteBuilder() {
     }
   }, [])
 
-  // Guardar cotización en localStorage cuando cambie
+  // Guardar cotización en localStorage cuando cambie y notificar a la UI
   useEffect(() => {
-    if (typeof window !== 'undefined' && quoteItems.length > 0) {
+    if (typeof window === 'undefined') return
+
+    if (quoteItems.length > 0) {
       localStorage.setItem('fullcolor_quote', JSON.stringify(quoteItems))
+    } else {
+      localStorage.removeItem('fullcolor_quote')
     }
+
+    window.dispatchEvent(
+      new CustomEvent('fullcolor:quote-updated', {
+        detail: { items: quoteItems }
+      })
+    )
   }, [quoteItems])
 
   const addItemToQuote = async (productId: number, name: string, category: string, quantity: number) => {
