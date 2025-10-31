@@ -24,13 +24,16 @@ export default function ProductPage() {
   const [product, setProduct] = useState<ProductWithTiers | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(100)
+  const [quantity, setQuantity] = useState<string>("100")
   const [addingToQuote, setAddingToQuote] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
   const [galleryImages, setGalleryImages] = useState<{ src: string; alt: string }[]>([])
   const [activeTab, setActiveTab] = useState("pricing")
   const isMountedRef = useRef(true)
   const pricingSectionRef = useRef<HTMLDivElement | null>(null)
+
+  const parsedQuantity = Number.parseInt(quantity, 10)
+  const quantityValue = Number.isNaN(parsedQuantity) ? 0 : Math.max(0, parsedQuantity)
 
   // Hook para manejar cotizaciones
   const { addItemToQuote, loading: quoteLoading } = useQuoteBuilder()
@@ -135,7 +138,11 @@ export default function ProductPage() {
       }
       // Establecer cantidad inicial basada en el mínimo de pedido
       if (productData.pricingTiers.length > 0) {
-        setQuantity(productData.pricingTiers[0].cantidad_min)
+        setQuantity(productData.pricingTiers[0].cantidad_min.toString())
+      } else if (productData.minimo_pedido && productData.minimo_pedido > 0) {
+        setQuantity(productData.minimo_pedido.toString())
+      } else {
+        setQuantity("1")
       }
     } catch (err) {
       console.error('Error loading product:', err)
@@ -152,11 +159,19 @@ export default function ProductPage() {
   const handleAddToQuote = async () => {
     if (!product) return
 
+    const minimumFromTier = product.pricingTiers.length > 0 ? product.pricingTiers[0].cantidad_min : null
+    const minimumOrder = minimumFromTier ?? (product.minimo_pedido && product.minimo_pedido > 0 ? product.minimo_pedido : 1)
+
+    if (quantityValue < minimumOrder) {
+      toast.error(`El pedido mínimo de este producto es ${minimumOrder}.`)
+      return
+    }
+
     try {
       setAddingToQuote(true)
       setAddSuccess(false)
       
-      await addItemToQuote(product.id, product.nombre, product.categoria, quantity)
+      await addItemToQuote(product.id, product.nombre, product.categoria, quantityValue)
 
       setAddSuccess(true)
       setTimeout(() => setAddSuccess(false), 3000)
@@ -168,11 +183,9 @@ export default function ProductPage() {
     }
   }
 
-  const handleQuantityChange = (newQuantity: number) => {
-    if (product && product.pricingTiers.length > 0) {
-      const minQuantity = product.pricingTiers[0].cantidad_min
-      setQuantity(Math.max(minQuantity, newQuantity))
-    }
+  const handleQuantityChange = (value: string) => {
+    const sanitizedValue = value.replace(/[^\d]/g, "")
+    setQuantity(sanitizedValue)
   }
 
   const getCurrentPricing = () => {
@@ -189,7 +202,7 @@ export default function ProductPage() {
       pricePerUnit: tier.precio_unitario
     }))
 
-    return priceForQuantity(pricingTiers, quantity)
+    return priceForQuantity(pricingTiers, quantityValue)
   }
 
   const currentPricing = getCurrentPricing()
@@ -238,7 +251,13 @@ export default function ProductPage() {
     )
   }
 
-  const minQuantity = product.pricingTiers.length > 0 ? product.pricingTiers[0].cantidad_min : 1
+  const minQuantity = product.pricingTiers.length > 0
+    ? product.pricingTiers[0].cantidad_min
+    : product.minimo_pedido && product.minimo_pedido > 0
+      ? product.minimo_pedido
+      : 1
+  const isBelowMinimum = quantity !== "" && quantityValue < minQuantity
+  const quantityErrorId = `quantity-error-${product.id}`
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -293,10 +312,12 @@ export default function ProductPage() {
                     id="quantity"
                     type="number"
                     min={minQuantity}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(Number.parseInt(e.target.value) || minQuantity)
-                    }
+                    onChange={(e) => handleQuantityChange(e.target.value)}
+                    aria-invalid={isBelowMinimum}
+                    aria-describedby={isBelowMinimum ? quantityErrorId : undefined}
                     className="mt-2"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -318,10 +339,15 @@ export default function ProductPage() {
                         ${currentPricing.subtotal.toFixed(2)}
                       </span>
                     </div>
-                    {!currentPricing.isValid && (
-                      <div className="mt-2 text-sm text-amber-600 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        Cantidad por debajo del mínimo
+                    {isBelowMinimum && (
+                      <div
+                        id={quantityErrorId}
+                        role="alert"
+                        aria-live="polite"
+                        className="mt-2 flex items-center gap-1 text-sm text-amber-600"
+                      >
+                        <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                        El pedido mínimo de este producto es {minQuantity}.
                       </div>
                     )}
                   </div>
@@ -338,7 +364,7 @@ export default function ProductPage() {
                   className="w-full" 
                   size="lg"
                   onClick={handleAddToQuote}
-                  disabled={addingToQuote || quoteLoading || !currentPricing?.isValid}
+                  disabled={addingToQuote || quoteLoading}
                 >
                   {addingToQuote ? (
                     <>

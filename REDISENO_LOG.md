@@ -759,3 +759,25 @@ npm run build
 - Archivo: app/producto/[id]/page.tsx
 
 **Estado:** En revision
+
+### 2025-10-31 - Producto / Formulario de cantidad
+
+**Descripcion:** Permite ingreso libre de cantidades en la ficha de producto y agrega validacion de pedido minimo con avisos accesibles antes de cotizar.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /producto/[id]
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [ ] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: app/producto/[id]/page.tsx
+
+**Estado:** En revision
