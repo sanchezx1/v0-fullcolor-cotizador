@@ -1,70 +1,132 @@
-import Link from "next/link"
-import { Mail, Phone, MapPin } from "lucide-react"
+﻿import Link from "next/link"
+import { Mail, Phone, MapPin, Instagram, Facebook, MessageCircle } from "lucide-react"
+
+const quickLinks = [
+  { label: "Inicio", href: "/" },
+  { label: "Catalogo", href: "/catalogo" },
+  { label: "Cotizador", href: "/cotizador" },
+]
+
+const serviceHighlights = [
+  "Papeleria corporativa",
+  "Material promocional",
+  "Merchandising personalizado",
+  "Gran formato y senaletica",
+]
+
+const socialLinks = [
+  { label: "Instagram", href: "https://instagram.com", icon: Instagram },
+  { label: "Facebook", href: "https://facebook.com", icon: Facebook },
+  { label: "WhatsApp", href: "https://wa.me/593999999999", icon: MessageCircle },
+]
 
 export function Footer() {
   return (
-    <footer className="bg-slate-900 text-white mt-20">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center mb-4">
-              <span className="text-2xl font-bold text-white">Full</span>
-              <span className="text-2xl font-bold text-accent">Color</span>
+    <footer className="mt-20 bg-gradient-to-br from-[#003d63] via-[#005f99] to-[#003d63] text-white">
+      <div className="border-t border-white/10 bg-white/5 backdrop-blur">
+        <div className="container mx-auto px-4 py-12 lg:py-16">
+          <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
+                FullColor
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold text-white">
+                Soluciones graficas integrales desde Machala
+              </h3>
+              <p className="mt-4 text-sm leading-relaxed text-white/80">
+                Acompanamos a marcas, agencias y emprendimientos con produccion de alta calidad,
+                tiempos confiables y asesoria experta en cada paso.
+              </p>
+              <div className="mt-6 inline-flex items-center rounded-full bg-white/15 px-5 py-3 text-sm text-white">
+                <MessageCircle className="mr-3 h-4 w-4 text-[#25D366]" aria-hidden="true" />
+                Respuesta comercial en menos de 24 horas
+              </div>
             </div>
-            <p className="text-sm text-gray-400">Tu socio en impresión y productos personalizados de alta calidad.</p>
-          </div>
 
-          <div>
-            <h3 className="font-bold mb-4">Enlaces Rápidos</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link href="/catalogo" className="text-gray-400 hover:text-white transition-colors">
-                  Catálogo
-                </Link>
-              </li>
-              <li>
-                <Link href="/cotizador" className="text-gray-400 hover:text-white transition-colors">
-                  Cotizador
-                </Link>
-              </li>
-            </ul>
-          </div>
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-white/80">
+                Enlaces rapidos
+              </h4>
+              <ul className="mt-4 space-y-3 text-sm text-white/80">
+                {quickLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="inline-flex items-center gap-2 rounded-full px-0 py-1 text-white/80 transition hover:text-white"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h3 className="font-bold mb-4">Categorías</h3>
-            <ul className="space-y-2 text-sm">
-              <li className="text-gray-400">Papelería Corporativa</li>
-              <li className="text-gray-400">Material Publicitario</li>
-              <li className="text-gray-400">Merchandising</li>
-            </ul>
-          </div>
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-white/80">
+                Servicios destacados
+              </h4>
+              <ul className="mt-4 space-y-3 text-sm text-white/80">
+                {serviceHighlights.map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/60" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h3 className="font-bold mb-4">Contacto</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-2 text-gray-400">
-                <Mail className="h-4 w-4" />
-                info@fullcolor.com
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <Phone className="h-4 w-4" />
-                +593 99 123 4567
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <MapPin className="h-4 w-4" />
-                Quito, Ecuador
-              </li>
-            </ul>
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-white/80">
+                Contacto
+              </h4>
+              <ul className="mt-4 space-y-4 text-sm text-white/80">
+                <li className="flex items-start gap-3">
+                  <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
+                  <span>
+                    Av. 25 de Junio y Sucre<br />
+                    Machala, El Oro - Ecuador
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
+                  <a className="hover:text-white transition" href="tel:+593991234567">
+                    +593 99 123 4567
+                  </a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
+                  <a className="hover:text-white transition" href="mailto:hola@fullcolor.ec">
+                    hola@fullcolor.ec
+                  </a>
+                </li>
+              </ul>
+              <div className="mt-6 flex gap-3">
+                {socialLinks.map(({ label, href, icon: Icon }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 text-white transition hover:border-white hover:bg-white/10"
+                  >
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} FullColor. Todos los derechos reservados.</p>
+          <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
+            <p>&copy; {new Date().getFullYear()} FullColor. Todos los derechos reservados.</p>
+            <p>
+              Politicas de privacidad y tratamiento de datos disponibles a solicitud en{" "}
+              <a className="underline hover:text-white" href="mailto:hola@fullcolor.ec">
+                hola@fullcolor.ec
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </div>
     </footer>

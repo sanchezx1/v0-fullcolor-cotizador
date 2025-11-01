@@ -236,10 +236,14 @@ export default function ConfirmacionPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-600" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <h1 className="text-3xl md:text-4xl font-bold text-balance">¡Cotización Enviada con Éxito!</h1>
             <p className="text-lg text-muted-foreground text-pretty">
               Hemos recibido tu solicitud de cotización y te responderemos pronto
+            </p>
+            <p className="text-sm text-muted-foreground text-pretty flex items-center justify-center gap-2">
+              <span aria-hidden="true">⚠️</span>
+              <span>Por favor revisa también tu bandeja de spam o correo no deseado.</span>
             </p>
           </div>
           <Card className="inline-block mt-4">

@@ -40,6 +40,8 @@ export interface Producto {
   categoria: string
   unidad: string
   minimo_pedido: number
+  agotado?: boolean
+  mas_vendido?: boolean
   activo: boolean
   imagen_url?: string
   created_at: string

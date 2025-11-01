@@ -1,4 +1,5 @@
 import { supabase, Producto, PrecioEscalonado } from '../services/supabaseClient'
+import { normalizeProductFromSource } from '@/lib/product-status'
 
 // Cache simple en memoria
 let productsCache: Producto[] | null = null
@@ -113,7 +114,8 @@ async function loadProducts(): Promise<Producto[]> {
       throw error
     }
 
-    productsCache = data || []
+    const normalized = (data || []).map(normalizeProductFromSource)
+    productsCache = normalized
     lastCacheUpdate = Date.now()
     return productsCache
   } catch (error) {

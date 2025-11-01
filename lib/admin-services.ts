@@ -6,6 +6,17 @@
 'use client'
 
 import { supabase } from './supabase-client'
+import {
+  buildProductGalleryPath,
+  createGalleryFileName,
+  getProductGalleryBucket,
+  getProductGalleryFolder,
+  isGalleryImage,
+} from './product-gallery'
+import {
+  normalizeProductFromSource,
+  prepareProductForPersist,
+} from './product-status'
 import type {
   Producto,
   ProductoConPrecios,
@@ -68,12 +79,15 @@ export async function getProductos(filtros?: FiltrosProductos): Promise<Paginate
     }
 
     // Calcular precio base (el más bajo de cada producto)
-    const productos = data?.map(p => ({
-      ...p,
-      precio_base: p.precios_escalonados?.length > 0
-        ? Math.min(...p.precios_escalonados.map((pe: any) => pe.precio_unitario))
-        : 0
-    })) || []
+    const productos = (data ?? []).map((p) => {
+      const normalized = normalizeProductFromSource(p)
+      return {
+        ...normalized,
+        precio_base: normalized.precios_escalonados?.length > 0
+          ? Math.min(...normalized.precios_escalonados.map((pe: any) => pe.precio_unitario))
+          : 0,
+      }
+    })
 
     return {
       data: productos,
@@ -99,35 +113,87 @@ export async function getProducto(id: number): Promise<ProductoConPrecios | null
 
   if (!data) return null
 
+  const normalized = normalizeProductFromSource(data)
+
   return {
-    ...data,
-    precio_base: data.precios_escalonados?.length > 0
-      ? Math.min(...data.precios_escalonados.map((pe: any) => pe.precio_unitario))
-      : 0
+    ...normalized,
+    precio_base: normalized.precios_escalonados?.length > 0
+      ? Math.min(...normalized.precios_escalonados.map((pe: any) => pe.precio_unitario))
+      : 0,
   }
 }
 
 export async function createProducto(producto: Omit<Producto, 'id' | 'created_at' | 'updated_at'>): Promise<Producto> {
-  const { data, error } = await supabase
-    .from('productos')
-    .insert(producto)
-    .select()
-    .single()
+  try {
+    let sku = producto.sku
+    
+    // Si no se proporciona SKU o está vacío, generar automáticamente
+    if (!sku || sku.trim() === '') {
+      console.log('🔢 Generando SKU automático para categoría:', producto.categoria)
+      sku = await generarSkuAutomatico(producto.categoria)
+      console.log('✅ SKU generado:', sku)
+    } else {
+      // Si se proporciona SKU, verificar que sea único
+      const esUnico = await verificarSkuUnico(sku)
+      if (!esUnico) {
+        throw new Error(`El SKU "${sku}" ya existe`)
+      }
+    }
 
-  if (error) throw error
-  return data
+    const persistPayload = prepareProductForPersist(producto)
+
+    console.log('📦 Insertando producto con SKU:', sku)
+    const { data, error } = await supabase
+      .from('productos')
+      .insert({ ...persistPayload, sku })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Error de Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      })
+      throw new Error(`Error al crear producto: ${error.message || 'Error desconocido'}`)
+    }
+    
+    if (!data) {
+      throw new Error('No se devolvió el producto creado')
+    }
+    
+    console.log('✅ Producto creado exitosamente:', data.id)
+    return normalizeProductFromSource(data)
+  } catch (error: any) {
+    console.error('❌ Error completo en createProducto:', {
+      message: error?.message,
+      name: error?.name,
+      stack: error?.stack,
+      error: error
+    })
+    
+    // Lanzar error con mensaje descriptivo
+    if (error instanceof Error) {
+      throw error
+    } else {
+      throw new Error(`Error al crear producto: ${JSON.stringify(error)}`)
+    }
+  }
 }
 
 export async function updateProducto(id: number, producto: Partial<Producto>): Promise<Producto> {
+  const persistPayload = prepareProductForPersist(producto)
+
   const { data, error } = await supabase
     .from('productos')
-    .update({ ...producto, updated_at: new Date().toISOString() })
+    .update({ ...persistPayload, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
 
   if (error) throw error
-  return data
+  return normalizeProductFromSource(data)
 }
 
 export async function deleteProducto(id: number): Promise<void> {
@@ -157,6 +223,73 @@ export async function verificarSkuUnico(sku: string, productoId?: number): Promi
 
   if (error) throw error
   return !data || data.length === 0
+}
+
+/**
+ * Genera un prefijo de SKU basado en la categoría
+ */
+function generarPrefijoSku(categoria: string): string {
+  const prefijos: Record<string, string> = {
+    'Papelería Corporativa': 'PAP',
+    'Publicidad': 'PUB',
+    'Promocional': 'PROM',
+    'Señalética': 'SEN',
+    'Packaging': 'PACK',
+    'Textil': 'TEXT',
+    'Digital': 'DIG',
+    'Otro': 'PROD'
+  }
+  
+  return prefijos[categoria] || 'PROD'
+}
+
+/**
+ * Genera un SKU único automáticamente
+ * Formato: {PREFIJO}-{CONTADOR}
+ * Ejemplo: PAP-001, PUB-042
+ */
+export async function generarSkuAutomatico(categoria: string): Promise<string> {
+  try {
+    const prefijo = generarPrefijoSku(categoria)
+    
+    // Buscar el último SKU con este prefijo
+    const { data, error } = await supabase
+      .from('productos')
+      .select('sku')
+      .ilike('sku', `${prefijo}-%`)
+      .order('sku', { ascending: false })
+      .limit(1)
+    
+    if (error) throw error
+    
+    let contador = 1
+    
+    if (data && data.length > 0) {
+      // Extraer el número del último SKU
+      const ultimoSku = data[0].sku
+      const match = ultimoSku.match(/-(\d+)$/)
+      if (match) {
+        contador = parseInt(match[1], 10) + 1
+      }
+    }
+    
+    // Formatear con ceros a la izquierda (3 dígitos)
+    const numeroFormateado = contador.toString().padStart(3, '0')
+    const nuevoSku = `${prefijo}-${numeroFormateado}`
+    
+    // Verificar que no exista (por si acaso)
+    const existe = !(await verificarSkuUnico(nuevoSku))
+    if (existe) {
+      // Si existe, intentar con el siguiente número
+      return generarSkuAutomatico(categoria)
+    }
+    
+    return nuevoSku
+  } catch (error) {
+    console.error('Error generando SKU automático:', error)
+    // Fallback: usar timestamp
+    return `PROD-${Date.now().toString().slice(-6)}`
+  }
 }
 
 // ============= PRECIOS ESCALONADOS =============
@@ -793,4 +926,85 @@ export async function deleteImagen(url: string, bucket: string = 'productos'): P
     .remove([path])
 
   if (error) throw error
+}
+
+export interface ProductoGaleriaItem {
+  path: string
+  url: string
+}
+
+export async function listProductoGaleria(productoId: number): Promise<ProductoGaleriaItem[]> {
+  const bucket = getProductGalleryBucket()
+  const folder = getProductGalleryFolder(productoId)
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list(folder, {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'name', order: 'asc' }
+    })
+
+  if (error) {
+    console.error('Error al listar galer��a de producto:', error)
+    throw error
+  }
+
+  if (!data) {
+    return []
+  }
+
+  return data
+    .filter((item) => !item.name.endsWith('/') && isGalleryImage(item.name))
+    .map((item) => {
+      const path = buildProductGalleryPath(productoId, item.name)
+      const { data: publicUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(path)
+
+      return {
+        path,
+        url: publicUrlData.publicUrl
+      }
+    })
+}
+
+export async function uploadProductoGaleriaImagen(productoId: number, file: File): Promise<ProductoGaleriaItem> {
+  const bucket = getProductGalleryBucket()
+  const fileName = createGalleryFileName(file.name)
+  const path = buildProductGalleryPath(productoId, fileName)
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    })
+
+  if (error) {
+    console.error('Error subiendo imagen de galer��a:', error)
+    throw error
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path)
+
+  return {
+    path,
+    url: publicUrlData.publicUrl
+  }
+}
+
+export async function deleteProductoGaleriaImagen(path: string): Promise<void> {
+  const bucket = getProductGalleryBucket()
+
+  const { error } = await supabase.storage
+    .from(bucket)
+    .remove([path])
+
+  if (error) {
+    console.error('Error eliminando imagen de galer��a:', error)
+    throw error
+  }
 }

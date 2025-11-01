@@ -194,48 +194,74 @@ async function getCotizacionData(quoteId: number) {
   console.log('🔍 Obteniendo datos reales para cotización:', quoteId)
   
   // Obtener cotización con lead
-    const { data: cotizacion, error: cotizacionError } = await supabase
-      .from('cotizaciones')
-      .select(`
-        *,
-        leads (
-          nombre,
-          email,
-          telefono,
-          empresa,
-          ruc_cedula,
-          ciudad,
-          notas
-        )
-      `)
-      .eq('id', quoteId)
-      .single()
+  const { data: cotizacion, error: cotizacionError } = await supabase
+    .from('cotizaciones')
+    .select(`
+      *,
+      leads (
+        nombre,
+        email,
+        telefono,
+        empresa,
+        ruc_cedula,
+        ciudad,
+        notas
+      )
+    `)
+    .eq('id', quoteId)
+    .single()
 
-    if (cotizacionError) {
-    console.warn('⚠️ No se encontró cotización real, usando datos de prueba')
-    return getMockCotizacionData(quoteId)
-    }
+  if (cotizacionError) {
+    console.error('❌ ERROR obteniendo cotización:', {
+      message: cotizacionError.message,
+      code: cotizacionError.code,
+      details: cotizacionError.details,
+      hint: cotizacionError.hint
+    })
+    throw new Error(`Error obteniendo cotización: ${cotizacionError.message}`)
+  }
+
+  if (!cotizacion) {
+    console.error('❌ Cotización no encontrada con ID:', quoteId)
+    throw new Error(`Cotización ${quoteId} no existe`)
+  }
+
+  console.log('✅ Cotización obtenida:', {
+    id: cotizacion.id,
+    lead_id: cotizacion.lead_id,
+    lead_nombre: cotizacion.leads?.nombre
+  })
 
   // Obtener items de la cotización con productos
-    const { data: items, error: itemsError } = await supabase
-      .from('items_cotizacion')
-      .select(`
-        *,
-        productos (
-          nombre,
-          categoria,
-          imagen_url
-        )
-      `)
-      .eq('cotizacion_id', quoteId)
+  const { data: items, error: itemsError } = await supabase
+    .from('items_cotizacion')
+    .select(`
+      *,
+      productos (
+        nombre,
+        categoria,
+        imagen_url
+      )
+    `)
+    .eq('cotizacion_id', quoteId)
 
-  if (itemsError || !items || items.length === 0) {
-    console.warn('⚠️ No se encontraron items reales, usando datos de prueba')
-    return getMockCotizacionData(quoteId)
-    }
+  if (itemsError) {
+    console.error('❌ ERROR obteniendo items:', {
+      message: itemsError.message,
+      code: itemsError.code
+    })
+    throw new Error(`Error obteniendo items: ${itemsError.message}`)
+  }
+
+  if (!items || items.length === 0) {
+    console.error('❌ No se encontraron items para cotización:', quoteId)
+    throw new Error(`Cotización ${quoteId} no tiene items`)
+  }
+
+  console.log('✅ Items obtenidos:', items.length)
 
   // Calcular totales
-    const totals = calculateTotals(items)
+  const totals = calculateTotals(items)
 
   return {
     cotizacion,
@@ -244,62 +270,6 @@ async function getCotizacionData(quoteId: number) {
   }
 }
 
-/**
- * Datos de prueba cuando no hay datos reales
- */
-function getMockCotizacionData(quoteId: number) {
-  return {
-    cotizacion: {
-      id: quoteId,
-      created_at: new Date().toISOString(),
-      validez_dias: 30,
-      leads: {
-        nombre: 'Juan Pérez',
-        email: 'juan.perez@empresa.com',
-        telefono: '+593 99 123 4567',
-        empresa: 'Empresa Ejemplo S.A.',
-        ruc_cedula: '1234567890001',
-        ciudad: 'Quito, Ecuador',
-        notas: 'Cliente preferencial con descuento especial'
-      }
-    },
-    items: [
-      {
-        cantidad: 100,
-        precio_unitario_aplicado: 2.50,
-        productos: {
-          nombre: 'Tarjetas de Presentación Premium',
-          categoria: 'Papelería Corporativa',
-          imagen_url: 'https://via.placeholder.com/64x48/0066a1/ffffff?text=TC'
-        }
-      },
-      {
-        cantidad: 50,
-        precio_unitario_aplicado: 15.00,
-        productos: {
-          nombre: 'Volantes Publicitarios',
-          categoria: 'Publicidad',
-          imagen_url: 'https://via.placeholder.com/64x48/f5c700/000000?text=VP'
-        }
-      },
-      {
-        cantidad: 25,
-        precio_unitario_aplicado: 8.00,
-        productos: {
-          nombre: 'Stickers Personalizados',
-          categoria: 'Promocional',
-          imagen_url: 'https://via.placeholder.com/64x48/28a745/ffffff?text=ST'
-        }
-      }
-    ],
-    totals: {
-      subtotal: 1200.00,
-      iva0: 0.00,
-      iva15: 180.00,
-      total: 1380.00
-    }
-  }
-}
 
 /**
  * Calcula totales desde los items
@@ -329,6 +299,36 @@ function calculateTotals(items: any[]) {
 }
 
 /**
+ * Utilidades: imágenes y formato de moneda
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = ''
+  const bytes = new Uint8Array(buffer)
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
+
+async function fetchAsDataUrl(url: string): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const contentType = res.headers.get('content-type') || ''
+    const buf = await res.arrayBuffer()
+    const base64 = arrayBufferToBase64(buf)
+    const isPng = contentType.includes('png')
+    const mime = isPng ? 'image/png' : 'image/jpeg'
+    return { dataUrl: `data:${mime};base64,${base64}`, format: isPng ? 'PNG' : 'JPEG' }
+  } catch (e) {
+    console.warn('No se pudo cargar imagen', url, (e as Error).message)
+    return null
+  }
+}
+
+function formatCurrency(n: number) {
+  return `$${n.toFixed(2)}`
+}
+
+/**
  * Genera PDF directamente desde datos estructurados usando jsPDF
  */
 async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
@@ -354,31 +354,43 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     const lead = cotizacion.leads
     
     const cotizacionNumero = cotizacion.id.toString().padStart(6, '0')
-    const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-ES')
+    const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-EC')
     
     console.log('✅ Datos preparados:', { items: items.length, cliente: lead.nombre })
     
     // COLORES DE MARCA FULLCOLOR
     const colorAzul = [0, 102, 161]      // #0066a1
-    const colorAmarillo = [245, 199, 0]   // #f5c700
-    const colorGris = [128, 128, 128]
+    const colorAmarillo = [245, 199, 0]  // #f5c700
+    const colorGris = [107, 114, 128]    // #6B7280
     const colorGrisClaro = [240, 240, 240]
+    const colorGrisOscuro = [31, 41, 55] // #1F2937
+    const colorLinea = [230, 230, 230]
     
     // ============================================
     // CABECERA (Header)
     // ============================================
     
-    // Logo FullColor (simulado con texto estilizado)
-    doc.setFontSize(18)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
-    doc.text('PromoStore', 15, 20)
-    
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
-    doc.text('Artículos promocionales', 15, 25)
-    doc.text('memorables', 15, 28)
+    // Logo FullColor desde LOGO_URL o fallback a texto
+    const LOGO_URL = Deno.env.get('LOGO_URL') || ''
+    let drewLogo = false
+    if (LOGO_URL) {
+      const logo = await fetchAsDataUrl(LOGO_URL)
+      if (logo) {
+        try {
+          doc.addImage(logo.dataUrl, logo.format, 15, 16, 40, 14)
+          drewLogo = true
+        } catch (_) {}
+      }
+    }
+    if (!drewLogo) {
+      doc.setFontSize(18)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
+      doc.text('FullColor', 15, 24)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Servicios gráficos', 15, 29)
+    }
     
     // Caja de información a la derecha
     const boxX = 130
@@ -387,7 +399,7 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     const boxHeight = 40
     
     // Borde de la caja
-    doc.setDrawColor(200, 200, 200)
+    doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
     doc.setLineWidth(0.3)
     doc.rect(boxX, boxY, boxWidth, boxHeight)
     
@@ -401,12 +413,12 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     doc.text('De', boxX + 3, currentY)
     
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(0, 0, 0)
-    doc.text('Promostore.ec', boxX + 25, currentY)
+    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
+    doc.text('FullColor — Servicios gráficos', boxX + 25, currentY)
     currentY += 5
     
     // Línea separadora
-    doc.setDrawColor(230, 230, 230)
+    doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
     doc.line(boxX + 3, currentY - 1, boxX + boxWidth - 3, currentY - 1)
     currentY += 4
     
@@ -449,51 +461,52 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     doc.text(fechaCreacion, boxX + 25, currentY - 2)
     
     // ============================================
-    // TÍTULO "Presupuesto #XXXXXX"
+    // TÍTULO "Proforma #XXXXXX"
     // ============================================
     
     doc.setFontSize(22)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(0, 0, 0)
-    doc.text(`Presupuesto #${cotizacionNumero}`, 15, 65)
+    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
+    doc.text(`Proforma #${cotizacionNumero}`, 15, 65)
     
     // ============================================
     // TABLA DE PRODUCTOS (AutoTable)
     // ============================================
     
-    // Preparar datos de la tabla
+    // Precargar imágenes y preparar datos
+    const productImages = await Promise.all(items.map(async (item: any) => {
+      const url = item.productos?.imagen_url
+      return url ? await fetchAsDataUrl(url) : null
+    }))
+
     const tableData = items.map((item: any) => {
-      const producto = item.productos
-      
-      // Preparar líneas del producto
-      let productoText = producto.nombre || 'Sin nombre'
-      
-      // Detalles opcionales (SKU, impresión, color, lados)
+      const producto = item.productos || {}
+      const nombre = producto.nombre || 'Sin nombre'
       const detalles: string[] = []
       if (producto.categoria) detalles.push(producto.categoria)
-      
-      const detallesText = detalles.length > 0 ? detalles.join(' | ') : ''
-      
-      return [
-        productoText + (detallesText ? '\n' + detallesText : ''),
-        `$${item.precio_unitario_aplicado.toFixed(2)}`,
-        item.cantidad.toString(),
-        `$${(item.cantidad * item.precio_unitario_aplicado).toFixed(2)}`
-      ]
+      if ((item as any).sku) detalles.push(`SKU: ${(item as any).sku}`)
+      if ((item as any).impresion) detalles.push(`Impresión: ${(item as any).impresion}`)
+      if ((item as any).lados) detalles.push(`Lados: ${(item as any).lados}`)
+      if ((item as any).color) detalles.push(`Color: ${(item as any).color}`)
+      const detalleTexto = detalles.length ? `\n${detalles.join(' | ')}` : ''
+      const precio = formatCurrency(item.precio_unitario_aplicado)
+      const subtotal = formatCurrency(item.cantidad * item.precio_unitario_aplicado)
+      return [' ', `${nombre}${detalleTexto}`, precio, item.cantidad.toString(), subtotal]
     })
-    
-    // Generar tabla con autoTable
+
+    // Generar tabla con imagen y estilos
     autoTable(doc, {
       startY: 75,
-      head: [['Producto', 'Precio por unidad', 'Cantidad', 'Subtotal']],
+      head: [['Imagen', 'Producto', 'Precio por unidad', 'Cantidad', 'Subtotal']],
       body: tableData,
       theme: 'striped',
       styles: {
         font: 'helvetica',
         fontSize: 9,
         cellPadding: 4,
-        lineColor: [220, 220, 220],
-        lineWidth: 0.1
+        lineColor: colorLinea,
+        lineWidth: 0.1,
+        minCellHeight: 28
       },
       headStyles: {
         fillColor: colorAzul,
@@ -509,12 +522,49 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
         fillColor: colorGrisClaro
       },
       columnStyles: {
-        0: { cellWidth: 90, halign: 'left', fontStyle: 'bold' },   // Producto (negrita)
-        1: { cellWidth: 35, halign: 'right' },                      // Precio
-        2: { cellWidth: 30, halign: 'right' },                      // Cantidad
-        3: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }   // Subtotal (negrita)
+        0: { cellWidth: 28, halign: 'center' },
+        1: { cellWidth: 82, halign: 'left', fontStyle: 'bold' },
+        2: { cellWidth: 28, halign: 'right' },
+        3: { cellWidth: 18, halign: 'right' },
+        4: { cellWidth: 24, halign: 'right', fontStyle: 'bold' }
       },
-      margin: { left: 15, right: 15 }
+      margin: { left: 15, right: 15 },
+      didDrawCell: (data: any) => {
+        if (data.section === 'body' && data.column.index === 0) {
+          const img = productImages[data.row.index]
+          const x = data.cell.x + 2
+          const y = data.cell.y + 2
+          const w = Math.max(10, data.cell.width - 4)
+          const h = Math.max(10, data.cell.height - 4)
+          if (img) {
+            try {
+              const maxW = w, maxH = h
+              // relación aprox 4:3 como fallback
+              let drawW = maxW, drawH = maxH
+              if (maxW / maxH > 1.33) {
+                drawW = maxH * 1.33
+              } else {
+                drawH = maxW / 1.33
+              }
+              const cx = x + (maxW - drawW) / 2
+              const cy = y + (maxH - drawH) / 2
+              doc.addImage(img.dataUrl, img.format, cx, cy, drawW, drawH, undefined, 'FAST')
+            } catch (_) {
+              doc.setFillColor(240, 240, 240)
+              doc.rect(x, y, w, h, 'F')
+              doc.setTextColor(150, 150, 150)
+              doc.setFontSize(7)
+              doc.text('sin imagen', x + w / 2, y + h / 2, { align: 'center', baseline: 'middle' })
+            }
+          } else {
+            doc.setFillColor(240, 240, 240)
+            doc.rect(x, y, w, h, 'F')
+            doc.setTextColor(150, 150, 150)
+            doc.setFontSize(7)
+            doc.text('sin imagen', x + w / 2, y + h / 2, { align: 'center', baseline: 'middle' })
+          }
+        }
+      }
     })
     
     // ============================================
@@ -525,11 +575,11 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     
     // Tabla de totales alineada a la derecha
     autoTable(doc, {
-      startY: finalY + 10,
+      startY: finalY + 8,
       body: [
-        ['Subtotal:', `$${totals.subtotal.toFixed(2)}`],
-        ['IVA:', `$${totals.iva15.toFixed(2)}`],
-        ['Total:', `$${totals.total.toFixed(2)}`]
+        ['Subtotal:', formatCurrency(totals.subtotal)],
+        ['IVA (15%):', formatCurrency(totals.iva15)],
+        ['Total:', formatCurrency(totals.total)]
       ],
       theme: 'plain',
       styles: {
@@ -541,18 +591,28 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
         textColor: [0, 0, 0]
       },
       columnStyles: {
-        0: { cellWidth: 30, halign: 'right', fontStyle: 'normal' },
-        1: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
+        0: { cellWidth: 35, halign: 'right', fontStyle: 'bold', textColor: colorAzul },
+        1: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
       },
-      margin: { left: 135 },
-      didParseCell: function(data) {
-        // Línea arriba del Total
+      margin: { left: 130 },
+      didParseCell: function(data: any) {
         if (data.row.index === 2 && data.section === 'body') {
-          data.cell.styles.lineWidth = { top: 0.5 }
-          data.cell.styles.lineColor = [0, 0, 0]
+          data.cell.styles.lineWidth = { top: 0.6 }
+          data.cell.styles.lineColor = colorLinea
+          data.cell.styles.textColor = colorAzul
         }
       }
     })
+
+    const afterTotalsY = (doc as any).lastAutoTable.finalY || finalY + 20
+    // Notas y validez
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    doc.text('Precios sujetos a cambios.', 15, afterTotalsY + 6)
+    if (cotizacion.validez_dias) {
+      doc.text(`Validez: ${cotizacion.validez_dias} días`, 15, afterTotalsY + 10)
+    }
     
     // ============================================
     // PIE DE PÁGINA (Footer)
@@ -571,8 +631,8 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
     
-    doc.text('Precios sujetos a cambios sin previo aviso', 15, footerY)
-    doc.text('WhatsApp: +593 99 123 4567 | Email: info@promostore.ec', 15, footerY + 4)
+    doc.text('FullColor — Rocafuerte 302 y 23 de Abril, Machala', 15, footerY)
+    doc.text('WhatsApp: +593 99 123 4567 | Email: info@fullcolor.ec | fullcolor.ec', 15, footerY + 4)
     
     // Generar PDF
     const pdfOutput = doc.output('arraybuffer')

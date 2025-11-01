@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
@@ -15,11 +15,21 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ImageUpload } from '@/components/admin/ImageUpload'
-import { createProducto, verificarSkuUnico, uploadImagen } from '@/lib/admin-services'
+import { ProductGalleryManager, type GalleryDisplayItem } from '@/components/admin/ProductGalleryManager'
+import { createProducto, verificarSkuUnico, updateProducto, uploadProductoGaleriaImagen } from '@/lib/admin-services'
 import { CATEGORIAS_PRODUCTO } from '@/lib/admin-types'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+
+type GalleryItemState = {
+  id: string
+  src: string
+  file?: File
+  status: 'new' | 'existing'
+  path?: string
+  isPrimary: boolean
+  pendingRemoval?: boolean
+}
 
 export default function NuevoProductoPage() {
   const router = useRouter()
@@ -35,8 +45,12 @@ export default function NuevoProductoPage() {
     lados: '',
     impresion: '',
     activo: true,
-    imagen: null as File | null
+    agotado: false,
+    mas_vendido: false
   })
+  const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
+  
+  const [skuManual, setSkuManual] = useState(false)
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {}
@@ -48,15 +62,15 @@ export default function NuevoProductoPage() {
       newErrors.nombre = 'El nombre debe tener al menos 3 caracteres'
     }
 
-    // SKU
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'El SKU es requerido'
-    } else if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
-      newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
-    } else {
-      const esUnico = await verificarSkuUnico(formData.sku)
-      if (!esUnico) {
-        newErrors.sku = 'Este SKU ya existe'
+    // SKU (solo validar si se ingresa manualmente)
+    if (skuManual && formData.sku.trim()) {
+      if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
+        newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
+      } else {
+        const esUnico = await verificarSkuUnico(formData.sku)
+        if (!esUnico) {
+          newErrors.sku = 'Este SKU ya existe'
+        }
       }
     }
 
@@ -74,6 +88,139 @@ export default function NuevoProductoPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const createGalleryId = () => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID()
+    }
+    return `gallery-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  }
+
+  const handleGalleryAdd = (files: File[]) => {
+    if (!files || files.length === 0) {
+      return
+    }
+
+    const MAX_SIZE = 5 * 1024 * 1024
+    const accepted: File[] = []
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" no es un archivo de imagen válido`)
+        return
+      }
+      if (file.size > MAX_SIZE) {
+        toast.error(`"${file.name}" excede el tamaño máximo de 5MB`)
+        return
+      }
+      accepted.push(file)
+    })
+
+    if (accepted.length === 0) {
+      return
+    }
+
+    const newItems = accepted.map((file) => ({
+      id: createGalleryId(),
+      src: URL.createObjectURL(file),
+      file,
+      status: 'new' as const,
+      isPrimary: false,
+    }))
+
+    setGalleryItems((prev) => {
+      const appended = [...prev, ...newItems]
+      const active = appended.filter((item) => !item.pendingRemoval)
+
+      if (!active.some((item) => item.isPrimary) && active.length > 0) {
+        const primaryId = active[0].id
+        return appended.map((item) => ({
+          ...item,
+          isPrimary: item.id === primaryId,
+        }))
+      }
+
+      return appended
+    })
+  }
+
+  const handleGalleryRemove = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target) return prev
+
+      if (target.file) {
+        URL.revokeObjectURL(target.src)
+      }
+
+      const filtered = prev.filter((item) => item.id !== id)
+      const active = filtered.filter((item) => !item.pendingRemoval)
+
+      if (target.isPrimary && active.length > 0) {
+        const primaryId = active[0].id
+        return filtered.map((item) => ({
+          ...item,
+          isPrimary: item.id === primaryId,
+        }))
+      }
+
+      return filtered
+    })
+  }
+
+  const handleGallerySetPrimary = (id: string) => {
+    setGalleryItems((prev) => {
+      const target = prev.find((item) => item.id === id)
+      if (!target || target.pendingRemoval) {
+        return prev
+      }
+
+      return prev.map((item) => ({
+        ...item,
+        isPrimary: item.id === id,
+      }))
+    })
+  }
+
+  const galleryDisplayItems = useMemo<GalleryDisplayItem[]>(() => {
+    return galleryItems.map((item) => ({
+      id: item.id,
+      src: item.src,
+      isPrimary: item.isPrimary,
+      status: item.status,
+      pendingRemoval: item.pendingRemoval,
+    }))
+  }, [galleryItems])
+
+  const syncGalleryWithStorage = async (productoId: number): Promise<string | undefined> => {
+    const itemsToKeep = galleryItems.filter((item) => !item.pendingRemoval)
+
+    if (itemsToKeep.length === 0) {
+      return undefined
+    }
+
+    const uploadedMap = new Map<string, string>()
+
+    for (const item of itemsToKeep) {
+      if (item.status === 'new' && item.file) {
+        const { url } = await uploadProductoGaleriaImagen(productoId, item.file)
+        uploadedMap.set(item.id, url)
+        URL.revokeObjectURL(item.src)
+      }
+    }
+
+    const primaryItem = itemsToKeep.find((item) => item.isPrimary) ?? itemsToKeep[0]
+
+    if (!primaryItem) {
+      return undefined
+    }
+
+    if (primaryItem.status === 'new') {
+      return uploadedMap.get(primaryItem.id)
+    }
+
+    return primaryItem.src
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -86,25 +233,22 @@ export default function NuevoProductoPage() {
     try {
       setLoading(true)
 
-      // Subir imagen si existe
-      let imagen_url: string | undefined
-      if (formData.imagen) {
-        const filename = `${formData.sku}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
-        imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
-      }
-
-      // Crear producto
+      // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
-        sku: formData.sku,
+        sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        color: formData.color || undefined,
-        lados: formData.lados || undefined,
-        impresion: formData.impresion || undefined,
         activo: formData.activo,
-        imagen_url
+        agotado: formData.agotado,
+        mas_vendido: formData.mas_vendido
       })
+
+      const primaryImageUrl = await syncGalleryWithStorage(producto.id)
+
+      if (primaryImageUrl) {
+        await updateProducto(producto.id, { imagen_url: primaryImageUrl })
+      }
 
       toast.success('Producto creado exitosamente')
       router.push('/admin/productos')
@@ -128,25 +272,22 @@ export default function NuevoProductoPage() {
     try {
       setLoading(true)
 
-      // Subir imagen si existe
-      let imagen_url: string | undefined
-      if (formData.imagen) {
-        const filename = `${formData.sku}-${Date.now()}.${formData.imagen.name.split('.').pop()}`
-        imagen_url = await uploadImagen(formData.imagen, 'productos', filename)
-      }
-
-      // Crear producto
+            // Crear producto (SKU se genera automáticamente si está vacío)
       const producto = await createProducto({
         nombre: formData.nombre,
-        sku: formData.sku,
+        sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        color: formData.color || undefined,
-        lados: formData.lados || undefined,
-        impresion: formData.impresion || undefined,
         activo: formData.activo,
-        imagen_url
+        agotado: formData.agotado,
+        mas_vendido: formData.mas_vendido
       })
+
+      const primaryImageUrl = await syncGalleryWithStorage(producto.id)
+
+      if (primaryImageUrl) {
+        await updateProducto(producto.id, { imagen_url: primaryImageUrl })
+      }
 
       toast.success('Producto creado exitosamente')
       router.push(`/admin/productos/${producto.id}/precios`)
@@ -187,22 +328,60 @@ export default function NuevoProductoPage() {
 
             {/* SKU */}
             <div className="space-y-2">
-              <Label htmlFor="sku">
-                SKU <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-                placeholder="Ej: TARJ-001"
-                className={errors.sku ? 'border-red-500' : ''}
-              />
-              {errors.sku && (
-                <p className="text-sm text-red-500">{errors.sku}</p>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="sku">SKU (Código del Producto)</Label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSkuManual(!skuManual)
+                    if (!skuManual) {
+                      setFormData({ ...formData, sku: '' })
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {skuManual ? '← Generar automáticamente' : '✏️ Ingresar manualmente'}
+                </button>
+              </div>
+              
+              {skuManual ? (
+                <>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                    placeholder="Ej: TARJ-001"
+                    className={errors.sku ? 'border-red-500' : ''}
+                  />
+                  {errors.sku && (
+                    <p className="text-sm text-red-500">{errors.sku}</p>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    Solo alfanuméricos y guiones. Debe ser único.
+                  </p>
+                </>
+              ) : (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    🤖 El SKU se generará <span className="font-semibold">automáticamente</span> al guardar el producto.
+                  </p>
+                  {formData.categoria && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Ejemplo para <span className="font-medium">{formData.categoria}</span>: 
+                      <code className="ml-1 px-2 py-0.5 bg-white rounded text-primary font-mono">
+                        {formData.categoria === 'Papelería Corporativa' && 'PAP-001'}
+                        {formData.categoria === 'Publicidad' && 'PUB-001'}
+                        {formData.categoria === 'Promocional' && 'PROM-001'}
+                        {formData.categoria === 'Señalética' && 'SEN-001'}
+                        {formData.categoria === 'Packaging' && 'PACK-001'}
+                        {formData.categoria === 'Textil' && 'TEXT-001'}
+                        {formData.categoria === 'Digital' && 'DIG-001'}
+                        {formData.categoria === 'Otro' && 'PROD-001'}
+                      </code>
+                    </p>
+                  )}
+                </div>
               )}
-              <p className="text-sm text-gray-500">
-                Solo alfanuméricos y guiones. Debe ser único.
-              </p>
             </div>
 
             {/* Descripción */}
@@ -250,12 +429,20 @@ export default function NuevoProductoPage() {
               )}
             </div>
 
-            {/* Imagen */}
-            <div className="space-y-2">
-              <Label>Imagen del Producto</Label>
-              <ImageUpload
-                value={formData.imagen || undefined}
-                onChange={(file) => setFormData({ ...formData, imagen: file })}
+            {/* Galería de Imágenes */}
+            <div className="space-y-3">
+              <div>
+                <Label>Galería de Imágenes</Label>
+                <p className="text-sm text-gray-500">
+                  Sube varias vistas del producto. La imagen principal se mostrará en el catálogo público.
+                </p>
+              </div>
+              <ProductGalleryManager
+                items={galleryDisplayItems}
+                onAddFiles={handleGalleryAdd}
+                onSetPrimary={handleGallerySetPrimary}
+                onRemove={handleGalleryRemove}
+                disabled={loading}
               />
             </div>
 
@@ -312,19 +499,56 @@ export default function NuevoProductoPage() {
             </div>
 
             {/* Estado */}
-            <div className="flex items-center justify-between border-t pt-6">
-              <div className="space-y-1">
-                <Label htmlFor="activo">Estado del Producto</Label>
-                <p className="text-sm text-gray-500">
-                  Los productos inactivos no aparecerán en el catálogo público
-                </p>
+            <div className="border-t pt-6 space-y-4">
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="activo" className="text-base font-semibold text-slate-900">Visible en catálogo</Label>
+                  <p id="activo-help" className="text-sm text-gray-500">
+                    Los productos inactivos no aparecerán en el catálogo público.
+                  </p>
+                </div>
+                <Switch
+                  id="activo"
+                  aria-describedby="activo-help"
+                  checked={formData.activo}
+                  onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
+                  className="self-start sm:self-auto"
+                />
               </div>
-              <Switch
-                id="activo"
-                checked={formData.activo}
-                onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
-              />
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="agotado" className="text-base font-semibold text-slate-900">Marcar como agotado</Label>
+                  <p id="agotado-help" className="text-sm text-gray-500">
+                    Muestra una etiqueta "Agotado" en el catálogo y bloqueará nuevas adiciones a cotizaciones.
+                  </p>
+                </div>
+                <Switch
+                  id="agotado"
+                  aria-describedby="agotado-help"
+                  checked={formData.agotado}
+                  onCheckedChange={(checked) => setFormData({ ...formData, agotado: checked })}
+                  className="self-start sm:self-auto"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#0066CC]/25 bg-[#0066CC]/10 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="mas-vendido" className="text-base font-semibold text-[#0066CC]">Destacar como "Más vendido"</Label>
+                  <p id="mas-vendido-help" className="text-sm text-[#1F2937]">
+                    Resalta este producto con un badge especial en el catálogo y en la ficha detallada.
+                  </p>
+                </div>
+                <Switch
+                  id="mas-vendido"
+                  aria-describedby="mas-vendido-help"
+                  checked={formData.mas_vendido}
+                  onCheckedChange={(checked) => setFormData({ ...formData, mas_vendido: checked })}
+                  className="self-start sm:self-auto"
+                />
+              </div>
             </div>
+
 
             {/* Botones */}
             <div className="flex flex-wrap gap-3 pt-6">

@@ -245,11 +245,29 @@ export default function ProductosPage() {
 
                     {/* Estado */}
                     <TableCell>
-                      <Badge
-                        variant={producto.activo ? 'default' : 'secondary'}
-                      >
-                        {producto.activo ? 'Activo' : 'Inactivo'}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={producto.activo ? 'default' : 'secondary'}
+                        >
+                          {producto.activo ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                        {producto.agotado && (
+                          <Badge
+                            variant="outline"
+                            className="border-[#1F2937]/30 bg-[#1F2937] text-white"
+                          >
+                            Agotado
+                          </Badge>
+                        )}
+                        {producto.mas_vendido && (
+                          <Badge
+                            variant="outline"
+                            className="border-[#FFD700]/40 bg-[#FFD700]/20 text-[#1F2937] font-semibold"
+                          >
+                            Más vendido
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
 
                     {/* Acciones */}

@@ -14,6 +14,8 @@ export interface Producto {
   color?: string
   lados?: string
   impresion?: string
+  agotado?: boolean
+  mas_vendido?: boolean
   activo: boolean
   created_at: string
   updated_at: string
@@ -152,6 +154,8 @@ export interface ProductoFormData {
   color?: string
   lados?: string
   impresion?: string
+  agotado?: boolean
+  mas_vendido?: boolean
   activo: boolean
   imagen?: File
 }

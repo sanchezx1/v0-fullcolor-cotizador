@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from '@/lib/supabase-client'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/admin'
@@ -176,5 +176,17 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#0066a1] to-[#004d7a]">
+        <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
