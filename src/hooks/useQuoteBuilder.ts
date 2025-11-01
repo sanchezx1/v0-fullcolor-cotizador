@@ -88,6 +88,13 @@ export function useQuoteBuilder() {
       }
 
       const product = priceResult.product
+
+      if (product.agotado) {
+        const outOfStockError: any = new Error('PRODUCTO_AGOTADO')
+        outOfStockError.code = 'PRODUCTO_AGOTADO'
+        setError('Lo sentimos, este producto está agotado.')
+        throw outOfStockError
+      }
       
       const newItem: QuoteItem = {
         productId: product.id,
@@ -114,7 +121,11 @@ export function useQuoteBuilder() {
       }
     } catch (err) {
       console.error('Error adding item to quote:', err)
-      setError(err instanceof Error ? err.message : 'Error al agregar producto')
+      if (err instanceof Error && (err as any).code === 'PRODUCTO_AGOTADO') {
+        setError('Lo sentimos, este producto está agotado.')
+      } else {
+        setError(err instanceof Error ? err.message : 'Error al agregar producto')
+      }
     } finally {
       setLoading(false)
     }

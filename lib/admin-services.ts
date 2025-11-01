@@ -13,6 +13,10 @@ import {
   getProductGalleryFolder,
   isGalleryImage,
 } from './product-gallery'
+import {
+  normalizeProductFromSource,
+  prepareProductForPersist,
+} from './product-status'
 import type {
   Producto,
   ProductoConPrecios,
@@ -75,12 +79,15 @@ export async function getProductos(filtros?: FiltrosProductos): Promise<Paginate
     }
 
     // Calcular precio base (el más bajo de cada producto)
-    const productos = data?.map(p => ({
-      ...p,
-      precio_base: p.precios_escalonados?.length > 0
-        ? Math.min(...p.precios_escalonados.map((pe: any) => pe.precio_unitario))
-        : 0
-    })) || []
+    const productos = (data ?? []).map((p) => {
+      const normalized = normalizeProductFromSource(p)
+      return {
+        ...normalized,
+        precio_base: normalized.precios_escalonados?.length > 0
+          ? Math.min(...normalized.precios_escalonados.map((pe: any) => pe.precio_unitario))
+          : 0,
+      }
+    })
 
     return {
       data: productos,
@@ -106,11 +113,13 @@ export async function getProducto(id: number): Promise<ProductoConPrecios | null
 
   if (!data) return null
 
+  const normalized = normalizeProductFromSource(data)
+
   return {
-    ...data,
-    precio_base: data.precios_escalonados?.length > 0
-      ? Math.min(...data.precios_escalonados.map((pe: any) => pe.precio_unitario))
-      : 0
+    ...normalized,
+    precio_base: normalized.precios_escalonados?.length > 0
+      ? Math.min(...normalized.precios_escalonados.map((pe: any) => pe.precio_unitario))
+      : 0,
   }
 }
 
@@ -131,10 +140,12 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
       }
     }
 
+    const persistPayload = prepareProductForPersist(producto)
+
     console.log('📦 Insertando producto con SKU:', sku)
     const { data, error } = await supabase
       .from('productos')
-      .insert({ ...producto, sku })
+      .insert({ ...persistPayload, sku })
       .select()
       .single()
 
@@ -153,7 +164,7 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
     }
     
     console.log('✅ Producto creado exitosamente:', data.id)
-    return data
+    return normalizeProductFromSource(data)
   } catch (error: any) {
     console.error('❌ Error completo en createProducto:', {
       message: error?.message,
@@ -172,15 +183,17 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
 }
 
 export async function updateProducto(id: number, producto: Partial<Producto>): Promise<Producto> {
+  const persistPayload = prepareProductForPersist(producto)
+
   const { data, error } = await supabase
     .from('productos')
-    .update({ ...producto, updated_at: new Date().toISOString() })
+    .update({ ...persistPayload, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single()
 
   if (error) throw error
-  return data
+  return normalizeProductFromSource(data)
 }
 
 export async function deleteProducto(id: number): Promise<void> {

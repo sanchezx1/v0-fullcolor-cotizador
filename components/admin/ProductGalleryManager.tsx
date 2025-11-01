@@ -76,9 +76,9 @@ export function ProductGalleryManager({
 
   const dropzoneDescription = useMemo(() => {
     if (disabled) {
-      return 'La galer��a est�� deshabilitada'
+      return 'La galería está deshabilitada'
     }
-    return 'Arrastra tus im��genes aqu�� o haz click para seleccionar'
+    return 'Arrastra tus imágenes aquí o haz click para seleccionar'
   }, [disabled])
 
   return (

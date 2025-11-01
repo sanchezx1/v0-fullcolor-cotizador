@@ -44,7 +44,9 @@ export default function NuevoProductoPage() {
     color: '',
     lados: '',
     impresion: '',
-    activo: true
+    activo: true,
+    agotado: false,
+    mas_vendido: false
   })
   const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
   
@@ -237,7 +239,9 @@ export default function NuevoProductoPage() {
         sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        activo: formData.activo
+        activo: formData.activo,
+        agotado: formData.agotado,
+        mas_vendido: formData.mas_vendido
       })
 
       const primaryImageUrl = await syncGalleryWithStorage(producto.id)
@@ -274,7 +278,9 @@ export default function NuevoProductoPage() {
         sku: skuManual ? formData.sku : '',
         descripcion: formData.descripcion || undefined,
         categoria: formData.categoria,
-        activo: formData.activo
+        activo: formData.activo,
+        agotado: formData.agotado,
+        mas_vendido: formData.mas_vendido
       })
 
       const primaryImageUrl = await syncGalleryWithStorage(producto.id)
@@ -493,19 +499,56 @@ export default function NuevoProductoPage() {
             </div>
 
             {/* Estado */}
-            <div className="flex items-center justify-between border-t pt-6">
-              <div className="space-y-1">
-                <Label htmlFor="activo">Estado del Producto</Label>
-                <p className="text-sm text-gray-500">
-                  Los productos inactivos no aparecerán en el catálogo público
-                </p>
+            <div className="border-t pt-6 space-y-4">
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="activo" className="text-base font-semibold text-slate-900">Visible en catálogo</Label>
+                  <p id="activo-help" className="text-sm text-gray-500">
+                    Los productos inactivos no aparecerán en el catálogo público.
+                  </p>
+                </div>
+                <Switch
+                  id="activo"
+                  aria-describedby="activo-help"
+                  checked={formData.activo}
+                  onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
+                  className="self-start sm:self-auto"
+                />
               </div>
-              <Switch
-                id="activo"
-                checked={formData.activo}
-                onCheckedChange={(checked) => setFormData({ ...formData, activo: checked })}
-              />
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="agotado" className="text-base font-semibold text-slate-900">Marcar como agotado</Label>
+                  <p id="agotado-help" className="text-sm text-gray-500">
+                    Muestra una etiqueta "Agotado" en el catálogo y bloqueará nuevas adiciones a cotizaciones.
+                  </p>
+                </div>
+                <Switch
+                  id="agotado"
+                  aria-describedby="agotado-help"
+                  checked={formData.agotado}
+                  onCheckedChange={(checked) => setFormData({ ...formData, agotado: checked })}
+                  className="self-start sm:self-auto"
+                />
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-[#0066CC]/25 bg-[#0066CC]/10 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="mas-vendido" className="text-base font-semibold text-[#0066CC]">Destacar como "Más vendido"</Label>
+                  <p id="mas-vendido-help" className="text-sm text-[#1F2937]">
+                    Resalta este producto con un badge especial en el catálogo y en la ficha detallada.
+                  </p>
+                </div>
+                <Switch
+                  id="mas-vendido"
+                  aria-describedby="mas-vendido-help"
+                  checked={formData.mas_vendido}
+                  onCheckedChange={(checked) => setFormData({ ...formData, mas_vendido: checked })}
+                  className="self-start sm:self-auto"
+                />
+              </div>
             </div>
+
 
             {/* Botones */}
             <div className="flex flex-wrap gap-3 pt-6">

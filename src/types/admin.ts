@@ -15,6 +15,8 @@ export interface Producto {
   categoria: ProductoCategoria
   unidad: string
   minimo_pedido: number
+  agotado?: boolean
+  mas_vendido?: boolean
   activo: boolean
   imagen_url?: string
   created_at: string
@@ -184,6 +186,8 @@ export interface ProductoFormData {
   unidad?: string
   minimo_pedido?: number
   activo?: boolean
+  agotado?: boolean
+  mas_vendido?: boolean
   imagen_url?: string
 }
 

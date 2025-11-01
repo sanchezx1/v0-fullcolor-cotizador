@@ -46,6 +46,14 @@ export const productoSchema = z.object({
   activo: z.boolean()
     .default(true)
     .optional(),
+
+  agotado: z.boolean()
+    .default(false)
+    .optional(),
+
+  mas_vendido: z.boolean()
+    .default(false)
+    .optional(),
   
   imagen_url: z.string()
     .url('Debe ser una URL válida')

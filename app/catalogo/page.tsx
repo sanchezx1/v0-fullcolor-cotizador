@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { AlertCircle, Search } from "lucide-react"
 
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { listProducts, searchProducts, getProductsByCategory } from "@/src/lib/data"
-import { Producto } from "@/src/services/supabaseClient"
+import { supabase, Producto } from "@/src/services/supabaseClient"
 
 const LOAD_ERROR_MESSAGE = "Error al cargar los productos"
 
@@ -19,6 +19,76 @@ export default function CatalogoPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [sortBy, setSortBy] = useState("name")
+  const [pricingByProduct, setPricingByProduct] = useState<Record<number, { fromPrice: number; fromQuantity: number }>>({})
+  const pricingRequestRef = useRef(0)
+
+  const currencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("es-EC", {
+        style: "currency",
+        currency: "USD",
+        currencyDisplay: "narrowSymbol",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }),
+    []
+  )
+
+  const quantityFormatter = useMemo(() => new Intl.NumberFormat("es-EC"), [])
+
+  const loadPricingForProducts = useCallback(
+    async (productList: Producto[]) => {
+      const productIds = productList.map((product) => product.id)
+      const requestId = ++pricingRequestRef.current
+
+      if (productIds.length === 0) {
+        if (pricingRequestRef.current === requestId) {
+          setPricingByProduct({})
+        }
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("precios_escalonados")
+          .select("producto_id, cantidad_min, precio_unitario")
+          .in("producto_id", productIds)
+          .order("cantidad_min", { ascending: true })
+
+        if (error) {
+          console.error("Error loading pricing tiers:", error)
+          return
+        }
+
+        if (pricingRequestRef.current !== requestId) {
+          return
+        }
+
+        const nextPricing: Record<number, { fromPrice: number; fromQuantity: number }> = {}
+
+        data?.forEach((tier) => {
+          const current = nextPricing[tier.producto_id]
+          if (!current || tier.cantidad_min > current.fromQuantity) {
+            nextPricing[tier.producto_id] = {
+              fromPrice: tier.precio_unitario,
+              fromQuantity: tier.cantidad_min
+            }
+          } else if (tier.cantidad_min === current.fromQuantity && tier.precio_unitario < current.fromPrice) {
+            nextPricing[tier.producto_id] = {
+              fromPrice: tier.precio_unitario,
+              fromQuantity: tier.cantidad_min
+            }
+          }
+        })
+
+        setPricingByProduct(nextPricing)
+      } catch (pricingError) {
+        console.error("Error processing pricing tiers:", pricingError)
+      }
+    },
+    []
+  )
+
 
   useEffect(() => {
     void loadProducts()
@@ -31,6 +101,7 @@ export default function CatalogoPage() {
 
       const productsData = await listProducts()
       setProducts(productsData)
+      void loadPricingForProducts(productsData)
     } catch (err) {
       console.error("Error loading products:", err)
       setError(LOAD_ERROR_MESSAGE)
@@ -51,6 +122,7 @@ export default function CatalogoPage() {
       setLoading(true)
       const searchResults = await searchProducts(query)
       setProducts(searchResults)
+      void loadPricingForProducts(searchResults)
     } catch (err) {
       console.error("Error searching products:", err)
       setError("Error al buscar productos")
@@ -71,6 +143,7 @@ export default function CatalogoPage() {
       setLoading(true)
       const categoryProducts = await getProductsByCategory(category)
       setProducts(categoryProducts)
+      void loadPricingForProducts(categoryProducts)
     } catch (err) {
       console.error("Error filtering by category:", err)
       setError("Error al filtrar por categoría")
@@ -288,44 +361,121 @@ export default function CatalogoPage() {
                 </Button>
               </div>
             ) : (
-              <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4">
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 2xl:grid-cols-4">
                 {sortedProducts.map((product) => (
                   <article
                     key={product.id}
-                    className="group flex h-full flex-col rounded-[28px] bg-white/90 p-3 sm:p-4 shadow-[0_28px_80px_-60px_rgba(0,102,204,0.45)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_32px_95px_-55px_rgba(0,102,204,0.55)]"
+                    className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/95 shadow-[0_26px_85px_-60px_rgba(0,102,204,0.55)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_32px_105px_-58px_rgba(0,102,204,0.6)]"
                   >
                     <Link
                       href={`/producto/${product.id}`}
-                      className="block overflow-hidden rounded-2xl bg-[#eeeeee]"
-                      aria-label={`Ver detalles de ${product.nombre}`}
+                      className="relative block overflow-hidden rounded-[24px] bg-white p-2.5 transition duration-300 group-hover:bg-white sm:p-3"
+                      aria-label={`Ver detalles de ${product.nombre}${product.agotado ? ' (agotado)' : ''}`}
                     >
-                      <div className="aspect-[4/3] w-full">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[20px]">
+                        {product.mas_vendido && (
+                          <span className="absolute left-3 top-3 z-20 inline-flex items-center gap-1 rounded-full bg-[#FFD700] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#1F2937] shadow-[0_12px_30px_-18px_rgba(31,41,55,0.7)]">
+                            Más vendido
+                          </span>
+                        )}
                         <img
                           src={product.imagen_url || "/placeholder.svg?height=320&width=400"}
                           alt={product.nombre}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          className={`h-full w-full object-cover transition duration-500 ease-out group-hover:scale-105 ${product.agotado ? 'opacity-70 saturate-[65%]' : ''}`}
+                        />
+                        {product.agotado && (
+                          <div
+                            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 bg-slate-900/65 backdrop-blur-sm text-white"
+                            role="status"
+                            aria-live="polite"
+                          >
+                            <span className="rounded-full border border-white/40 bg-white/90 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-[#1F2937]">
+                              Agotado
+                            </span>
+                            <span className="text-xs text-white/80">Disponible nuevamente muy pronto</span>
+                          </div>
+                        )}
+                        <div
+                          className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-slate-900/18 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                          aria-hidden="true"
                         />
                       </div>
                     </Link>
 
-                    <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
+                    <div className="flex flex-1 flex-col gap-4 px-4 py-5 sm:px-5 sm:py-6">
+                      <div className="flex flex-1 flex-col gap-3">
+                        <Link
+                          href={`/producto/${product.id}`}
+                          className="block text-lg font-semibold leading-tight text-slate-900 transition hover:text-[#0066CC] sm:text-xl"
+                        >
+                          {product.nombre}
+                        </Link>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex max-w-max items-center gap-2 rounded-full bg-[#0066CC]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#0066CC]">
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#FFD700]" aria-hidden="true" />
+                            {product.categoria}
+                          </span>
+                          {product.mas_vendido && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#FFD700]/40 bg-[#FFD700]/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#1F2937]">
+                              Más vendido
+                            </span>
+                          )}
+                          {product.agotado && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#1F2937]/20 bg-[#1F2937]/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                              Agotado
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 text-sm sm:text-base">
+                        {(() => {
+                          const pricingInfo = pricingByProduct[product.id]
+                          if (pricingInfo && pricingInfo.fromPrice > 0) {
+                            const formattedPrice = currencyFormatter.format(pricingInfo.fromPrice)
+                            const formattedQuantity = quantityFormatter.format(pricingInfo.fromQuantity)
+                            return (
+                              <p className="leading-relaxed text-slate-600">
+                                <span className="font-semibold text-[#0066CC]">Desde {formattedPrice}</span> por artículo{" "}
+                                <span className="text-slate-500">
+                                  (pedido mínimo {formattedQuantity} {product.unidad})
+                                </span>
+                              </p>
+                            )
+                          }
+
+                          if (product.minimo_pedido) {
+                            const formattedQuantity = quantityFormatter.format(product.minimo_pedido)
+                            return (
+                              <p className="leading-relaxed text-slate-600">
+                                Tarifas disponibles al cotizar{" "}
+                                <span className="text-slate-500">
+                                  (pedido mínimo {formattedQuantity} {product.unidad})
+                                </span>
+                              </p>
+                            )
+                          }
+
+                          return <p className="leading-relaxed text-slate-600">Tarifas disponibles al cotizar.</p>
+                        })()}
+                        {product.agotado && (
+                          <p className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+                            <span className="inline-block h-2 w-2 rounded-full bg-[#FFD700]" aria-hidden="true" />
+                            Producto temporalmente agotado. Revisa otras opciones del catálogo.
+                          </p>
+                        )}
+                      </div>
+
                       <Link
                         href={`/producto/${product.id}`}
-                        className="block text-base sm:text-lg font-semibold leading-tight text-slate-900 transition hover:text-[#0066CC] line-clamp-2"
+                        className="inline-flex items-center gap-2 self-start text-sm font-semibold text-[#0066CC] transition hover:text-[#005bb5]"
                       >
-                        {product.nombre}
+                        Ver detalles
+                        <span aria-hidden="true" className="translate-x-0 transition-transform duration-300 group-hover:translate-x-1">
+                          &rarr;
+                        </span>
                       </Link>
-
-                      {product.minimo_pedido ? (
-                        <p className="text-xs sm:text-sm font-medium text-slate-500">
-                          Mín: {product.minimo_pedido} {product.unidad}
-                        </p>
-                      ) : null}
-
-                      <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500">
-                        <span className="inline-block h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-[#0066CC]" aria-hidden="true" />
-                        <span className="line-clamp-1">{product.categoria}</span>
-                      </div>
                     </div>
                   </article>
                 ))}

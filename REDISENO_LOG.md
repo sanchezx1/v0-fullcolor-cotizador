@@ -781,3 +781,37 @@ npm run build
 - Archivo: app/producto/[id]/page.tsx
 
 **Estado:** En revision
+
+### 2025-10-31 - Estado de productos (admin + catálogo)
+
+**Descripcion:** Se habilitaron los flags "Agotado" y "Más vendido" con controles mobile-first en el panel admin, badges visuales consistentes en catálogo/ficha y bloqueo guiado al intentar cotizar artículos sin stock.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /admin/productos
+- /catalogo
+- /producto/[id]
+- /cotizador
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: app/admin/productos/[id]/page.tsx
+- Archivo: app/admin/productos/nuevo/page.tsx
+- Archivo: app/admin/productos/page.tsx
+- Archivo: app/catalogo/page.tsx
+- Archivo: app/producto/[id]/page.tsx
+- Archivo: src/hooks/useQuoteBuilder.ts
+- Archivo: lib/admin-types.ts
+- Archivo: src/services/supabaseClient.ts
+- Archivo: src/types/admin.ts
+- Archivo: src/lib/validations.ts
+
+**Estado:** En revision

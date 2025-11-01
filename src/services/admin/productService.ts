@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient'
+import { normalizeProductFromSource, prepareProductForPersist } from '@/lib/product-status'
 import type { 
   Producto, 
   ProductoConPrecios,
@@ -57,8 +58,10 @@ export async function getProductos(
 
     if (error) throw error
 
+    const productos = (data || []).map(normalizeProductFromSource)
+
     return {
-      data: data || [],
+      data: productos,
       total: count || 0,
       page,
       perPage,
@@ -98,8 +101,10 @@ export async function getProductoById(id: number): Promise<ProductoConPrecios | 
       ? Math.min(...precios.map(p => Number(p.precio_unitario)))
       : undefined
 
+    const normalized = normalizeProductFromSource(producto)
+
     return {
-      ...producto,
+      ...normalized,
       precios_escalonados: precios || [],
       precio_base
     }
@@ -225,14 +230,16 @@ export async function createProducto(
       }
     }
 
+    const persistPayload = prepareProductForPersist(producto)
+
     const { data, error } = await supabase
       .from('productos')
-      .insert({ ...producto, sku })
+      .insert({ ...persistPayload, sku })
       .select()
       .single()
 
     if (error) throw error
-    return data
+    return normalizeProductFromSource(data)
   } catch (error) {
     console.error('Error en createProducto:', error)
     throw error
@@ -255,15 +262,17 @@ export async function updateProducto(
       }
     }
 
+    const persistPayload = prepareProductForPersist(producto)
+
     const { data, error } = await supabase
       .from('productos')
-      .update(producto)
+      .update(persistPayload)
       .eq('id', id)
       .select()
       .single()
 
     if (error) throw error
-    return data
+    return normalizeProductFromSource(data)
   } catch (error) {
     console.error('Error en updateProducto:', error)
     throw error

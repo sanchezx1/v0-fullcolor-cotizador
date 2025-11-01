@@ -93,6 +93,38 @@ export default function ProductPage() {
     })
   }
 
+  const showOutOfStockToast = () => {
+    toast.custom((id) => (
+      <div className="w-full max-w-sm rounded-2xl border border-[#0066CC]/20 bg-white p-4 shadow-lg ring-1 ring-[#0066CC]/15 transition-all duration-300 ease-out dark:bg-slate-900">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0066CC]/10 text-[#0066CC]">
+            <AlertCircle className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div className="flex-1 space-y-3">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-[#0066CC]">Lo sentimos, este producto está agotado.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-200">Explora otras opciones disponibles en el catálogo.</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              className="w-full bg-[#0066CC] text-white hover:bg-[#005bb5] focus-visible:ring-[#FFD700]"
+              onClick={() => {
+                toast.dismiss(id)
+                router.push("/catalogo")
+              }}
+            >
+              Ver más opciones en el catálogo
+            </Button>
+          </div>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      closeButton: false
+    })
+  }
+
   const handleScrollToPricing = () => {
     setActiveTab("pricing")
     if (pricingSectionRef.current) {
@@ -158,6 +190,10 @@ export default function ProductPage() {
 
   const handleAddToQuote = async () => {
     if (!product) return
+    if (product.agotado) {
+      showOutOfStockToast()
+      return
+    }
 
     const minimumFromTier = product.pricingTiers.length > 0 ? product.pricingTiers[0].cantidad_min : null
     const minimumOrder = minimumFromTier ?? (product.minimo_pedido && product.minimo_pedido > 0 ? product.minimo_pedido : 1)
@@ -178,6 +214,9 @@ export default function ProductPage() {
       showQuoteToast()
     } catch (err) {
       console.error('Error adding to quote:', err)
+      if (err instanceof Error && (err as any).code === 'PRODUCTO_AGOTADO') {
+        showOutOfStockToast()
+      }
     } finally {
       setAddingToQuote(false)
     }
@@ -256,7 +295,8 @@ export default function ProductPage() {
     : product.minimo_pedido && product.minimo_pedido > 0
       ? product.minimo_pedido
       : 1
-  const isBelowMinimum = quantity !== "" && quantityValue < minQuantity
+  const outOfStock = Boolean(product.agotado)
+  const isBelowMinimum = !outOfStock && quantity !== "" && quantityValue < minQuantity
   const quantityErrorId = `quantity-error-${product.id}`
 
   return (
@@ -284,9 +324,21 @@ export default function ProductPage() {
           {/* Product Info */}
           <div className="space-y-6">
             <div>
-              <Badge variant="secondary" className="mb-3">
-                {product.categoria}
-              </Badge>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">
+                  {product.categoria}
+                </Badge>
+                {product.mas_vendido && (
+                  <Badge variant="outline" className="border-[#FFD700]/40 bg-[#FFD700]/20 text-[#1F2937]">
+                    Más vendido
+                  </Badge>
+                )}
+                {outOfStock && (
+                  <Badge variant="outline" className="border-[#1F2937]/30 bg-[#1F2937]/90 text-white">
+                    Agotado
+                  </Badge>
+                )}
+              </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-4">
                 {product.nombre}
               </h1>
@@ -318,7 +370,9 @@ export default function ProductPage() {
                     onChange={(e) => handleQuantityChange(e.target.value)}
                     aria-invalid={isBelowMinimum}
                     aria-describedby={isBelowMinimum ? quantityErrorId : undefined}
-                    className="mt-2"
+                    className={`mt-2 ${outOfStock ? 'cursor-not-allowed opacity-80' : ''}`}
+                    disabled={outOfStock}
+                    aria-disabled={outOfStock || undefined}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Cantidad mínima: {minQuantity} {product.unidad}
@@ -360,11 +414,22 @@ export default function ProductPage() {
                   Ver listas de precios
                 </button>
 
+                {outOfStock && (
+                  <div className="flex items-start gap-3 rounded-lg border border-[#1F2937]/15 bg-[#1F2937]/5 px-4 py-3 text-sm text-[#1F2937]">
+                    <AlertCircle className="mt-0.5 h-5 w-5 text-[#0066CC]" aria-hidden="true" />
+                    <div>
+                      <p className="font-semibold">Producto temporalmente agotado</p>
+                      <p className="text-[#4B5563]">Puedes revisar el catálogo para encontrar alternativas similares.</p>
+                    </div>
+                  </div>
+                )}
+
                 <Button 
-                  className="w-full" 
+                  className={`w-full transition-colors ${outOfStock ? 'bg-slate-300 text-slate-600 hover:bg-slate-300 focus-visible:ring-[#FFD700] cursor-not-allowed' : ''}`} 
                   size="lg"
                   onClick={handleAddToQuote}
                   disabled={addingToQuote || quoteLoading}
+                  aria-disabled={outOfStock || undefined}
                 >
                   {addingToQuote ? (
                     <>
@@ -378,8 +443,17 @@ export default function ProductPage() {
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-4 h-4 mr-2" />
-                      Agregar a Cotización
+                      {outOfStock ? (
+                        <>
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          Producto agotado
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          Agregar a Cotización
+                        </>
+                      )}
                     </>
                   )}
                 </Button>
