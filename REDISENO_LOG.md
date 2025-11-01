@@ -36,7 +36,47 @@ BitÃƒÂ¡cora incremental del rediseÃƒÂ±o de frontend. **Cada tarea de UI 
 
 ---
 
-## Ã°Å¸â€œâ€“ Entradas de RediseÃƒÂ±o
+## Ã°Å¸â€œâ€" Entradas de RediseÃƒÂ±o
+
+### [2025-11-01] - Pull Request: Rediseño Completo Mobile-First
+
+**Descripción:** Apertura de PR (#2) con rediseño completo del frontend manteniendo funcionalidad y contratos de API.
+
+**Impacto en contratos:** Ninguno ✅
+
+**Rutas afectadas:**
+- `/` (Homepage)
+- `/catalogo`
+- `/cotizador`
+- `/confirmacion`
+- `/producto/[id]`
+- `/admin/*` (todas las rutas admin)
+- `/auth/login`
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada (WCAG 2.1 AA)
+- [x] Colores de marca aplicados (#0066CC, #FFD700)
+- [x] Animaciones sutiles implementadas
+- [x] Build exitoso (tests pasando)
+- [ ] PR aprobado (pendiente review)
+
+**Artefactos:**
+- PR: #2
+- URL: https://github.com/sanchezx1/v0-fullcolor-cotizador/pull/2
+- Commits: 53 archivos modificados (+5,636 / -4,251 líneas)
+- Fix pre-merge: cc1ce29 (Suspense boundary en login)
+
+**Estado:** 🟡 En revisión
+
+**Notas:**
+- Build verde ✅
+- Sin cambios en backend/API ✅
+- Funcionalidad preservada ✅
+- Listo para merge con "Squash & merge"
+- NO borrar rama feature/front-design post-merge
+
+---
 
 ### [2025-10-23] - PreparaciÃƒÂ³n de GuÃƒÂ­a Mobile-First
 
@@ -573,9 +613,9 @@ npm run build
 - Cambios: Grid (grid-cols-2), tipografía responsive, padding y spacing
 
 **Estado:** 🟢 Completado
-### [2025-10-30] - Confirmaci�n: Recordatorio de correo
+### [2025-10-30] - Confirmaci�n: Recordatorio de correo
 
-**Descripci�n:** Se a�adi� un mensaje complementario bajo el encabezado de �xito para recordar al usuario revisar spam o correo no deseado.
+**Descripci�n:** Se a�adi� un mensaje complementario bajo el encabezado de �xito para recordar al usuario revisar spam o correo no deseado.
 
 **Impacto en contratos:** Ninguno
 
@@ -593,10 +633,10 @@ npm run build
 **Artefactos:**
 - Archivo: `app/confirmacion/page.tsx`
 
-**Estado:** En revisi�n
+**Estado:** En revisi�n
 
 **Notas:**
-- Se preserv� la jerarqu�a visual original y se ajust� el espaciado del bloque principal.
+- Se preserv� la jerarqu�a visual original y se ajust� el espaciado del bloque principal.
 ### [2025-10-30] - Header Mobile Menu
 
 **Descripcion:** Implementacion de menu hamburguesa mobile-first con panel lateral animado y CTA destacada en colores de marca.
@@ -651,7 +691,7 @@ npm run build
 - CTA Seguir comprando redirige al catalogo para continuar navegacion.
 - Actualizacion: Menu mobile ahora ocupa pantalla completa con fondo blanco y enlaces de texto para mejorar legibilidad.
 
-- Se sum� un emoji de advertencia para llamar la atenci�n sin romper el tono de la interfaz.
+- Se sum� un emoji de advertencia para llamar la atenci�n sin romper el tono de la interfaz.
 ### [2025-10-30] - Header Mobile Menu Overlay Fix
 
 **Descripcion:** Fondo solido blanco para el desplegable mobile y ocultar logo base al abrirlo para evitar duplicidad visual.
@@ -715,9 +755,9 @@ npm run build
 - Archivo: components/header.tsx
 
 **Estado:** En revision
-### 2025-10-30 - Galer�a de Productos
+### 2025-10-30 - Galer�a de Productos
 
-**Descripci�n:** Se habilit� una galer�a multi-imagen con carrusel responsivo en la ficha p�blica y un gestor completo de galer�a en la creaci�n y edici�n de productos dentro del panel administrativo.
+**Descripci�n:** Se habilit� una galer�a multi-imagen con carrusel responsivo en la ficha p�blica y un gestor completo de galer�a en la creaci�n y edici�n de productos dentro del panel administrativo.
 
 **Impacto en contratos:** Ninguno
 
@@ -737,7 +777,7 @@ npm run build
 **Artefactos:**
 - Capturas: pendiente de adjuntar
 
-**Estado:** En revisi�n
+**Estado:** En revisi�n
 ### 2025-10-30 - Ajustes ficha de producto
 
 **Descripcion:** Se priorizo la pestana de precios en la ficha individual, se elimino la tarjeta de tiempo de entrega y se agrego el enlace "Ver listas de precios" con desplazamiento suave hacia las escalas de precio.
