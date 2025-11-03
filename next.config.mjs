@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false, // ✅ Validar ESLint en builds
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // ✅ Validar TypeScript en builds
   },
   images: {
-    unoptimized: true,
+    unoptimized: true, // Mantener temporalmente hasta verificar dominios
   },
 }
 

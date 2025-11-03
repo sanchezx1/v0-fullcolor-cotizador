@@ -68,7 +68,7 @@ export class PDFGenerationService {
       console.error('❌ Error general en generateQuotePDF:', error)
       return {
         success: false,
-        error: `Error interno: ${error.message}`
+        error: `Error interno: ${error instanceof Error ? error.message : String(error)}`
       }
     }
   }
@@ -106,7 +106,7 @@ export class PDFGenerationService {
       console.error('Error in generateAndEmailPDF:', error)
       return {
         success: false,
-        error: `Error interno: ${error.message}`
+        error: `Error interno: ${error instanceof Error ? error.message : String(error)}`
       }
     }
   }
@@ -142,7 +142,7 @@ export class PDFGenerationService {
     } catch (error) {
       return {
         success: false,
-        error: `Error interno enviando email: ${error.message}`
+        error: `Error interno enviando email: ${error instanceof Error ? error.message : String(error)}`
       }
     }
   }

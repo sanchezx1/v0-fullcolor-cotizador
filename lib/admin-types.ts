@@ -45,6 +45,7 @@ export interface Lead {
   telefono: string
   ciudad?: string
   direccion?: string
+  notas?: string
   created_at: string
 }
 
@@ -84,7 +85,7 @@ export interface ItemCotizacion {
 }
 
 export interface CotizacionConRelaciones extends Cotizacion {
-  leads: Lead
+  lead: Lead
   items_cotizacion?: ItemCotizacion[]
   eventos?: Evento[]
 }

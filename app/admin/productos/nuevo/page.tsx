@@ -119,12 +119,13 @@ export default function NuevoProductoPage() {
       return
     }
 
-    const newItems = accepted.map((file) => ({
+    const newItems: GalleryItemState[] = accepted.map((file) => ({
       id: createGalleryId(),
       src: URL.createObjectURL(file),
       file,
       status: 'new' as const,
       isPrimary: false,
+      pendingRemoval: false,
     }))
 
     setGalleryItems((prev) => {

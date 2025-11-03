@@ -6,7 +6,7 @@ type ProductStatus = {
 const STATUS_PREFIX = '<!--FC_STATUS:'
 const STATUS_SUFFIX = '-->'
 
-const STATUS_REGEX = /<!--FC_STATUS:(.*?)-->/s
+const STATUS_REGEX = /<!--FC_STATUS:([\s\S]*?)-->/
 
 function parseStatusPayload(payload: string | undefined): ProductStatus {
   if (!payload) {

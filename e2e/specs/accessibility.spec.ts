@@ -18,7 +18,7 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await page.goto('/')
     await injectAxe(page)
     
-    const violations = await getViolations(page, null, {
+    const violations = await getViolations(page, undefined, {
       rules: {
         'color-contrast': { enabled: true },
         'heading-order': { enabled: true },
@@ -39,7 +39,7 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await page.goto('/catalogo')
     await injectAxe(page)
     
-    await checkA11y(page, null, {
+    await checkA11y(page, undefined, {
       detailedReport: true,
       detailedReportOptions: {
         html: true,
@@ -87,7 +87,7 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await page.goto('/')
     await injectAxe(page)
     
-    const violations = await getViolations(page, null, {
+    const violations = await getViolations(page, undefined, {
       rules: {
         'color-contrast': { enabled: true },
       },
@@ -120,7 +120,7 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await page.goto('/')
     await injectAxe(page)
     
-    const violations = await getViolations(page, null, {
+    const violations = await getViolations(page, undefined, {
       rules: {
         'heading-order': { enabled: true },
       },
@@ -135,7 +135,7 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await page.goto('/')
     await injectAxe(page)
     
-    const violations = await getViolations(page, null, {
+    const violations = await getViolations(page, undefined, {
       rules: {
         'link-name': { enabled: true },
       },

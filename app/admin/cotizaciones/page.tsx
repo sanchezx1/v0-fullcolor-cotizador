@@ -39,16 +39,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getCotizaciones } from '@/lib/admin-services'
-import type { Cotizacion, Lead, EstadoCotizacion, FiltrosCotizaciones } from '@/lib/admin-types'
+import type { CotizacionConRelaciones, EstadoCotizacion, FiltrosCotizaciones } from '@/lib/admin-types'
 import { toast } from 'sonner'
-
-interface CotizacionConLead extends Cotizacion {
-  lead: Lead
-}
 
 export default function CotizacionesListPage() {
   const router = useRouter()
-  const [cotizaciones, setCotizaciones] = useState<CotizacionConLead[]>([])
+  const [cotizaciones, setCotizaciones] = useState<CotizacionConRelaciones[]>([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -306,10 +302,10 @@ export default function CotizacionesListPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{cotizacion.leads.nombre}</div>
-                      {cotizacion.leads.empresa && (
+                      <div className="font-medium">{cotizacion.lead.nombre}</div>
+                      {cotizacion.lead.empresa && (
                         <div className="text-sm text-muted-foreground">
-                          {cotizacion.leads.empresa}
+                          {cotizacion.lead.empresa}
                         </div>
                       )}
                     </div>

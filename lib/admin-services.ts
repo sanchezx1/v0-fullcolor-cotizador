@@ -25,6 +25,7 @@ import type {
   LeadConEstadisticas,
   Cotizacion,
   CotizacionCompleta,
+  CotizacionConRelaciones,
   ItemCotizacion,
   Evento,
   EstadisticasDashboard,

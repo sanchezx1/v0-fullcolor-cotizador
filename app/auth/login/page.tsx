@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 
+// Componente interno que usa useSearchParams
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -179,6 +180,7 @@ function LoginForm() {
   )
 }
 
+// Componente principal con Suspense boundary
 export default function LoginPage() {
   return (
     <Suspense fallback={

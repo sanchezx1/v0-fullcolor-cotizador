@@ -408,7 +408,7 @@ export default function EditarProductoPage() {
         activo: formData.activo,
         agotado: formData.agotado,
         mas_vendido: formData.mas_vendido,
-        imagen_url: primaryImageUrl ?? null
+        imagen_url: primaryImageUrl ?? undefined
       })
 
       toast.success('Producto actualizado exitosamente')
