@@ -1,52 +1,604 @@
-# Testing Agent 🧪 - FullColor Cotizador# Testing Agent — FullColor Cotizador
+# Testing Agent 🧪 - FullColor Cotizador
 
-
-
-> **Testing completo: Unit, Integration, E2E, Accessibility**  > **Rol:** Agente especializado en garantizar la calidad funcional y accesibilidad del sistema mediante testing exhaustivo en todos los niveles.
-
-> **Basado en análisis real del repositorio**
+> **Agente especializado en testing automatizado: Unit, Integration, E2E, Accessibility**  
+> **Estado:** ✅ 73/73 tests PASSING | Cobertura: 50% threshold configurado  
+> **Última verificación:** feature/qa-fixes-and-optimization (Nov 2025)
 
 ---
 
----
-
-## Objetivo
-
-## 📊 Estado Actual (Verificado)
-
-Implementar y mantener una **estrategia de testing completa** que garantice:
+## 📊 Estado Actual (VERIFICADO)
 
 ```bash
+$ npm run test:unit
 
-$ npm run test:unit1. **Funcionalidad correcta** en todos los flujos críticos
+✅ PASS  tests/unit/validations.test.ts
+✅ PASS  tests/unit/pricing.test.ts
+✅ PASS  tests/unit/quote-calculations.test.ts
 
-✅ PASS tests/unit/quote-calculations.test.ts2. **Prevención de regresiones** mediante tests automatizados
-
-✅ PASS tests/unit/pricing.test.ts (5.354s)3. **Accesibilidad** conforme a WCAG 2.1 nivel AA
-
-✅ PASS tests/unit/validations.test.ts (5.541s)4. **Compatibilidad cross-browser** y responsive
-
-5. **Cobertura mínima de código** del 50% (objetivo: 80%)
-
-Test Suites: 3 passed, 3 total6. **Integración continua** con GitHub Actions que bloquea merges defectuosos
-
+Test Suites: 3 passed, 3 total
 Tests:       73 passed, 73 total
-
-Time:        14.136s---
-
+Snapshots:   0 total
+Time:        1.679 s
 ```
 
-## Alcance
+**Baseline verificado:**
+- ✅ **Build:** PASSING (22 routes optimizadas)
+- ✅ **Tests:** 73/73 PASSING en 1.679s
+- ✅ **TypeScript:** 0 errores
+- ✅ **Cobertura:** Threshold 50% (v8 coverage provider)
+- ⚠️ **E2E:** 2 specs configurados (Playwright), no ejecutados en CI aún
 
 ---
-
-### ✅ Incluido
 
 ## 🎯 Objetivo
 
-- **Tests unitarios** de servicios, utilidades y lógica de negocio
+Garantizar **100% del código crítico** con tests automatizados y prevenir regresiones:
 
-Garantizar que **100% del código crítico** tiene tests automatizados:- **Tests de integración** con Supabase (usando mocks o test database)
+1. ✅ **Funcionalidad correcta** - Validaciones, cálculos de precio, lógica de negocio
+2. ✅ **Prevención de regresiones** - Tests automatizados en CI/CD
+3. ⚠️ **Accesibilidad WCAG 2.1 AA** - Tests E2E con axe-playwright (configurados, no en CI)
+4. ⚠️ **Cross-browser** - Playwright 6 proyectos (Chromium, Firefox, WebKit, Mobile)
+5. 🔄 **Cobertura 50%+** - Configurado, métrica no medida aún
+6. ✅ **CI/CD** - Tests unitarios bloquean merges defectuosos
+
+---
+
+## 📦 Inventario de Tests (REAL)
+
+### 🧪 Unit Tests: 73 tests en 3 suites
+
+#### 1. `tests/unit/validations.test.ts` - **30 tests**
+**Propósito:** Validar datos de entrada críticos del negocio (Ecuador-specific)
+
+**Tests incluidos:**
+- ✅ **Teléfono ecuatoriano** (8 tests)
+  - Formato válido: `+593 99 123 4567`, `+593991234567`
+  - Código país obligatorio (+593)
+  - Operadores móviles válidos (09x)
+  - Longitud correcta (10 dígitos)
+
+- ✅ **RUC/Cédula ecuatoriana** (10 tests)
+  - Validación de cédula con dígito verificador
+  - Formato RUC empresa (13 dígitos, termina en 001)
+  - Rechazo de números inválidos
+
+- ✅ **SKU de productos** (7 tests)
+  - Formato válido: `TARJETAS-PRESENTACION`, `BANNER-LONA-120X80`
+  - Solo mayúsculas, números y guiones
+  - Rechazo de caracteres especiales
+
+- ✅ **Cálculo de totales** (5 tests)
+  - Subtotal = suma de líneas de cotización
+  - IVA = 15% del subtotal (Ecuador)
+  - Total = subtotal + IVA
+  - Redondeo a 2 decimales
+
+**Archivo:** 237 líneas, 7878 bytes
+
+---
+
+#### 2. `tests/unit/pricing.test.ts` - **28 tests**
+**Propósito:** 🔥 CRÍTICO - Cálculo de precios escalonados (revenue-impacting)
+
+**Tests incluidos:**
+- ✅ **Happy path** (8 tests)
+  - Cantidad mínima del primer tier (100 unidades)
+  - Cantidad en medio del tier (300 unidades)
+  - Salto entre tiers (500, 1000, 2500 unidades)
+  - Tier sin máximo (qty > 2500)
+
+- ✅ **Edge cases** (10 tests)
+  - Exactamente en el límite inferior (minQty)
+  - Exactamente en el límite superior (maxQty)
+  - Cantidades decimales redondeadas
+  - Tier único (sin escalonamiento)
+
+- ✅ **Validación de errores** (10 tests)
+  - Cantidad < minQty del primer tier (rechazo)
+  - Cantidad 0 o negativa
+  - Tiers inválidos (null, vacío, mal formados)
+  - Gaps en rangos de tiers
+
+**Datos de prueba:**
+```typescript
+const standardTiers: PricingTier[] = [
+  { minQty: 100, maxQty: 499, pricePerUnit: 0.25 },   // $0.25/u
+  { minQty: 500, maxQty: 999, pricePerUnit: 0.18 },   // $0.18/u
+  { minQty: 1000, maxQty: 2499, pricePerUnit: 0.12 }, // $0.12/u
+  { minQty: 2500, maxQty: null, pricePerUnit: 0.08 }, // $0.08/u
+]
+```
+
+**Archivo:** 252 líneas, 9358 bytes
+
+---
+
+#### 3. `tests/unit/quote-calculations.test.ts` - **15 tests**
+**Propósito:** Lógica de generación de cotizaciones y cálculos de totales
+
+**Tests incluidos:**
+- ✅ **Número de cotización** (8 tests)
+  - Formato `COT-XXXXX` (5 dígitos)
+  - Secuencialidad (COT-00001, COT-00002...)
+  - Fallback con timestamp si falla Supabase
+  - Unicidad del número
+
+- ✅ **Cálculos con IVA** (7 tests)
+  - Subtotal = suma de (cantidad × precio unitario)
+  - IVA 15% sobre subtotal
+  - Total = subtotal + IVA
+  - Redondeo correcto (2 decimales)
+  - Caso con descuento aplicado
+
+**Archivo:** 215 líneas, 6673 bytes
+
+---
+
+### 🔗 Integration Tests: 1 suite
+
+#### 4. `tests/integration/quote-flow.test.ts`
+**Propósito:** Flujo completo de cotización (multi-step)
+
+**Tests incluidos:**
+- ✅ Usuario agrega productos al cotizador
+- ✅ Cálculo de subtotales por línea
+- ✅ Aplicación de descuentos
+- ✅ Generación de PDF
+- ✅ Envío de email
+
+**Estado:** ⚠️ Mockea Supabase (no usa test database aún)
+
+**Archivo:** 2681 bytes
+
+---
+
+### 🌐 E2E Tests: 2 specs (Playwright)
+
+#### 5. `e2e/specs/cotizador-flow.spec.ts`
+**Propósito:** Flujo completo de usuario (browser real)
+
+**Tests incluidos:**
+- ✅ Navegación desde homepage → catálogo → producto
+- ✅ Agregar producto al cotizador
+- ✅ Ingresar datos de contacto (formulario)
+- ✅ Generar cotización
+- ✅ Verificar página de confirmación
+
+**Archivo:** 206 líneas, 8404 bytes
+
+---
+
+#### 6. `e2e/specs/accessibility.spec.ts`
+**Propósito:** Validación WCAG 2.1 AA con axe-playwright
+
+**Tests incluidos:**
+- ✅ Homepage sin violaciones
+- ✅ Catálogo sin violaciones
+- ✅ Formulario de cotizador accesible
+- ✅ Página de producto accesible
+- ✅ Admin panel accesible
+
+**Configuración:**
+- Axe-core 4.8.2
+- Axe-playwright 1.2.3
+- Rules: WCAG 2.1 Level AA
+
+**Archivo:** 234 líneas, 7672 bytes
+
+---
+
+## 🛠️ Configuración de Testing
+
+### Jest (Unit/Integration)
+
+**Archivo:** `jest.config.ts`
+
+```typescript
+{
+  coverageProvider: 'v8',              // V8 coverage (rápido)
+  testEnvironment: 'jsdom',            // Simula browser
+  setupFilesAfterEnv: ['tests/setup/jest.setup.ts'],
+  
+  testMatch: [
+    'tests/**/*.test.ts',
+    'tests/**/*.test.tsx'
+  ],
+  
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}',
+    'components/**/*.{ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**'
+  ],
+  
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50
+    }
+  }
+}
+```
+
+**Testing Library:**
+- `@testing-library/react` 15.0.0
+- `@testing-library/jest-dom` 6.1.4
+- `@testing-library/user-event` 14.5.1
+
+---
+
+### Playwright (E2E)
+
+**Archivo:** `playwright.config.ts`
+
+```typescript
+{
+  testDir: './e2e/specs',
+  timeout: 30000,
+  fullyParallel: true,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
+  
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure'
+  },
+  
+  projects: [
+    { name: 'chromium', use: devices['Desktop Chrome'] },
+    { name: 'firefox', use: devices['Desktop Firefox'] },
+    { name: 'webkit', use: devices['Desktop Safari'] },
+    { name: 'Mobile Chrome', use: devices['Pixel 5'] },
+    { name: 'Mobile Safari', use: devices['iPhone 12'] },
+    { name: 'iPad', use: devices['iPad Pro'] }
+  ],
+  
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI
+  }
+}
+```
+
+**Dependencias:**
+- `@playwright/test` 1.40.0
+- `axe-core` 4.8.2 (accessibility)
+- `axe-playwright` 1.2.3
+
+---
+
+## 🚀 Comandos Disponibles
+
+### Unit Tests
+```bash
+# Ejecutar todos los unit tests
+npm run test:unit
+
+# Con coverage
+npm run test:coverage
+
+# Watch mode (re-run on changes)
+npm run test:watch
+
+# Test específico
+npm run test:unit -- validations.test.ts
+```
+
+### E2E Tests
+```bash
+# Ejecutar todos los E2E tests
+npm run test:e2e
+
+# Con UI interactiva
+npm run test:e2e:ui
+
+# Headed mode (ver navegador)
+npm run test:e2e:headed
+
+# Solo accessibility tests
+npm run test:accessibility
+
+# Proyecto específico
+npm run test:e2e -- --project=chromium
+```
+
+### CI/CD
+```bash
+# Ejecutar todo (como en GitHub Actions)
+npm run test:ci
+```
+
+---
+
+## 📋 Checklist de Testing
+
+### ✅ Pre-commit (obligatorio)
+```bash
+# 1. Lint
+npm run lint
+
+# 2. Type check
+npm run type-check
+
+# 3. Unit tests
+npm run test:unit
+
+# 4. Build
+npm run build
+```
+
+### ✅ Pre-PR (recomendado)
+```bash
+# 1. Todos los tests
+npm run test:ci
+
+# 2. E2E en navegador principal
+npm run test:e2e -- --project=chromium
+
+# 3. Accessibility scan
+npm run test:accessibility
+
+# 4. Coverage check
+npm run test:coverage
+```
+
+### ✅ Pre-deploy (crítico)
+```bash
+# 1. Build production
+npm run build
+
+# 2. Smoke tests E2E
+npm run test:e2e -- smoke.spec.ts
+
+# 3. Verificar bundle size
+npm run analyze
+```
+
+---
+
+## 🎯 Gaps Identificados y Plan de Acción
+
+### 🔴 CRÍTICO (Bloquean deploy seguro)
+
+1. **E2E no en CI**
+   - **Problema:** Tests E2E configurados pero no ejecutados en GitHub Actions
+   - **Impacto:** Regresiones de UX pueden llegar a producción
+   - **Solución:**
+     ```yaml
+     # .github/workflows/test.yml
+     - name: Install Playwright
+       run: npx playwright install --with-deps
+     
+     - name: Run E2E tests
+       run: npm run test:e2e -- --project=chromium
+       env:
+         PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+     ```
+   - **Esfuerzo:** 2 horas
+   - **Prioridad:** 🔴 INMEDIATA
+
+2. **Test database faltante**
+   - **Problema:** Tests de integración mockean Supabase en lugar de usar test DB
+   - **Impacto:** No se validan queries reales, RLS policies, triggers
+   - **Solución:**
+     - Crear test database en Supabase
+     - Seed data con fixtures
+     - Usar `@supabase/ssr` en tests
+   - **Esfuerzo:** 4 horas
+   - **Prioridad:** 🔴 ALTA
+
+3. **Coverage no medido**
+   - **Problema:** Threshold configurado (50%) pero nunca ejecutado
+   - **Impacto:** No sabemos si realmente tenemos 50% de cobertura
+   - **Solución:**
+     ```bash
+     npm run test:coverage
+     # Revisar coverage/lcov-report/index.html
+     ```
+   - **Esfuerzo:** 30 min (verificación) + tiempo para agregar tests faltantes
+   - **Prioridad:** 🟡 MEDIA
+
+---
+
+### 🟡 MEDIO (Mejoras de calidad)
+
+4. **Tests de componentes UI faltantes**
+   - **Archivos sin tests:**
+     - `components/product-card.tsx`
+     - `components/quote-form.tsx`
+     - `components/admin/dashboard-kpis.tsx`
+   - **Solución:** Agregar tests con Testing Library
+   - **Esfuerzo:** 6 horas
+   - **Prioridad:** 🟡 MEDIA
+
+5. **Snapshot tests para PDF**
+   - **Problema:** PDF generation no tiene tests visuales
+   - **Solución:** Usar `jest-image-snapshot` o Playwright PDF assertions
+   - **Esfuerzo:** 3 horas
+   - **Prioridad:** 🟡 MEDIA
+
+6. **Performance tests**
+   - **Problema:** No hay tests de Lighthouse o bundle size
+   - **Solución:** Agregar `@lhci/cli` a CI
+   - **Esfuerzo:** 2 horas
+   - **Prioridad:** 🟡 MEDIA
+
+---
+
+### 🟢 OPCIONAL (Nice-to-have)
+
+7. **Visual regression tests**
+   - Usar Playwright screenshots o Percy
+   - **Esfuerzo:** 4 horas
+   - **Prioridad:** 🟢 BAJA
+
+8. **Mutation testing**
+   - Usar Stryker para detectar tests débiles
+   - **Esfuerzo:** 3 horas
+   - **Prioridad:** 🟢 BAJA
+
+---
+
+## 📝 Guía para Agregar Tests
+
+### 1. Unit Test (ejemplo con validaciones)
+
+```typescript
+// tests/unit/nueva-validacion.test.ts
+import { validarEmail } from '@/src/lib/validations'
+
+describe('validarEmail', () => {
+  test('debe aceptar email válido', () => {
+    expect(validarEmail('user@example.com')).toBe(true)
+  })
+  
+  test('debe rechazar email sin @', () => {
+    expect(validarEmail('userexample.com')).toBe(false)
+  })
+})
+```
+
+**Ejecutar:**
+```bash
+npm run test:unit -- nueva-validacion.test.ts
+```
+
+---
+
+### 2. Component Test (ejemplo con Testing Library)
+
+```typescript
+// tests/unit/product-card.test.tsx
+import { render, screen } from '@testing-library/react'
+import { ProductCard } from '@/components/product-card'
+
+describe('ProductCard', () => {
+  test('debe mostrar nombre del producto', () => {
+    render(<ProductCard 
+      nombre="Tarjetas de Presentación"
+      precio={25.00}
+    />)
+    
+    expect(screen.getByText('Tarjetas de Presentación')).toBeInTheDocument()
+  })
+})
+```
+
+---
+
+### 3. E2E Test (ejemplo con Playwright)
+
+```typescript
+// e2e/specs/nuevo-flujo.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('usuario puede agregar producto al cotizador', async ({ page }) => {
+  await page.goto('/catalogo')
+  
+  await page.click('text=Tarjetas de Presentación')
+  await page.fill('input[name="cantidad"]', '500')
+  await page.click('button:has-text("Agregar al Cotizador")')
+  
+  await expect(page.locator('.cotizador-badge')).toContainText('1')
+})
+```
+
+**Ejecutar:**
+```bash
+npm run test:e2e:ui -- nuevo-flujo.spec.ts
+```
+
+---
+
+## 🔄 Flujo de Testing en CI/CD
+
+```mermaid
+graph LR
+    A[Push to branch] --> B[Lint]
+    B --> C[Type Check]
+    C --> D[Unit Tests]
+    D --> E[Build]
+    E --> F{Branch?}
+    F -->|main| G[E2E Tests]
+    F -->|feature| H[Skip E2E]
+    G --> I[Deploy Preview]
+    H --> J[Deploy Preview]
+```
+
+**Actualmente implementado:**
+- ✅ Lint (ESLint)
+- ✅ Type Check (TypeScript)
+- ✅ Unit Tests (Jest)
+- ✅ Build (Next.js)
+- ❌ E2E Tests (configurados, no en CI)
+
+---
+
+## 🎓 Recursos
+
+### Documentación oficial
+- [Jest](https://jestjs.io/)
+- [Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- [Playwright](https://playwright.dev/)
+- [Axe Accessibility](https://www.deque.com/axe/)
+
+### Guías internas
+- `tests/setup/jest.setup.ts` - Setup de Jest
+- `e2e/fixtures/` - Fixtures para E2E
+- `RULES.md` - Reglas de testing en el proyecto
+
+---
+
+## 📊 Métricas Objetivo
+
+| Métrica | Actual | Objetivo Q1 2026 |
+|---------|--------|------------------|
+| Unit Tests | 73 | 150+ |
+| Cobertura | ~50% (no medido) | 80% |
+| E2E Tests | 2 specs | 10 specs |
+| CI E2E | ❌ No | ✅ Sí |
+| Test DB | ❌ No | ✅ Sí |
+| Accessibility | Configurado | En CI |
+| Performance | ❌ No | Lighthouse CI |
+
+---
+
+## 🚨 Reglas de Oro
+
+1. **🔴 NUNCA commitear si tests fallan** - `npm run test:unit` debe ser ✅
+2. **🔴 NUNCA deshabilitar tests** - Arreglar la causa, no ocultar el síntoma
+3. **🟡 PREFERIR tests pequeños y rápidos** - Unit > Integration > E2E
+4. **🟡 MOCKEAR servicios externos** - Supabase, APIs, filesystem
+5. **🟢 TESTS son DOCUMENTACIÓN** - Nombres descriptivos, casos claros
+
+---
+
+## 🤖 Sintaxis de Invocación del Agente
+
+```bash
+@agent Testing: [descripción de la tarea de testing]
+```
+
+**Ejemplos:**
+```bash
+@agent Testing: Agregar tests unitarios para nueva función de descuentos
+@agent Testing: Crear E2E test para flujo de checkout
+@agent Testing: Aumentar cobertura de lib/pricing.ts a 90%
+@agent Testing: Ejecutar accessibility scan y corregir violaciones
+@agent Testing: Configurar test database en Supabase
+```
+
+---
+
+**Última actualización:** Nov 2025 | **Branch:** feature/qa-fixes-and-optimization  
+**Estado:** ✅ 73/73 tests passing | ⚠️ E2E no en CI | 🔄 3 gaps críticos identificados
 
 - **Lógica de negocio:** Precios escalonados, validaciones, cálculos- **Tests E2E** del flujo completo de cotización
 

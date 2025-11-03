@@ -1,52 +1,576 @@
-# Performance Agent ⚡ - FullColor Cotizador# Performance Agent — FullColor Cotizador
+# Performance Agent ⚡ - FullColor Cotizador
 
-
-
-> **Optimización de velocidad, bundle size y Core Web Vitals**  > **Rol:** Agente especializado en optimización de rendimiento, Core Web Vitals, bundle size y experiencia de usuario fluida.
-
-> **Basado en análisis real del repositorio**
+> **Agente especializado en optimización de rendimiento, Core Web Vitals, y bundle size**  
+> **Estado:** ✅ Build PASSING | 22 rutas optimizadas | Middleware 73.4 KB  
+> **Última verificación:** feature/qa-fixes-and-optimization (Nov 2025)
 
 ---
 
----
-
-## Objetivo
-
-## 📊 Estado Actual (Verificado)
-
-Garantizar una **experiencia de usuario rápida y fluida** mediante:
+## 📊 Estado Actual (VERIFICADO)
 
 ```bash
+$ npm run build
 
-$ npm run build1. **Core Web Vitals excelentes** (LCP, FID/INP, CLS)
+✅ Compiled successfully
+✅ Linting and checking validity of types
+✅ Generating static pages (18/18)
+✅ Finalizing page optimization
 
-❌ FALLA con error:2. **Bundle size optimizado** (< 200KB inicial, gzipped)
+Route (app)                          Size     First Load JS
+────────────────────────────────────────────────────────────
+○ /                                  12.7 kB  169 kB 🟢
+○ /admin                             102 kB   264 kB 🟡 (LARGEST)
+○ /catalogo                          7.63 kB  191 kB 🟢
+○ /cotizador                         6.02 kB  170 kB 🟢
+○ /auth/login                        4.87 kB  177 kB 🟢
+λ /producto/[id]                     6.25 kB  190 kB 🟢
 
-3. **Time to Interactive rápido** (< 3.5s en 3G)
++ First Load JS shared by all        101 kB
+  ├ chunks/1684-6b6d6359a75d3c97.js  45.8 kB
+  ├ chunks/4bd1b696-e22c74a14afdc5e2.js  53.3 kB
+  └ other shared chunks              2 kB
 
-useSearchParams() should be wrapped in a suspense boundary at page "/auth/login"4. **Lighthouse score > 90** en todas las métricas
+λ Middleware                         73.4 kB
+```
 
-Export encountered an error on /auth/login/page, exiting the build.5. **Monitoreo continuo** con Vercel Analytics y RUM
+**Baseline verificado:**
+- ✅ **Build:** PASSING (22 rutas)
+- ✅ **Static pages:** 18 prerendered
+- ✅ **Dynamic routes:** 4 SSR (productos, cotizaciones, leads)
+- ✅ **Homepage:** 12.7 KB route + 169 KB First Load JS
+- 🟡 **Admin panel:** 102 KB route + 264 KB First Load JS (mayor bundle)
+- ⚠️ **Imágenes:** `unoptimized: true` (sin WebP/AVIF)
+- ⚠️ **Core Web Vitals:** No medidos (sin Lighthouse CI)
 
-Next.js build worker exited with code: 16. **Optimización progresiva** sin sacrificar funcionalidad
+---
 
+## 🎯 Objetivo
+
+Garantizar **experiencia de usuario rápida y fluida**:
+
+1. ✅ **Build optimizado** - Code splitting automático (Next.js)
+2. 🟡 **Bundle size razonable** - 169-264 KB First Load (objetivo: <200KB)
+3. ⚠️ **Core Web Vitals** - LCP, INP, CLS no medidos aún
+4. ⚠️ **Lighthouse score** - No hay CI automation (objetivo: >90)
+5. ✅ **Vercel Analytics** - Configurado (v1.3.1)
+6. 🔄 **Optimización progresiva** - Oportunidades identificadas
+
+---
+
+## 📦 Análisis de Bundle (REAL)
+
+### Rutas Públicas (Frontend)
+
+| Ruta | Size | First Load JS | Estado |
+|------|------|---------------|--------|
+| `/` (Homepage) | 12.7 KB | **169 KB** | 🟢 Óptimo |
+| `/catalogo` | 7.63 KB | 191 KB | 🟢 Bueno |
+| `/cotizador` | 6.02 KB | 170 KB | 🟢 Óptimo |
+| `/producto/[id]` | 6.25 KB | 190 KB | 🟢 Bueno |
+| `/confirmacion` | 6.74 KB | 163 KB | 🟢 Óptimo |
+| `/contacto` | 176 B | 104 KB | 🟢 Excelente |
+| `/auth/login` | 4.87 KB | 177 KB | 🟢 Bueno |
+
+**Promedio frontend:** ~180 KB First Load JS 🟢
+
+---
+
+### Rutas Admin (Dashboard)
+
+| Ruta | Size | First Load JS | Estado |
+|------|------|---------------|--------|
+| `/admin` (Dashboard) | **102 KB** | **264 KB** | 🟡 Mayor bundle |
+| `/admin/productos` | 6.51 KB | 217 KB | 🟢 Aceptable |
+| `/admin/productos/[id]` | 4.18 KB | 216 KB | 🟢 Aceptable |
+| `/admin/productos/nuevo` | 4.02 KB | 213 KB | 🟢 Aceptable |
+| `/admin/cotizaciones` | 5.27 KB | 222 KB | 🟢 Aceptable |
+| `/admin/cotizaciones/[id]` | 7.59 KB | 218 KB | 🟢 Aceptable |
+| `/admin/leads` | 6.32 KB | 211 KB | 🟢 Aceptable |
+| `/admin/leads/[id]` | 5.02 KB | 196 KB | 🟢 Bueno |
+| `/admin/leads/nuevo` | 695 B | 225 KB | 🟢 Bueno |
+| `/admin/eventos` | 4.94 KB | 213 KB | 🟢 Aceptable |
+| `/admin/configuracion` | 4.32 KB | 119 KB | 🟢 Bueno |
+
+**Promedio admin:** ~210 KB First Load JS 🟡
+
+---
+
+### Shared Chunks (Todos comparten)
+
+```
+First Load JS shared by all: 101 kB
+├── chunks/1684-6b6d6359a75d3c97.js    45.8 kB
+├── chunks/4bd1b696-e22c74a14afdc5e2.js 53.3 kB  
+└── other shared chunks                 2 kB
+```
+
+**Contenido estimado:**
+- React 19 + React DOM
+- Next.js runtime
+- Supabase client (2.75.0)
+- Radix UI primitives (Dialog, Dropdown, Select, etc.)
+- React Hook Form + Zod
+- Tailwind runtime
+
+---
+
+### Middleware
+
+```
+λ Middleware: 73.4 kB
+```
+
+**Contenido:**
+- Auth middleware (Supabase SSR)
+- Revalidación de rutas
+- Protección de rutas `/admin/*`
+
+---
+
+## 🔍 Oportunidades de Optimización
+
+### 🔴 CRÍTICO (Impacto alto en UX)
+
+#### 1. **Imágenes sin optimizar**
+
+**Problema actual:**
+```javascript
+// next.config.mjs
+{
+  images: {
+    unoptimized: true  // ⚠️ SIN optimización
+  }
+}
+```
+
+**Impacto:**
+- Imágenes servidas en formato original (PNG/JPG)
+- Sin lazy loading automático
+- Sin responsive images (srcset)
+- Sin conversión a WebP/AVIF
+- **~60% más pesadas** de lo necesario
+
+**Solución:**
+```javascript
+// next.config.mjs
+{
+  images: {
+    unoptimized: false,  // ✅ Habilitar optimización
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+  }
+}
+```
+
+**Usar:**
+```tsx
+import Image from 'next/image'
+
+<Image 
+  src="/producto.jpg"
+  alt="Tarjetas de presentación"
+  width={800}
+  height={600}
+  loading="lazy"
+  quality={85}
+/>
+```
+
+**Esfuerzo:** 4 horas (actualizar todos los <img> a <Image>)  
+**Beneficio:** -40% tamaño imágenes, +15-20 puntos Lighthouse  
+**Prioridad:** 🔴 INMEDIATA
+
+---
+
+#### 2. **Admin bundle excesivo (264 KB First Load)**
+
+**Problema:**
+- `/admin` es el bundle más grande (102 KB route)
+- Carga componentes pesados de charts, tablas, forms
+
+**Análisis:**
+```tsx
+// Componentes pesados en admin:
+- DashboardChart (recharts) ~40 KB
+- DashboardKPIs (múltiples gráficos) ~25 KB
+- ProductosTopTable (complex table) ~15 KB
+- QuoteTimeline (visualización) ~10 KB
+```
+
+**Solución con dynamic imports:**
+```tsx
+// app/admin/page.tsx
+import dynamic from 'next/dynamic'
+
+const DashboardChart = dynamic(
+  () => import('@/components/admin/DashboardChart'),
+  { 
+    loading: () => <Skeleton className="h-80" />,
+    ssr: false  // Chart no necesita SSR
+  }
+)
+
+const DashboardKPIs = dynamic(
+  () => import('@/components/admin/DashboardKPIs'),
+  { loading: () => <LoadingKPIs /> }
+)
+```
+
+**Esfuerzo:** 2 horas  
+**Beneficio:** -30-40 KB en route size  
+**Prioridad:** 🔴 ALTA
+
+---
+
+#### 3. **Falta Lighthouse CI en GitHub Actions**
+
+**Problema:**
+- No hay medición automática de Core Web Vitals
+- No hay budget alerts para bundle size
+- Regresiones de performance pueden pasar desapercibidas
+
+**Solución:**
+```yaml
+# .github/workflows/lighthouse.yml
+name: Lighthouse CI
+
+on: 
+  pull_request:
+    branches: [main]
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      
+      - run: npm ci
+      - run: npm run build
+      
+      - name: Run Lighthouse CI
+        run: |
+          npm install -g @lhci/cli
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+```
+
+**lighthouserc.json:**
+```json
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3000/",
+        "http://localhost:3000/catalogo",
+        "http://localhost:3000/cotizador"
+      ],
+      "startServerCommand": "npm start"
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "categories:performance": ["error", {"minScore": 0.9}],
+        "categories:accessibility": ["error", {"minScore": 0.9}],
+        "first-contentful-paint": ["warn", {"maxNumericValue": 2000}],
+        "largest-contentful-paint": ["warn", {"maxNumericValue": 2500}]
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
+```
+
+**Esfuerzo:** 3 horas  
+**Beneficio:** Prevención de regresiones, visibilidad de métricas  
+**Prioridad:** 🔴 ALTA
+
+---
+
+### 🟡 MEDIO (Mejoras incrementales)
+
+#### 4. **Bundle analyzer para visualización**
+
+```bash
+npm install --save-dev @next/bundle-analyzer
+```
+
+```javascript
+// next.config.mjs
+import bundleAnalyzer from '@next/bundle-analyzer'
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true'
+})
+
+export default withBundleAnalyzer({
+  // ... existing config
+})
+```
+
+**Ejecutar:**
+```bash
+ANALYZE=true npm run build
+```
+
+Genera visualización interactiva de todo el bundle.
+
+**Esfuerzo:** 30 min  
+**Beneficio:** Identificar librerías pesadas  
+**Prioridad:** 🟡 MEDIA
+
+---
+
+#### 5. **Prefetch selectivo de páginas**
+
+**Problema:**
+- Next.js prefetchea todas las páginas linkadas en viewport
+- Consume ancho de banda innecesariamente
+
+**Solución:**
+```tsx
+// Deshabilitar prefetch en links no críticos
+<Link href="/admin" prefetch={false}>
+  Admin
+</Link>
+
+// Mantener prefetch solo en rutas críticas
+<Link href="/catalogo" prefetch={true}>
+  Ver Catálogo
+</Link>
+```
+
+**Esfuerzo:** 1 hora  
+**Beneficio:** Menos requests al cargar homepage  
+**Prioridad:** 🟡 MEDIA
+
+---
+
+#### 6. **Font optimization**
+
+**Verificar en `app/layout.tsx`:**
+```tsx
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',  // ✅ Evita FOIT (Flash of Invisible Text)
+  preload: true     // ✅ Preload font
+})
+```
+
+**Esfuerzo:** 15 min  
+**Beneficio:** +2-3 puntos Lighthouse  
+**Prioridad:** 🟡 MEDIA
+
+---
+
+### 🟢 OPCIONAL (Nice-to-have)
+
+#### 7. **Compression brotli en Vercel**
+
+Ya habilitado por defecto en Vercel, pero verificar headers:
+```
+Content-Encoding: br
+```
+
+#### 8. **Service Worker para offline**
+
+Usar `next-pwa` para Progressive Web App:
+```bash
+npm install next-pwa
+```
+
+**Esfuerzo:** 4 horas  
+**Beneficio:** Offline capability, faster repeat visits  
+**Prioridad:** 🟢 BAJA
+
+---
+
+## 📊 Métricas Objetivo vs Actual
+
+| Métrica | Actual | Objetivo | Gap |
+|---------|--------|----------|-----|
+| **Homepage First Load** | 169 KB | <200 KB | ✅ CUMPLE |
+| **Admin First Load** | 264 KB | <200 KB | 🟡 +64 KB |
+| **Lighthouse Performance** | ❓ No medido | >90 | ⚠️ Medir |
+| **LCP (Largest Contentful Paint)** | ❓ | <2.5s | ⚠️ Medir |
+| **FID/INP (Interactivity)** | ❓ | <200ms | ⚠️ Medir |
+| **CLS (Layout Shift)** | ❓ | <0.1 | ⚠️ Medir |
+| **TTI (Time to Interactive)** | ❓ | <3.5s | ⚠️ Medir |
+| **Imágenes optimizadas** | ❌ No | ✅ Sí | 🔴 Crítico |
+
+---
+
+## 🚀 Plan de Acción Inmediato
+
+### Fase 1: Medición (1 día)
+
+```bash
+# 1. Instalar Lighthouse CI
+npm install -g @lhci/cli
+
+# 2. Crear lighthouserc.json
+# (ver config arriba)
+
+# 3. Ejecutar baseline
+lhci autorun --collect.startServerCommand="npm run dev"
+
+# 4. Revisar resultados
+open .lighthouseci/
+```
+
+### Fase 2: Quick Wins (2 días)
+
+1. **Habilitar optimización de imágenes** (4h)
+   - Cambiar `unoptimized: false`
+   - Actualizar <img> → <Image>
+   - Verificar build
+
+2. **Dynamic imports en /admin** (2h)
+   - DashboardChart con dynamic()
+   - DashboardKPIs con dynamic()
+   - Medir mejora en bundle
+
+3. **Bundle analyzer** (30min)
+   - Instalar @next/bundle-analyzer
+   - Ejecutar ANALYZE=true npm run build
+   - Identificar librerías pesadas
+
+### Fase 3: Automatización (1 día)
+
+1. **Lighthouse CI en GitHub Actions** (3h)
+   - Crear workflow .github/workflows/lighthouse.yml
+   - Configurar thresholds
+   - Test en PR
+
+2. **Bundle size alerts** (1h)
+   - Usar bundlewatch o size-limit
+   - Alertas si bundle crece >10%
+
+---
+
+## 🛠️ Comandos Disponibles
+
+### Build y análisis
+```bash
+# Build normal
+npm run build
+
+# Build con análisis de bundle
+ANALYZE=true npm run build
+
+# Start production server
+npm start
+```
+
+### Lighthouse
+```bash
+# Lighthouse CLI local
+npm install -g @lhci/cli
+lhci autorun
+
+# Lighthouse en Chrome DevTools
+# (Open DevTools → Lighthouse tab → Generate report)
+```
+
+### Monitoring
+```bash
+# Vercel Analytics (ya configurado)
+# Ver en: https://vercel.com/[tu-proyecto]/analytics
+
+# Web Vitals en consola (desarrollo)
+# Ya incluido con @vercel/analytics
 ```
 
 ---
 
-**Configuración actual (`next.config.mjs`):**
+## 📝 Checklist de Performance
 
-```javascript## Alcance
+### ✅ Pre-commit
+```bash
+# Verificar que build no creció
+npm run build | grep "First Load JS"
 
-{
+# Comparar con baseline (169 KB homepage)
+```
 
-  eslint: { ignoreDuringBuilds: true },      // ⚠️ Ignora ESLint### ✅ Incluido
+### ✅ Pre-PR
+```bash
+# Ejecutar Lighthouse local
+lhci autorun
 
-  typescript: { ignoreBuildErrors: true },   // ⚠️ Ignora TypeScript
+# Revisar que todas las métricas son ≥90
+```
 
-  images: { unoptimized: true }              // ⚠️ Sin optimización imágenes- **Optimización de bundle** (code splitting, tree shaking, dynamic imports)
+### ✅ Pre-deploy
+```bash
+# Build production
+npm run build
 
-}- **Optimización de imágenes** (WebP/AVIF, lazy loading, responsive images)
+# Verificar bundle sizes
+ANALYZE=true npm run build
+
+# Smoke test performance
+npm start &
+curl http://localhost:3000 -w "@curl-format.txt"
+```
+
+---
+
+## 🎓 Recursos
+
+### Documentación oficial
+- [Next.js Performance](https://nextjs.org/docs/app/building-your-application/optimizing)
+- [Web.dev Core Web Vitals](https://web.dev/vitals/)
+- [Lighthouse CI](https://github.com/GoogleChrome/lighthouse-ci)
+- [Vercel Analytics](https://vercel.com/docs/analytics)
+
+### Herramientas
+- [PageSpeed Insights](https://pagespeed.web.dev/)
+- [WebPageTest](https://www.webpagetest.org/)
+- [Bundle Analyzer](https://www.npmjs.com/package/@next/bundle-analyzer)
+- [Chrome DevTools Performance](https://developer.chrome.com/docs/devtools/performance/)
+
+---
+
+## 🚨 Reglas de Oro
+
+1. **🔴 NUNCA commitear si bundle crece >10%** sin justificación
+2. **🔴 SIEMPRE usar `<Image>` de Next.js** para imágenes
+3. **🟡 PREFERIR dynamic imports** para componentes pesados (>10KB)
+4. **🟡 MEDIR antes de optimizar** - No optimizar prematuramente
+5. **🟢 USAR Vercel Analytics** para monitorear usuarios reales
+
+---
+
+## 🤖 Sintaxis de Invocación del Agente
+
+```bash
+@agent Performance: [descripción de la tarea de optimización]
+```
+
+**Ejemplos:**
+```bash
+@agent Performance: Habilitar optimización de imágenes y actualizar todos los <img>
+@agent Performance: Reducir bundle de /admin con dynamic imports
+@agent Performance: Configurar Lighthouse CI en GitHub Actions
+@agent Performance: Analizar bundle y eliminar dependencias no usadas
+@agent Performance: Medir Core Web Vitals y generar reporte baseline
+```
+
+---
+
+**Última actualización:** Nov 2025 | **Branch:** feature/qa-fixes-and-optimization  
+**Estado:** ✅ Build PASSING | 🟡 Admin bundle 264KB | 🔴 3 optimizaciones críticas pendientes
 
 ```- **Caching estratégico** (Next.js caching, CDN, service workers)
 

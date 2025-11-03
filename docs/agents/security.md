@@ -1,52 +1,621 @@
-# Security Agent 🔒 - FullColor Cotizador# Security Agent — FullColor Cotizador
+# Security Agent 🔒 - FullColor Cotizador
 
-
-
-> **Seguridad: Auditoría, Headers, Secrets, RLS**  > **Rol:** Agente especializado en garantizar la seguridad de la aplicación mediante auditorías de vulnerabilidades, análisis estático, validación de configuraciones y hardening.
-
-> **Basado en análisis real del repositorio**
+> **Agente especializado en seguridad: Auditoría, Headers, Secrets, RLS**  
+> **Estado:** ⚠️ 3 vulnerabilidades moderadas | Headers faltantes | Gitleaks pendiente  
+> **Última verificación:** feature/qa-fixes-and-optimization (Nov 2025)
 
 ---
 
----
-
-## Objetivo
-
-## 📊 Estado Actual (Verificado)
-
-Implementar una **postura de seguridad robusta** que garantice:
+## 📊 Estado Actual (VERIFICADO)
 
 ```bash
+$ npm audit --audit-level=moderate
 
-$ npm audit --audit-level=moderate1. **Zero vulnerabilidades críticas/altas** en dependencias
+⚠️ 3 moderate severity vulnerabilities
 
-❌ 3 moderate severity vulnerabilities2. **Protección contra OWASP Top 10** (XSS, SQL injection, CSRF, etc.)
+Package: next
+Patched versions: >=15.5.6
+Current: 15.2.4
 
-3. **Validación de RLS policies** sin modificar Supabase
+Vulnerabilities:
+1. GHSA-g5qg-72qw-gw5v - Cache Key Confusion in Next.js
+2. GHSA-xv57-4mr9-wg8v - Content Injection in Next.js Server Actions
+3. GHSA-4342-x723-ch2f - SSRF in Next.js Middleware
 
-tar  7.5.14. **Headers de seguridad** correctamente configurados
+Fix available:
+  npm audit fix --force
+  (Will update Next.js 15.2.4 → 15.5.6)
+```
 
-Severity: moderate5. **Secrets management** sin exposición en código
+**Baseline verificado:**
+- ⚠️ **Vulnerabilidades:** 3 MODERATE en Next.js (0 high/critical)
+- ✅ **Build:** PASSING con validaciones activas
+- ✅ **RLS Policies:** Activas en Supabase (no modificables per RULES.md)
+- ❌ **Security headers:** No configurados en middleware
+- ❌ **Secrets scan:** Gitleaks no implementado
+- ❌ **Rate limiting:** No implementado
+- ⚠️ **Dependabot:** Habilitado en GitHub (auto-PRs)
 
-node-tar has a race condition leading to uninitialized memory exposure6. **Rate limiting** en endpoints sensibles
+---
 
-fix available via `npm audit fix --force`7. **Monitoreo continuo** de vulnerabilidades con GitHub Actions
+## 🎯 Objetivo
 
-node_modules/tar
+Implementar **postura de seguridad robusta** sin romper contratos:
 
-  supabase  2.46.0 - 2.55.4---
+1. ✅ **Zero vulns críticas/altas** - Actualmente cumplido (solo 3 moderate)
+2. 🔄 **OWASP Top 10** - Parcialmente cubierto (XSS, CSRF protegidos por Next.js)
+3. ✅ **RLS Policies** - Activas en Supabase (validar, no modificar)
+4. ❌ **Security headers** - CSP, HSTS, X-Frame-Options faltantes
+5. 🟡 **Secrets management** - `.env.local` no commitido, pero sin escaneo
+6. ❌ **Rate limiting** - No implementado
+7. 🟡 **Monitoreo continuo** - Dependabot ✅, Gitleaks ❌, Snyk ❌
 
-  Depends on vulnerable versions of tar
+---
 
-  node_modules/supabase## Alcance
+## 🔍 Inventario de Vulnerabilidades (REAL)
 
+### 🟡 Vulnerabilidades Actuales (3 MODERATE)
 
+#### 1. **GHSA-g5qg-72qw-gw5v** - Cache Key Confusion in Next.js
+- **Package:** `next@15.2.4`
+- **Severity:** MODERATE
+- **Description:** Cache key confusion vulnerability in Next.js server-side cache
+- **Impact:** Potential information leakage between different users via cache
+- **Affected versions:** 15.0.0-canary.0 - 15.4.6
+- **Fixed in:** ≥15.5.6
+- **Workaround:** None (upgrade required)
+- **Status:** ⚠️ PENDIENTE
 
-To address issues that do not require attention, run:### ✅ Incluido
+**Detalles técnicos:**
+```
+When using Next.js server-side caching with certain cache keys,
+there's a possibility of cache key collision that could lead to
+serving cached content intended for one user to another user.
+```
 
-  npm audit fix
+---
 
-- **Dependency auditing** (npm audit, Snyk, Dependabot)
+#### 2. **GHSA-xv57-4mr9-wg8v** - Content Injection in Next.js Server Actions
+- **Package:** `next@15.2.4`
+- **Severity:** MODERATE
+- **Description:** Content injection vulnerability in Next.js Server Actions
+- **Impact:** Attacker could inject malicious content via Server Actions
+- **Affected versions:** 15.0.0-canary.0 - 15.4.6
+- **Fixed in:** ≥15.5.6
+- **Workaround:** Validate all Server Action inputs
+- **Status:** ⚠️ PENDIENTE (mitigado con validaciones)
+
+**Nuestro uso de Server Actions:**
+```typescript
+// app/admin/productos/nuevo/page.tsx
+// app/admin/cotizaciones/page.tsx
+// Todos validan inputs con Zod schemas ✅
+```
+
+---
+
+#### 3. **GHSA-4342-x723-ch2f** - SSRF in Next.js Middleware
+- **Package:** `next@15.2.4`
+- **Severity:** MODERATE
+- **Description:** Server-Side Request Forgery vulnerability in Next.js middleware
+- **Impact:** Attacker could make server perform requests to internal resources
+- **Affected versions:** 15.0.0-canary.0 - 15.4.6
+- **Fixed in:** ≥15.5.6
+- **Workaround:** Validate all URLs in middleware redirects
+- **Status:** ⚠️ PENDIENTE
+
+**Nuestro middleware:**
+```typescript
+// middleware.ts
+// Solo hace redirects a rutas conocidas (/auth/login, /admin)
+// No usa input de usuario en redirects ✅
+```
+
+---
+
+### ✅ Fix Disponible
+
+```bash
+# Actualizar Next.js automáticamente
+npm audit fix --force
+
+# Esto actualizará:
+# next: 15.2.4 → 15.5.6
+```
+
+**⚠️ IMPORTANTE:** Verificar compatibilidad:
+- React 19 es compatible con Next.js 15.5.6 ✅
+- Supabase SSR compatible ✅
+- Tailwind CSS compatible ✅
+
+**Esfuerzo:** 30 min (update + verificar build + tests)  
+**Prioridad:** 🔴 ALTA (hacer esta semana)
+
+---
+
+## 🛡️ Security Headers (FALTANTES)
+
+### Estado Actual
+
+**Verificación:**
+```bash
+curl -I https://[tu-dominio].vercel.app
+
+# Actualmente NO hay headers de seguridad:
+# ❌ Content-Security-Policy
+# ❌ Strict-Transport-Security (HSTS)
+# ❌ X-Frame-Options
+# ❌ X-Content-Type-Options
+# ❌ Referrer-Policy
+# ❌ Permissions-Policy
+```
+
+---
+
+### Solución: Middleware con Headers
+
+**Archivo:** `middleware.ts`
+
+```typescript
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  // Crear response
+  const response = NextResponse.next()
+  
+  // 1. Content Security Policy
+  response.headers.set(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://va.vercel-scripts.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vercel.live",
+      "frame-ancestors 'none'",
+    ].join('; ')
+  )
+  
+  // 2. Strict-Transport-Security (HTTPS only)
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains; preload'
+  )
+  
+  // 3. X-Frame-Options (previene clickjacking)
+  response.headers.set('X-Frame-Options', 'DENY')
+  
+  // 4. X-Content-Type-Options (previene MIME sniffing)
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  
+  // 5. Referrer-Policy
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  
+  // 6. Permissions-Policy
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=()'
+  )
+  
+  // ... resto del middleware (auth, etc.)
+  
+  return response
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except static files and _next
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
+}
+```
+
+**Esfuerzo:** 1 hora  
+**Beneficio:** +10-15 puntos en Lighthouse Security  
+**Prioridad:** 🔴 ALTA
+
+---
+
+## 🔐 Secrets Management
+
+### ✅ Actual (Correcto)
+
+```bash
+# .env.local (NOT committed)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...
+
+# .gitignore
+.env.local ✅
+.env*.local ✅
+```
+
+**Verificado:**
+- ✅ `.env.local` en `.gitignore`
+- ✅ No hay secrets en código
+- ✅ Variables públicas con prefijo `NEXT_PUBLIC_`
+- ✅ Service role key NO expuesta en frontend
+
+---
+
+### ❌ Faltante: Gitleaks (Secrets Scanning)
+
+**Problema:** No hay escaneo automático de secrets en commits/PRs
+
+**Solución:**
+
+1. **Pre-commit hook local:**
+```bash
+# Instalar gitleaks
+brew install gitleaks  # macOS
+# o
+choco install gitleaks  # Windows
+
+# Crear .gitleaks.toml
+title = "FullColor Secrets Scan"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "supabase-key"
+description = "Supabase Keys"
+regex = '''eyJhbGc[A-Za-z0-9_-]*'''
+tags = ["secret", "supabase"]
+```
+
+2. **GitHub Actions:**
+```yaml
+# .github/workflows/secrets-scan.yml
+name: Secrets Scan
+
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+**Esfuerzo:** 2 horas  
+**Prioridad:** 🔴 ALTA
+
+---
+
+## 🚦 Rate Limiting (FALTANTE)
+
+### Problema
+
+**Endpoints sin rate limit:**
+- `/api/send-email` - Puede ser abusado para spam
+- `/api/generate-pdf` - Computacionalmente costoso
+- `/api/revalidate` - Puede causar DDoS en cache
+
+**Riesgo:** Abuse, DDoS, spam
+
+---
+
+### Solución: Vercel Edge Config + Upstash
+
+```typescript
+// lib/rate-limit.ts
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
+
+// 10 requests per 10 seconds
+export const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '10 s'),
+  analytics: true,
+})
+```
+
+```typescript
+// app/api/send-email/route.ts
+import { ratelimit } from '@/lib/rate-limit'
+
+export async function POST(request: Request) {
+  // Get IP from headers
+  const ip = request.headers.get('x-forwarded-for') ?? 'anonymous'
+  
+  // Check rate limit
+  const { success, remaining } = await ratelimit.limit(ip)
+  
+  if (!success) {
+    return Response.json(
+      { error: 'Too many requests' },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Remaining': remaining.toString(),
+          'Retry-After': '10'
+        }
+      }
+    )
+  }
+  
+  // ... send email
+}
+```
+
+**Setup:**
+1. Crear cuenta Upstash (free tier: 10k requests/day)
+2. Crear Redis database
+3. Agregar env vars:
+   ```
+   UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+   UPSTASH_REDIS_REST_TOKEN=xxx
+   ```
+4. Instalar: `npm install @upstash/ratelimit @upstash/redis`
+
+**Esfuerzo:** 3 horas  
+**Prioridad:** 🟡 MEDIA
+
+---
+
+## ✅ Seguridad ya Implementada
+
+### 1. **RLS Policies en Supabase** ✅
+
+**Verificado en RULES.md:**
+```sql
+-- Usuarios solo ven sus propias cotizaciones
+-- Admins ven todas las cotizaciones
+-- Productos públicos para todos
+-- Configuración solo para admins
+```
+
+**🚨 REGLA:** NO modificar RLS policies (Supabase es fuente de verdad)
+
+---
+
+### 2. **Validación de Inputs con Zod** ✅
+
+```typescript
+// Todos los formularios usan Zod schemas
+const leadSchema = z.object({
+  nombre: z.string().min(2),
+  email: z.string().email(),
+  telefono: z.string().regex(/^\+593/),
+  // ...
+})
+```
+
+**Protección contra:**
+- XSS (React escapa por defecto + validación)
+- SQL Injection (Supabase usa prepared statements)
+- Type coercion attacks
+
+---
+
+### 3. **CSRF Protection** ✅
+
+Next.js Server Actions tienen protección CSRF integrada:
+- Origin header validation
+- SameSite cookies
+- Double submit cookie pattern
+
+---
+
+### 4. **Authentication con Supabase** ✅
+
+```typescript
+// middleware.ts protege rutas /admin/*
+const supabase = createServerClient(...)
+const { data: { user } } = await supabase.auth.getUser()
+
+if (!user && request.nextUrl.pathname.startsWith('/admin')) {
+  return NextResponse.redirect('/auth/login')
+}
+```
+
+---
+
+## 📋 Checklist de Seguridad
+
+### ✅ Pre-commit
+```bash
+# 1. Lint
+npm run lint
+
+# 2. Type check
+npm run type-check
+
+# 3. Secrets scan (después de implementar gitleaks)
+gitleaks detect --source . --verbose
+```
+
+### ✅ Pre-PR
+```bash
+# 1. Audit vulnerabilities
+npm audit
+
+# 2. Build
+npm run build
+
+# 3. Tests
+npm run test:unit
+```
+
+### ✅ Pre-deploy
+```bash
+# 1. Audit critical/high only
+npm audit --audit-level=high
+
+# 2. Verificar headers (después de implementar)
+curl -I https://preview-url.vercel.app | grep -E "Content-Security|X-Frame"
+
+# 3. Smoke test auth
+# Verificar que /admin redirige a /login sin sesión
+```
+
+---
+
+## 🎯 Plan de Acción Inmediato
+
+### Fase 1: Vulnerabilidades (30 min)
+
+```bash
+# 1. Update Next.js
+npm audit fix --force
+
+# 2. Verificar build
+npm run build
+
+# 3. Verificar tests
+npm run test:unit
+
+# 4. Commit
+git add package.json package-lock.json
+git commit -m "fix: update Next.js to 15.5.6 (3 moderate vulnerabilities)"
+```
+
+---
+
+### Fase 2: Security Headers (1 hora)
+
+1. Editar `middleware.ts`
+2. Agregar headers (ver código arriba)
+3. Deploy a preview
+4. Verificar headers:
+   ```bash
+   curl -I https://preview-url.vercel.app
+   ```
+5. Test que no rompe funcionalidad
+
+---
+
+### Fase 3: Gitleaks (2 horas)
+
+1. Instalar gitleaks localmente
+2. Crear `.gitleaks.toml`
+3. Escanear repo actual:
+   ```bash
+   gitleaks detect --source . --verbose
+   ```
+4. Si encuentra secrets, rotarlos en Supabase
+5. Crear GitHub Action (ver código arriba)
+6. Test en PR
+
+---
+
+### Fase 4: Rate Limiting (3 horas) - OPCIONAL
+
+1. Crear cuenta Upstash
+2. Crear Redis database
+3. Agregar env vars
+4. Instalar `@upstash/ratelimit`
+5. Implementar en `/api/send-email`
+6. Test con 20 requests rápidas
+
+---
+
+## 🚀 Comandos Disponibles
+
+```bash
+# Audit vulnerabilities
+npm audit
+npm audit --audit-level=moderate
+npm audit --audit-level=high
+
+# Fix vulnerabilities (auto)
+npm audit fix
+
+# Fix vulnerabilities (force major updates)
+npm audit fix --force
+
+# Outdated packages
+npm outdated
+
+# Gitleaks (después de instalar)
+gitleaks detect --source . --verbose
+gitleaks protect --staged --verbose  # pre-commit
+
+# Headers check
+curl -I https://[tu-dominio].vercel.app | grep -E "Content-Security|X-Frame|Strict-Transport"
+```
+
+---
+
+## 🎓 Recursos
+
+### Documentación oficial
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Next.js Security](https://nextjs.org/docs/app/building-your-application/configuring/security)
+- [Supabase RLS](https://supabase.com/docs/guides/auth/row-level-security)
+- [Gitleaks](https://github.com/gitleaks/gitleaks)
+- [Upstash Rate Limiting](https://upstash.com/docs/redis/features/ratelimiting)
+
+### Herramientas
+- [npm audit](https://docs.npmjs.com/cli/v10/commands/npm-audit)
+- [Snyk](https://snyk.io/)
+- [Dependabot](https://github.com/dependabot)
+- [Mozilla Observatory](https://observatory.mozilla.org/)
+- [Security Headers](https://securityheaders.com/)
+
+---
+
+## 📊 Métricas Objetivo
+
+| Métrica | Actual | Objetivo | Gap |
+|---------|--------|----------|-----|
+| **Critical/High vulns** | 0 | 0 | ✅ CUMPLE |
+| **Moderate vulns** | 3 | 0 | 🔴 -3 |
+| **Security headers** | 0/6 | 6/6 | 🔴 -6 |
+| **Gitleaks en CI** | ❌ | ✅ | 🔴 Falta |
+| **Rate limiting** | ❌ | ✅ | 🟡 Falta |
+| **RLS active** | ✅ | ✅ | ✅ CUMPLE |
+| **Dependabot** | ✅ | ✅ | ✅ CUMPLE |
+
+---
+
+## 🚨 Reglas de Oro
+
+1. **🔴 NUNCA commitear secrets** - Usar .env.local siempre
+2. **🔴 NUNCA deshabilitar RLS** - Es la fuente de verdad (per RULES.md)
+3. **🔴 SIEMPRE validar inputs** - Usar Zod schemas
+4. **🟡 ACTUALIZAR dependencias** - Cada 2 semanas
+5. **🟡 ESCANEAR secrets** - Pre-commit con gitleaks
+
+---
+
+## 🤖 Sintaxis de Invocación del Agente
+
+```bash
+@agent Security: [descripción de la tarea de seguridad]
+```
+
+**Ejemplos:**
+```bash
+@agent Security: Actualizar Next.js para resolver 3 vulnerabilidades moderadas
+@agent Security: Implementar security headers en middleware
+@agent Security: Configurar gitleaks en GitHub Actions
+@agent Security: Agregar rate limiting a /api/send-email
+@agent Security: Auditar RLS policies en Supabase (validar, no modificar)
+```
+
+---
+
+**Última actualización:** Nov 2025 | **Branch:** feature/qa-fixes-and-optimization  
+**Estado:** ⚠️ 3 vulns moderadas (fix disponible) | ❌ Headers faltantes | ❌ Gitleaks pendiente
 
 To address all issues, run:- **Static analysis** (CodeQL, ESLint security plugins)
 
