@@ -1,0 +1,42 @@
+title = "FullColor Secrets Scan"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "supabase-key"
+description = "Supabase Keys"
+regex = '''eyJhbGc[A-Za-z0-9_-]*'''
+tags = ["secret", "supabase"]
+
+[[rules]]
+id = "supabase-url"
+description = "Supabase Project URL"
+regex = '''https://[a-z]{20}\.supabase\.co'''
+tags = ["secret", "supabase"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|access[_-]?key)['\"]?\s*[:=]\s*['\"]?[a-z0-9]{32,}'''
+tags = ["secret", "api-key"]
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''\.gitleaks\.toml$''',
+  '''(.*?)(jpg|gif|doc|pdf|bin|svg|socket)$''',
+  '''node_modules/''',
+  '''.next/''',
+  '''dist/''',
+  '''build/''',
+]
+
+# Allow example/dummy keys in documentation
+regexes = [
+  '''example''',
+  '''sample''',
+  '''dummy''',
+  '''placeholder''',
+  '''xxx''',
+]
