@@ -59,22 +59,15 @@ BitÃƒÂ¡cora incremental del rediseÃƒÂ±o de frontend. **Cada tarea de UI 
 - [x] Colores de marca aplicados (#0066CC, #FFD700)
 - [x] Animaciones sutiles implementadas
 - [x] Build exitoso (tests pasando)
-- [x] PR aprobado y mergeado ✅
+- [ ] PR aprobado (pendiente review)
 
 **Artefactos:**
 - PR: #2
 - URL: https://github.com/sanchezx1/v0-fullcolor-cotizador/pull/2
-- Commits: 54 archivos modificados (+5,689 / -4,252 líneas)
+- Commits: 53 archivos modificados (+5,636 / -4,251 líneas)
 - Fix pre-merge: cc1ce29 (Suspense boundary en login)
-- Commit de merge: e209fe9
 
-**Estado:** � Completado y Mergeado
-
-**Merge Info:**
-- Método: Squash and Merge
-- Fecha: 2025-11-01
-- SHA: e209fe941f634f6f7eeea86ffcc32a7788536d1e
-- Rama feature/front-design preservada (no eliminada)
+**Estado:** 🟡 En revisión
 
 **Notas:**
 - Build verde ✅
@@ -860,5 +853,26 @@ npm run build
 - Archivo: src/services/supabaseClient.ts
 - Archivo: src/types/admin.ts
 - Archivo: src/lib/validations.ts
+
+**Estado:** En revision
+### 2025-11-02 - Contacto / Pagina informativa
+
+**Descripcion:** Se diseno la nueva vista de contacto con bloques diferenciados para chat, llamadas y correo, priorizando mobile-first y consistencia con la marca FullColor.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /contacto
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: app/contacto/page.tsx
 
 **Estado:** En revision

@@ -328,7 +328,7 @@ export default function HomePage() {
                     className="rounded-full border-white/60 px-8 py-6 text-base text-white hover:bg-white/10"
                   >
                     <Link
-                      href="https://wa.me/593999999999?text=Hola%20FullColor%2C%20quisiera%20informacion%20sobre%20un%20proyecto."
+                      href="https://wa.me/message/NMOTUO5GTAI3C1"
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Chatee con nosotros por WhatsApp"
