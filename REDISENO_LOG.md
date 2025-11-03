@@ -855,3 +855,24 @@ npm run build
 - Archivo: src/lib/validations.ts
 
 **Estado:** En revision
+### 2025-11-02 - Contacto / Pagina informativa
+
+**Descripcion:** Se diseno la nueva vista de contacto con bloques diferenciados para chat, llamadas y correo, priorizando mobile-first y consistencia con la marca FullColor.
+
+**Impacto en contratos:** Ninguno
+
+**Rutas afectadas:**
+- /contacto
+
+**Definition of Done:**
+- [x] Responsive (mobile/tablet/desktop)
+- [x] Accesibilidad validada
+- [x] Colores de marca aplicados
+- [x] Animaciones sutiles implementadas
+- [ ] Tests pasando
+- [ ] PR aprobado
+
+**Artefactos:**
+- Archivo: app/contacto/page.tsx
+
+**Estado:** En revision

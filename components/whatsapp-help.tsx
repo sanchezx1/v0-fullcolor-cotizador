@@ -6,10 +6,8 @@ interface WhatsAppHelpProps {
   message?: string
 }
 
-export function WhatsAppHelp({ variant = "inline", message }: WhatsAppHelpProps) {
-  const whatsappNumber = "593999999999" // Replace with actual number
-  const defaultMessage = "Hola FullColor, necesito apoyo con mi cotizacion."
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message || defaultMessage)}`
+export function WhatsAppHelp({ variant = "inline", message: _message }: WhatsAppHelpProps) {
+  const whatsappUrl = "https://wa.me/message/NMOTUO5GTAI3C1"
 
   if (variant === "floating") {
     return (

@@ -123,10 +123,6 @@ npm run test:coverage
 npm run test:all
 ```
 
-### Verificar Setup
-```bash
-node scripts/test-setup.js
-```
 
 📖 **Documentación completa:** [`TESTING_README.md`](TESTING_README.md)
 
@@ -250,7 +246,6 @@ npm run test:coverage          # Cobertura
 npm run test:accessibility     # Accesibilidad
 
 # Utilidades
-node scripts/test-setup.js     # Verificar testing setup
 npm run lint                   # Linter ESLint
 ```
 

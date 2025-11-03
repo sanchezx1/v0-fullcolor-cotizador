@@ -140,15 +140,8 @@ export function Header() {
           <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
             Inicio
           </Link>
-          <Link href="/catalogo" className="text-sm font-medium transition-colors hover:text-primary">
-            Catalogo
-          </Link>
-          <Link
-            href="/cotizador"
-            className="flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Cotizador
+          <Link href="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
+            Contacto
           </Link>
         </nav>
 
@@ -183,6 +176,9 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
+          <Button asChild size="sm" className="bg-primary text-white hover:bg-primary-hover">
+            <Link href="/catalogo">Explorar catálogo</Link>
+          </Button>
           <Button
             asChild
             variant="outline"
@@ -191,17 +187,14 @@ export function Header() {
           >
             <Link href="/cotizador" aria-live="polite" className="flex items-center gap-2">
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Ver Cotizacion</span>
-              <span className="sm:hidden text-sm font-semibold">Cotizacion</span>
+              <span className="hidden sm:inline">Mis cotizaciones</span>
+              <span className="sm:hidden text-sm font-semibold">Mis cotizaciones</span>
               {quoteCount > 0 && (
                 <span className={badgeClasses} role="status" aria-label={quoteCountLabel}>
                   {quoteCount}
                 </span>
               )}
             </Link>
-          </Button>
-          <Button asChild size="sm" className="bg-primary text-white hover:bg-primary-hover">
-            <Link href="/catalogo">Cotizar Ahora</Link>
           </Button>
         </div>
       </div>
