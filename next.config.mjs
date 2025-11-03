@@ -1,3 +1,9 @@
+import bundleAnalyzer from '@next/bundle-analyzer'
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -7,7 +13,15 @@ const nextConfig = {
     ignoreBuildErrors: false, // ✅ Validar TypeScript en builds
   },
   images: {
-    unoptimized: true, // Mantener temporalmente hasta verificar dominios
+    unoptimized: false, // ✅ Image optimization habilitada
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+    formats: ['image/webp', 'image/avif'],
   },
   async headers() {
     return [
@@ -52,4 +66,4 @@ const nextConfig = {
   },
 }
 
-export default nextConfig
+export default withBundleAnalyzer(nextConfig)

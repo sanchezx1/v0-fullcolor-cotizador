@@ -1,10 +1,37 @@
+import dynamic from 'next/dynamic'
 import { AdminHeader } from '@/components/admin/AdminHeader'
-import { DashboardKPIs } from '@/components/admin/DashboardKPIs'
-import { DashboardChart } from '@/components/admin/DashboardChart'
-import { ProductosTopTable } from '@/components/admin/ProductosTopTable'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+
+// Lazy load heavy components
+const DashboardKPIs = dynamic(
+  () => import('@/components/admin/DashboardKPIs').then(mod => ({ default: mod.DashboardKPIs })),
+  { 
+    loading: () => (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+    ),
+  }
+)
+
+const DashboardChart = dynamic(
+  () => import('@/components/admin/DashboardChart').then(mod => ({ default: mod.DashboardChart })),
+  { 
+    loading: () => <Skeleton className="h-80" />,
+  }
+)
+
+const ProductosTopTable = dynamic(
+  () => import('@/components/admin/ProductosTopTable').then(mod => ({ default: mod.ProductosTopTable })),
+  { 
+    loading: () => <Skeleton className="h-80" />,
+  }
+)
 
 export default function AdminDashboardPage() {
   return (
