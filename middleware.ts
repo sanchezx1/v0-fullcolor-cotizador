@@ -1,7 +1,41 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { checkRateLimit } from '@/src/lib/rateLimiter'
+
 export async function middleware(request: NextRequest) {
+  const clientIp =
+    request.ip ??
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+
+  const path = request.nextUrl.pathname
+  const method = request.method.toUpperCase()
+  const shouldRateLimit =
+    path.startsWith('/auth') ||
+    path.startsWith('/api') ||
+    (method === 'POST' && path.startsWith('/admin'))
+
+  if (shouldRateLimit) {
+    const { limited, retryAfterSeconds } = checkRateLimit(
+      `${clientIp}:${method}:${path}`,
+      {
+        limit: method === 'GET' ? 120 : 20,
+        windowMs: 60_000,
+      }
+    )
+
+    if (limited) {
+      return new NextResponse('Too many requests', {
+        status: 429,
+        headers: {
+          'Retry-After': retryAfterSeconds.toString(),
+          'Cache-Control': 'no-store',
+        },
+      })
+    }
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -73,5 +107,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/auth/:path*']
+  matcher: ['/admin/:path*', '/auth/:path*', '/api/:path*']
 }
