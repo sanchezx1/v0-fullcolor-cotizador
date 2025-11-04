@@ -2,7 +2,7 @@ name: Unit & Integration Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, 'feature/**' ]
   pull_request:
     branches: [ main, develop ]
 
@@ -29,12 +29,18 @@ jobs:
       
       - name: 🧪 Run unit tests
         run: npm run test:unit
+        env:
+          NODE_ENV: test
       
       - name: 🔗 Run integration tests
         run: npm run test:integration
+        env:
+          NODE_ENV: test
       
       - name: 📊 Generate coverage report
         run: npm run test:coverage
+        env:
+          NODE_ENV: test
       
       - name: 📈 Upload coverage to Codecov
         uses: codecov/codecov-action@v3
