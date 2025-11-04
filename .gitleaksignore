@@ -1,0 +1,14 @@
+# Gitleaks ignore file
+# Ignora placeholders y valores de test en workflows de CI/CD
+
+# Placeholders de Supabase en workflows
+.github/workflows/lighthouse.yml:*:NEXT_PUBLIC_SUPABASE_ANON_KEY
+.github/workflows/tests-e2e.yml:*:NEXT_PUBLIC_SUPABASE_ANON_KEY
+.github/workflows/security-audit.yml:*:NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# JWT placeholders (no son secretos reales)
+*:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDk3MDUyMDAsImV4cCI6MTk2NTI4MTIwMH0.placeholder
+
+# Test environment variables en jest setup
+tests/setup/jest.setup.ts:*:NEXT_PUBLIC_SUPABASE_ANON_KEY
+tests/unit/supabaseClient.test.ts:*:NEXT_PUBLIC_SUPABASE_ANON_KEY
