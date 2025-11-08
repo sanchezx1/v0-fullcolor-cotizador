@@ -5,8 +5,8 @@ import { checkRateLimit } from '@/src/lib/rateLimiter'
 
 export async function middleware(request: NextRequest) {
   const clientIp =
-    request.ip ??
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
     'unknown'
 
   const path = request.nextUrl.pathname
