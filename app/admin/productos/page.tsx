@@ -105,7 +105,7 @@ export default function ProductosPage() {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <AdminHeader
         title="Productos"
         subtitle="Gestiona el catálogo de productos"
@@ -119,7 +119,7 @@ export default function ProductosPage() {
         }
       />
 
-      <div className="p-8 space-y-6">
+      <div className="space-y-6">
         {/* Filtros */}
         <div className="bg-white rounded-lg border p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -355,6 +355,6 @@ export default function ProductosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

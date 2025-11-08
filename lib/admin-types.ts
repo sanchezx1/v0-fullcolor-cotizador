@@ -85,7 +85,7 @@ export interface ItemCotizacion {
 }
 
 export interface CotizacionConRelaciones extends Cotizacion {
-  lead: Lead
+  lead: Lead | null
   items_cotizacion?: ItemCotizacion[]
   eventos?: Evento[]
 }

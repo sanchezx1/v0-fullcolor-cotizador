@@ -38,6 +38,44 @@ BitÃƒÂ¡cora incremental del rediseÃƒÂ±o de frontend. **Cada tarea de UI 
 
 ## Ã°Å¸â€œâ€" Entradas de RediseÃƒÂ±o
 
+### [2025-11-07] - PDF Proforma: Rediseño Visual Completo
+
+**Descripción:** Rediseño completo del layout del PDF de cotización basado en diseño de referencia profesional. Cambios visuales mayores:
+- **Header:** Logo con diseño limpio, título PROFORMA destacado en azul primario (#0066CC)
+- **Paleta de colores:** Aplicación de colores de marca FullColor (Azul #0066CC, tipografía mejorada)
+- **Bloques de información:** Diseño de tarjetas con bordes sutiles, etiquetas en mayúsculas, mejor jerarquía visual
+- **Tabla de productos:** Header con fondo azul y texto blanco, rows alternados con color suave, bordes redondeados
+- **Sección de totales:** Caja destacada con fondo azul claro, total general con fondo azul y texto blanco
+- **Terms & Bank Details:** Tipografía optimizada, espaciado mejorado
+- **Footer:** Mensaje de agradecimiento centrado con separador sutil
+
+**Impacto en contratos:** Ninguno ✅ (Solo cambios visuales en PDF, sin alterar lógica ni datos dinámicos)
+
+**Archivo modificado:**
+- `supabase/functions/generate-pdf/index.ts`
+
+**Optimizaciones técnicas:**
+- Mantiene todas las variables dinámicas existentes (lead, items, totales, IVA)
+- Sin agregar imágenes pesadas (optimizado para Edge Function)
+- Uso de jsPDF y autoTable sin cambios en dependencias
+- Márgenes optimizados (20mm) para mejor uso del espacio
+- Texto no desborda del layout
+
+**Definition of Done:**
+- [x] Colores de marca FullColor aplicados (#0066CC, #FFD700)
+- [x] Jerarquía visual mejorada (títulos, labels, totales)
+- [x] Tipografía profesional y legible
+- [x] Bordes redondeados y espaciado moderno
+- [x] Mantiene funcionalidad existente
+- [x] Sin cambios en lógica de negocio
+- [x] Optimizado para Edge Function
+
+**Referencia de diseño:** Basado en invoice profesional con estructura limpia y moderna
+
+**Estado:** 🟢 Completado
+
+---
+
 ### [2025-11-01] - Pull Request: Rediseño Completo Mobile-First
 
 **Descripción:** Apertura de PR (#2) con rediseño completo del frontend manteniendo funcionalidad y contratos de API.
@@ -75,6 +113,49 @@ BitÃƒÂ¡cora incremental del rediseÃƒÂ±o de frontend. **Cada tarea de UI 
 - Funcionalidad preservada ✅
 - Listo para merge con "Squash & merge"
 - NO borrar rama feature/front-design post-merge
+
+---
+
+### [2025-11-07] - 📄 Rediseño PDF Profesional de Cotización
+
+**Descripción:** Rediseño visual completo del PDF generado para cotizaciones con estilo profesional estilo "PROFORMA INVOICE"
+
+**Cambios visuales implementados:**
+- ✨ Paleta de colores FullColor aplicada (Azul #0066CC, Amarillo #FFD700)
+- 🎨 Header mejorado con logo/nombre más prominente
+- 📊 Título "PRESUPUESTO" más grande y destacado
+- 🏷️ Etiquetas en mayúsculas (CLIENTE, FECHA DE CREACIÓN)
+- 📋 Tabla limpia sin bordes Excel, con líneas sutiles
+- 💰 Totales destacados con separador visual y color azul
+- 📞 Footer elegante con línea divisoria y contactos centrados
+- 🔤 Mejoras tipográficas: tamaños y pesos optimizados
+- 🎯 Espaciado generoso entre secciones
+
+**Impacto en contratos:** Ninguno ✅
+- ❌ Sin cambios en lógica de generación
+- ❌ Sin modificaciones en estructura de datos
+- ❌ Sin alteraciones en cálculos de totales
+- ✅ Solo cambios visuales en jsPDF
+
+**Archivos modificados:**
+- `supabase/functions/generate-pdf/index.ts`
+
+**Detalles técnicos:**
+- Paleta de 7 colores corporativos definida
+- Tabla con `theme: 'plain'` y padding personalizado
+- Footer multi-línea con info completa de contacto
+- Total destacado en azul primario y font size 13
+- Espaciado aumentado entre secciones principales
+
+**Definition of Done:**
+- [x] Diseño profesional aplicado
+- [x] Colores de marca FullColor implementados
+- [x] Jerarquía visual clara y moderna
+- [x] Sin cambios en lógica backend
+- [x] Edge Function mantiene compatibilidad
+- [x] Tipografía mejorada y legible
+
+**Estado:** 🟢 Completado
 
 ---
 

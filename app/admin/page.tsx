@@ -35,13 +35,13 @@ const ProductosTopTable = dynamic(
 
 export default function AdminDashboardPage() {
   return (
-    <>
+    <div className="space-y-6">
       <AdminHeader 
         title="Dashboard" 
         subtitle="Vista general de tu negocio"
       />
 
-      <div className="p-8 space-y-8">
+      <div className="space-y-6">
         {/* KPIs */}
         <DashboardKPIs />
 
@@ -83,6 +83,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

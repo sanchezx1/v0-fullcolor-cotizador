@@ -372,7 +372,7 @@ export default function CatalogoPage() {
                       className="relative block overflow-hidden rounded-[24px] bg-white p-2.5 transition duration-300 group-hover:bg-white sm:p-3"
                       aria-label={`Ver detalles de ${product.nombre}${product.agotado ? ' (agotado)' : ''}`}
                     >
-                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[20px]">
+                      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[20px] bg-slate-100">
                         {product.mas_vendido && (
                           <span className="absolute left-3 top-3 z-20 inline-flex items-center gap-1 rounded-full bg-[#FFD700] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#1F2937] shadow-[0_12px_30px_-18px_rgba(31,41,55,0.7)]">
                             Más vendido

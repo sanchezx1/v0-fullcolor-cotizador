@@ -302,8 +302,8 @@ export default function CotizacionesListPage() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{cotizacion.lead.nombre}</div>
-                      {cotizacion.lead.empresa && (
+                      <div className="font-medium">{cotizacion.lead?.nombre || 'Sin cliente'}</div>
+                      {cotizacion.lead?.empresa && (
                         <div className="text-sm text-muted-foreground">
                           {cotizacion.lead.empresa}
                         </div>

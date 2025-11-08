@@ -264,11 +264,11 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
                     className="group block w-full overflow-hidden rounded-3xl bg-white shadow-[0_12px_35px_-24px_rgba(0,104,165,0.45)]"
                     aria-label={`Ver detalles de ${product.nombre}`}
                   >
-                    <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-[#eeeeee]">
+                    <div className="aspect-[4/3] w-full overflow-hidden rounded-3xl bg-slate-100">
                       <img
                         src={product.imagen_url || "/placeholder.svg?height=320&width=400"}
                         alt={product.nombre}
-                        className="w-full h-auto object-cover transition duration-500 group-hover:scale-105"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         loading={index === 0 ? "eager" : "lazy"}
                       />
                     </div>

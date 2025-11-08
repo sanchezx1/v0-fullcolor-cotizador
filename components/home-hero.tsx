@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -15,8 +16,9 @@ const slides = [
       label: "Cotizar branding corporativo",
       href: "/cotizador",
     },
-    image: "/placeholder.svg?height=760&width=1440",
+    image: "/herofoto1.webp",
     imageAlt: "Mockup de papelería corporativa FullColor sobre fondo azul",
+    useNextImage: true,
   },
   {
     id: 2,
@@ -28,6 +30,7 @@ const slides = [
     },
     image: "/placeholder.svg?height=760&width=1440",
     imageAlt: "Caja de obsequios navideños personalizados con la marca de la empresa",
+    useNextImage: false,
   },
   {
     id: 3,
@@ -39,13 +42,46 @@ const slides = [
     },
     image: "/placeholder.svg?height=760&width=1440",
     imageAlt: "Equipo creativo instalando material gráfico en un evento corporativo",
+    useNextImage: false,
   },
 ]
+
+const MOBILE_LOOP_GROUPS = 3
+const MOBILE_LOOP_CENTER_INDEX = 1
 
 export function HomeHero() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [announcement, setAnnouncement] = useState(`${slides[0].title}. ${slides[0].subtitle}`)
+  const totalSlides = slides.length
   const trackRef = useRef<HTMLDivElement>(null)
+  const virtualIndexRef = useRef(totalSlides * MOBILE_LOOP_CENTER_INDEX)
+  const mobileSlides = useMemo(
+    () =>
+      Array.from({ length: MOBILE_LOOP_GROUPS }, (_, groupIndex) =>
+        slides.map((slide, originalIndex) => ({
+          slide,
+          originalIndex,
+          isReplica: groupIndex !== MOBILE_LOOP_CENTER_INDEX,
+          loopKey: `${groupIndex}-${slide.id}`,
+        }))
+      ).flat(),
+    []
+  )
+
+  const setTrackScrollQuietly = useCallback((targetIndex: number) => {
+    const track = trackRef.current
+    if (!track) return
+    const width = track.offsetWidth
+    if (!width) return
+
+    const previousBehavior = track.style.scrollBehavior
+    track.style.scrollBehavior = "auto"
+    track.scrollLeft = width * targetIndex
+
+    requestAnimationFrame(() => {
+      track.style.scrollBehavior = previousBehavior
+    })
+  }, [])
 
   useEffect(() => {
     setAnnouncement(`${slides[activeIndex].title}. ${slides[activeIndex].subtitle}`)
@@ -55,19 +91,70 @@ export function HomeHero() {
     const track = trackRef.current
     if (!track) return
 
+    const syncToVirtualIndex = () => {
+      setTrackScrollQuietly(virtualIndexRef.current)
+    }
+
+    syncToVirtualIndex()
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(syncToVirtualIndex)
+      observer.observe(track)
+      return () => observer.disconnect()
+    }
+
+    const handleResize = () => syncToVirtualIndex()
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [setTrackScrollQuietly])
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return
+
+    let frameId: number | null = null
+
     const handleScroll = () => {
-      const { scrollLeft, offsetWidth } = track
-      if (!offsetWidth) return
-      const index = Math.round(scrollLeft / offsetWidth)
-      setActiveIndex((previous) => (index === previous ? previous : index))
+      if (frameId) cancelAnimationFrame(frameId)
+      frameId = requestAnimationFrame(() => {
+        if (!track) return
+        const { scrollLeft, offsetWidth } = track
+        if (!offsetWidth) return
+
+        const rawIndex = scrollLeft / offsetWidth
+        virtualIndexRef.current = rawIndex
+
+        const normalizedIndex =
+          ((Math.round(rawIndex) % totalSlides) + totalSlides) % totalSlides
+        setActiveIndex((previous) => (normalizedIndex === previous ? previous : normalizedIndex))
+
+        const start = totalSlides * MOBILE_LOOP_CENTER_INDEX
+        const end = totalSlides * (MOBILE_LOOP_CENTER_INDEX + 1)
+
+        if (rawIndex < start) {
+          const newIndex = rawIndex + totalSlides
+          virtualIndexRef.current = newIndex
+          setTrackScrollQuietly(newIndex)
+        } else if (rawIndex >= end) {
+          const newIndex = rawIndex - totalSlides
+          virtualIndexRef.current = newIndex
+          setTrackScrollQuietly(newIndex)
+        }
+        frameId = null
+      })
     }
 
     track.addEventListener("scroll", handleScroll, { passive: true })
+
     return () => {
       track.removeEventListener("scroll", handleScroll)
+      if (frameId) cancelAnimationFrame(frameId)
     }
-  }, [])
+  }, [setTrackScrollQuietly])
 
+  // Desktop: cambiar de slide con modulo circular
   const goToSlide = (index: number) => {
     const nextIndex = (index + slides.length) % slides.length
     setActiveIndex(nextIndex)
@@ -106,47 +193,62 @@ export function HomeHero() {
           className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth pb-6 scrollbar-hide"
           aria-roledescription="Carrusel de beneficios FullColor"
         >
-          {slides.map((slide, index) => (
-            <article
-              key={slide.id}
-              className="relative flex min-w-full snap-center flex-col"
-              aria-label={`Slide ${index + 1} de ${slides.length}`}
-            >
-              <div className="aspect-[4/3] w-full overflow-hidden">
-                <img
-                  src={slide.image}
-                  alt={slide.imageAlt}
-                  className="h-full w-full object-cover"
-                  loading={index === 0 ? "eager" : "lazy"}
-                />
-              </div>
-              <div className="-mt-8 flex min-h-[320px] flex-col justify-between rounded-t-3xl bg-[#0068A5] px-6 py-8 text-white text-center">
-                <div className="space-y-4">
-                  <h1 className="text-3xl font-semibold leading-tight sm:text-left">{slide.title}</h1>
-                  <p
-                    className="text-base leading-relaxed text-white/90 sm:text-left"
-                    style={{
-                      display: "-webkit-box",
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
+          {mobileSlides.map(({ slide, originalIndex, isReplica, loopKey }) => {
+            const isPrimarySlide = !isReplica
+            const shouldPrioritize = isPrimarySlide && originalIndex === 0
+
+            return (
+              <article
+                key={loopKey}
+                className="relative flex min-w-full snap-center flex-col"
+                aria-hidden={isReplica ? true : undefined}
+                aria-label={isPrimarySlide ? `Slide ${originalIndex + 1} de ${slides.length}` : undefined}
+                role={isReplica ? "presentation" : undefined}
+              >
+                <div className="aspect-[4/3] w-full overflow-hidden relative">
+                  {slide.useNextImage ? (
+                    <Image
+                      src={slide.image}
+                      alt={slide.imageAlt}
+                      fill
+                      priority={shouldPrioritize}
+                      quality={85}
+                      sizes="100vw"
+                      className="object-cover"
+                      aria-hidden={isReplica ? true : undefined}
+                    />
+                  ) : (
+                    <img
+                      src={slide.image}
+                      alt={slide.imageAlt}
+                      className="h-full w-full object-cover"
+                      loading={shouldPrioritize ? "eager" : "lazy"}
+                      aria-hidden={isReplica ? true : undefined}
+                    />
+                  )}
+                </div>
+                <div className="flex min-h-[340px] flex-col justify-between rounded-t-3xl bg-[#0068A5] px-6 py-10 text-white">
+                  <div className="space-y-5">
+                  <h1 className="text-3xl font-bold leading-tight text-center">{slide.title}</h1>
+                  <p className="text-base leading-relaxed text-white/90 text-center">
                     {slide.subtitle}
                   </p>
                 </div>
-                <div className="mt-6 flex justify-center sm:justify-start">
+                <div className="mt-8 flex justify-center">
                   <Button
                     asChild
                     size="lg"
-                    className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
+                    className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000] shadow-lg"
+                    tabIndex={isReplica ? -1 : undefined}
+                    aria-hidden={isReplica ? true : undefined}
                   >
                     <Link href={slide.primaryCta.href}>{slide.primaryCta.label}</Link>
                   </Button>
                 </div>
               </div>
             </article>
-          ))}
+            )
+          })}
         </div>
         {renderProgressBars("mt-2 px-6")}
       </div>
@@ -168,12 +270,25 @@ export function HomeHero() {
               )}
               aria-hidden={index !== activeIndex}
             >
-              <img
-                src={slide.image}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
+              {slide.useNextImage ? (
+                <Image
+                  src={slide.image}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  priority={index === 0}
+                  quality={85}
+                  sizes="100vw"
+                  className="object-cover"
+                />
+              ) : (
+                <img
+                  src={slide.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-r from-[#0068A5]/88 via-[#0068A5]/52 to-transparent" />
               <div className="relative z-10 flex h-full items-center pl-40 pr-16">
                 <div className="max-w-2xl text-white">
