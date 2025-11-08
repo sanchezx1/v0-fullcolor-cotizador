@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+﻿import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 // Configuración de Supabase
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -53,11 +53,8 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    console.log('🔍 Generando PDF profesional para cotización:', quoteId)
-
     // Generar PDF profesional directamente
     const pdfBuffer = await generateProfessionalPDF(quoteId)
-    console.log('📄 PDF profesional generado, tamaño:', pdfBuffer.length, 'bytes')
     
     // Subir PDF a Supabase Storage
     const fileName = `cotizacion-${quoteId}-${Date.now()}.pdf`
@@ -100,8 +97,6 @@ Deno.serve(async (req: Request) => {
         metadata: { fileName, url: urlData.publicUrl }
       })
 
-    console.log('✅ PDF profesional generado exitosamente:', urlData.publicUrl)
-
     // ⚡ ENVIAR EMAIL AUTOMÁTICAMENTE
     let emailStatus = {
       sent: false,
@@ -110,8 +105,6 @@ Deno.serve(async (req: Request) => {
     }
 
     try {
-      console.log('📧 Enviando email automáticamente...')
-      
       const emailResponse = await supabase.functions.invoke('send-email', {
         body: { quoteId }
       })
@@ -123,12 +116,10 @@ Deno.serve(async (req: Request) => {
       if (emailResponse.data?.success) {
         emailStatus.sent = true
         emailStatus.recipient = emailResponse.data.recipient
-        console.log('✅ Email enviado automáticamente a:', emailResponse.data.recipient)
       }
-    } catch (emailError) {
+    } catch (emailError: any) {
       // No bloquear la generación del PDF si falla el email
-      console.warn('⚠️ Error enviando email (no crítico):', emailError.message)
-      emailStatus.error = emailError.message
+      emailStatus.error = emailError?.message || 'Error desconocido'
     }
 
     return new Response(
@@ -169,15 +160,11 @@ Deno.serve(async (req: Request) => {
  */
 async function generateProfessionalPDF(quoteId: number): Promise<Uint8Array> {
   try {
-    console.log('📄 Generando PDF profesional usando datos reales...')
-    
     // 1. Obtener datos reales de Supabase
     const cotizacionData = await getCotizacionData(quoteId)
-    console.log('✅ Datos de cotización obtenidos:', cotizacionData.cotizacion.id)
     
     // 2. Generar PDF directamente con los datos
     const pdfBytes = await generatePDFFromData(cotizacionData)
-    console.log('✅ PDF generado exitosamente con datos reales')
     
     return pdfBytes
     
@@ -191,8 +178,6 @@ async function generateProfessionalPDF(quoteId: number): Promise<Uint8Array> {
  * Obtiene datos reales de la cotización desde Supabase
  */
 async function getCotizacionData(quoteId: number) {
-  console.log('🔍 Obteniendo datos reales para cotización:', quoteId)
-  
   // Obtener cotización con lead
   const { data: cotizacion, error: cotizacionError } = await supabase
     .from('cotizaciones')
@@ -257,8 +242,6 @@ async function getCotizacionData(quoteId: number) {
     console.error('❌ No se encontraron items para cotización:', quoteId)
     throw new Error(`Cotización ${quoteId} no tiene items`)
   }
-
-  console.log('✅ Items obtenidos:', items.length)
 
   // Calcular totales
   const totals = calculateTotals(items)
@@ -339,8 +322,6 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1')
     const autoTable = (await import('https://esm.sh/jspdf-autotable@3.8.2')).default
     
-    console.log('✅ jsPDF y autoTable importados correctamente')
-    
     // Crear PDF con formato A4
     const doc = new jsPDF({
       format: 'a4',
@@ -351,294 +332,389 @@ async function generatePDFFromData(cotizacionData: any): Promise<Uint8Array> {
     const cotizacion = cotizacionData.cotizacion
     const items = cotizacionData.items
     const totals = cotizacionData.totals
-    const lead = cotizacion.leads
+    const lead = cotizacion.leads || {}
     
     const cotizacionNumero = cotizacion.id.toString().padStart(6, '0')
     const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-EC')
     
-    console.log('✅ Datos preparados:', { items: items.length, cliente: lead.nombre })
-    
-    // COLORES DE MARCA FULLCOLOR
-    const colorAzul = [0, 102, 161]      // #0066a1
-    const colorAmarillo = [245, 199, 0]  // #f5c700
-    const colorGris = [107, 114, 128]    // #6B7280
-    const colorGrisClaro = [240, 240, 240]
-    const colorGrisOscuro = [31, 41, 55] // #1F2937
-    const colorLinea = [230, 230, 230]
-    
     // ============================================
-    // CABECERA (Header)
+    // PALETA DE COLORES FULLCOLOR + DIMENSIONES BASE
     // ============================================
+    const colorAzulPrimario = [0, 102, 204] // #0066CC - FullColor primary
+    const colorAmarilloAccent = [255, 215, 0] // #FFD700 - FullColor accent
+    const colorNegro = [31, 41, 55]
+    const colorTexto = [55, 65, 81]
+    const colorGrisClaro = [107, 114, 128]
+    const colorMuted = [107, 114, 128]
+    const colorLinea = [229, 231, 235]
+    const colorFondoClaro = [249, 250, 251]
+    const colorTableHeader = [0, 102, 204] // Azul primario para header
+    const colorTableRowAlt = [245, 247, 250]
     
-    // Logo FullColor desde LOGO_URL o fallback a texto
-    const LOGO_URL = Deno.env.get('LOGO_URL') || ''
-    let drewLogo = false
-    if (LOGO_URL) {
-      const logo = await fetchAsDataUrl(LOGO_URL)
-      if (logo) {
-        try {
-          doc.addImage(logo.dataUrl, logo.format, 15, 16, 40, 14)
-          drewLogo = true
-        } catch (_) {}
-      }
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 20
+    const contentWidth = pageWidth - margin * 2
+    
+    // Fondo blanco limpio
+    doc.setFillColor(255, 255, 255)
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+    
+    const invoiceCode = cotizacion.codigo || `PF-${new Date(cotizacion.created_at).getFullYear()}-${cotizacionNumero}`
+    const validUntilDate =
+      cotizacion.fecha_validez ||
+      cotizacion.validez_hasta ||
+      cotizacion.valido_hasta ||
+      cotizacion.fecha_expiracion ||
+      null
+    const validUntil = validUntilDate
+      ? new Date(validUntilDate).toLocaleDateString('es-EC')
+      : new Date(new Date(cotizacion.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('es-EC')
+    
+    const companyInfo = {
+      name: 'FullColor Cotizador',
+      tagline: 'Soluciones gráficas profesionales',
+      address: 'Parque de Negocios Beraca 2, Guayaquil - Ecuador',
+      phone: '+593 99 549 0880',
+      email: 'contacto@fullcolor.ec'
     }
-    if (!drewLogo) {
-      doc.setFontSize(18)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
-      doc.text('FullColor', 15, 24)
+    
+    const leadName = lead?.nombre || lead?.empresa || 'Cliente'
+    const leadLines = [
+      lead?.empresa && lead?.empresa !== leadName ? lead.empresa : null,
+      lead?.ciudad ? `${lead.ciudad}` : null,
+      lead?.telefono ? `Teléfono: ${lead.telefono}` : null,
+      lead?.email || null
+    ].filter(Boolean) as string[]
+    
+    // ============================================
+    // HEADER MODERNO CON DISEÑO LIMPIO
+    // ============================================
+    const headerTop = margin // Alineado con el margen superior
+    const logoUrl = Deno.env.get('FULLCOLOR_LOGO_URL') || Deno.env.get('LOGO_URL') || ''
+    const logoHeight = 22 // Tamaño balanceado para el diseño
+    let headerLeftBottom = headerTop
+    
+    // Logo o marca con icono
+    const drawFallbackBrand = (y: number) => {
+      // Icono de tienda pequeño con fondo azul
+      doc.setFillColor(colorAzulPrimario[0], colorAzulPrimario[1], colorAzulPrimario[2])
+      doc.roundedRect(margin, y, 11, 11, 2, 2, 'F')
       doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text('Servicios gráficos', 15, 29)
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.text('FC', margin + 2.8, y + 7.5)
+      
+      // Nombre de la empresa al lado
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(14)
+      doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+      doc.text(companyInfo.name, margin + 14, y + 7.5)
+      return y + 11
     }
     
-    // Caja de información a la derecha
-    const boxX = 130
-    const boxY = 12
-    const boxWidth = 70
-    const boxHeight = 40
+    if (logoUrl) {
+      const logoData = await fetchAsDataUrl(logoUrl)
+      if (logoData) {
+        try {
+          const props = (doc as any).getImageProperties?.(logoData.dataUrl)
+          const ratio = props?.width && props?.height ? props.width / props.height : 2.5
+          const logoWidth = logoHeight * ratio
+          doc.addImage(logoData.dataUrl, logoData.format, margin, headerTop, logoWidth, logoHeight, undefined, 'FAST')
+          headerLeftBottom = headerTop + logoHeight
+        } catch (_) {
+          headerLeftBottom = drawFallbackBrand(headerTop)
+        }
+      } else {
+        headerLeftBottom = drawFallbackBrand(headerTop)
+      }
+    } else {
+      headerLeftBottom = drawFallbackBrand(headerTop)
+    }
     
-    // Borde de la caja
+    const headerBottom = headerLeftBottom + 4
+    
+    // Línea separadora sutil
     doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
-    doc.setLineWidth(0.3)
-    doc.rect(boxX, boxY, boxWidth, boxHeight)
+    doc.setLineWidth(0.5)
+    doc.line(margin, headerBottom + 6, pageWidth - margin, headerBottom + 6)
     
-    // Contenido de la caja
-    let currentY = boxY + 6
-    
-    // "De"
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
-    doc.text('De', boxX + 3, currentY)
-    
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
-    doc.text('FullColor — Servicios gráficos', boxX + 25, currentY)
-    currentY += 5
-    
-    // Línea separadora
-    doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
-    doc.line(boxX + 3, currentY - 1, boxX + boxWidth - 3, currentY - 1)
-    currentY += 4
-    
-    // "Cliente"
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
-    doc.text('Cliente', boxX + 3, currentY)
-    
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(0, 0, 0)
-    doc.text(lead.nombre || 'N/A', boxX + 25, currentY)
-    currentY += 4
-    
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7)
-    doc.text(lead.telefono || '', boxX + 25, currentY)
-    currentY += 3
-    doc.text(lead.ciudad || '', boxX + 25, currentY)
-    currentY += 3
-    doc.text(lead.email || '', boxX + 25, currentY)
-    currentY += 3
-    doc.text(lead.ruc_cedula || '', boxX + 25, currentY)
-    currentY += 5
-    
-    // Línea separadora
-    doc.setDrawColor(230, 230, 230)
-    doc.line(boxX + 3, currentY - 1, boxX + boxWidth - 3, currentY - 1)
-    currentY += 4
-    
-    // "Fecha de creación"
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
-    doc.text('Fecha de', boxX + 3, currentY)
-    currentY += 4
-    doc.text('creación', boxX + 3, currentY)
-    
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(0, 0, 0)
-    doc.text(fechaCreacion, boxX + 25, currentY - 2)
+    let cursorY = headerBottom + 14
     
     // ============================================
-    // TÍTULO "Proforma #XXXXXX"
+    // BLOQUE DE INFORMACIÓN SIN BORDES - DISEÑO LIMPIO
     // ============================================
+    const summaryWidth = 65
+    const infoGap = 12
+    const infoWidth = contentWidth - summaryWidth - infoGap
+    const infoColumnsGap = 16
+    const infoColumnWidth = (infoWidth - infoColumnsGap) / 2
+    const infoBoxY = cursorY
+    const infoLabelColor = colorGrisClaro
+    let contentBottom = infoBoxY
     
-    doc.setFontSize(22)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(colorAzul[0], colorAzul[1], colorAzul[2])
-    doc.text(`Proforma #${cotizacionNumero}`, 15, 65)
+    const renderInfoColumn = (
+      label: string,
+      name: string,
+      details: string[],
+      x: number
+    ) => {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(infoLabelColor[0], infoLabelColor[1], infoLabelColor[2])
+      const labelUpper = label.toUpperCase() + ':'
+      doc.text(labelUpper, x, infoBoxY + 2)
+      
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+      doc.text(name || 'N/A', x, infoBoxY + 9)
+      
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8.5)
+      doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2])
+      const wrappedDetails = doc.splitTextToSize(details.join('\n'), infoColumnWidth - 2)
+      doc.text(wrappedDetails, x, infoBoxY + 15)
+      return infoBoxY + 15 + wrappedDetails.length * 4
+    }
+    
+    const fromDetails = [
+      companyInfo.address,
+      `Teléfono: ${companyInfo.phone}`,
+      companyInfo.email
+    ]
+    const toDetails = leadLines.length ? leadLines : ['Información pendiente']
+    
+    const fromBottom = renderInfoColumn('De', companyInfo.name, fromDetails, margin)
+    const toBottom = renderInfoColumn(
+      'Cliente',
+      leadName,
+      toDetails,
+      margin + infoColumnWidth + infoColumnsGap
+    )
+    
+    contentBottom = Math.max(fromBottom, toBottom)
+    const infoBoxHeight = contentBottom - infoBoxY + 6
+    
+    // Información de la derecha (Invoice #, Date, Valid Until) SIN TARJETA
+    const summaryX = margin + infoWidth + infoGap
+    
+    const summaryItems = [
+      { label: 'Factura #', value: invoiceCode },
+      { label: 'Fecha', value: fechaCreacion },
+      { label: 'Válido Hasta', value: validUntil }
+    ]
+    let summaryY = infoBoxY + 2
+    summaryItems.forEach(item => {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7.5)
+      doc.setTextColor(infoLabelColor[0], infoLabelColor[1], infoLabelColor[2])
+      doc.text(item.label, summaryX, summaryY)
+      
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+      doc.text(item.value, pageWidth - margin, summaryY, { align: 'right' })
+      summaryY += 11
+    })
+    
+    cursorY += infoBoxHeight + 16
     
     // ============================================
-    // TABLA DE PRODUCTOS (AutoTable)
+    // TABLA DE PRODUCTOS CON ESCALA DE GRISES
     // ============================================
-    
-    // Precargar imágenes y preparar datos
     const productImages = await Promise.all(items.map(async (item: any) => {
       const url = item.productos?.imagen_url
       return url ? await fetchAsDataUrl(url) : null
     }))
-
+    
     const tableData = items.map((item: any) => {
       const producto = item.productos || {}
       const nombre = producto.nombre || 'Sin nombre'
       const detalles: string[] = []
-      if (producto.categoria) detalles.push(producto.categoria)
-      if ((item as any).sku) detalles.push(`SKU: ${(item as any).sku}`)
-      if ((item as any).impresion) detalles.push(`Impresión: ${(item as any).impresion}`)
-      if ((item as any).lados) detalles.push(`Lados: ${(item as any).lados}`)
-      if ((item as any).color) detalles.push(`Color: ${(item as any).color}`)
-      const detalleTexto = detalles.length ? `\n${detalles.join(' | ')}` : ''
-      const precio = formatCurrency(item.precio_unitario_aplicado)
-      const subtotal = formatCurrency(item.cantidad * item.precio_unitario_aplicado)
-      return [' ', `${nombre}${detalleTexto}`, precio, item.cantidad.toString(), subtotal]
+      if ((item as any).impresion) detalles.push(` ${(item as any).impresion}`)
+      if ((item as any).color) detalles.push(` ${(item as any).color}`)
+      // Descripción en una sola línea con detalles separados por comas
+      const descripcion = detalles.length ? `${nombre}, ${detalles.join(',')}` : nombre
+      return [
+        '',
+        descripcion,
+        item.cantidad.toString(),
+        formatCurrency(item.precio_unitario_aplicado),
+        formatCurrency(item.cantidad * item.precio_unitario_aplicado)
+      ]
     })
-
-    // Generar tabla con imagen y estilos
+    
+    const tableStartY = cursorY
     autoTable(doc, {
-      startY: 75,
-      head: [['Imagen', 'Producto', 'Precio por unidad', 'Cantidad', 'Subtotal']],
+      startY: tableStartY,
+      head: [['Item', 'Descripción', 'Cantidad', 'Precio Unitario', 'Total']],
       body: tableData,
-      theme: 'striped',
+      theme: 'plain',
       styles: {
         font: 'helvetica',
         fontSize: 9,
-        cellPadding: 4,
-        lineColor: colorLinea,
-        lineWidth: 0.1,
-        minCellHeight: 28
+        cellPadding: { top: 6, right: 5, bottom: 6, left: 5 },
+        textColor: colorTexto,
+        lineWidth: 0,
+        lineColor: [220, 220, 220],
+        overflow: 'visible',
+        cellWidth: 'wrap'
       },
       headStyles: {
-        fillColor: colorAzul,
+        fillColor: [0, 104, 164], // #0068A4 - Azul corporativo
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        halign: 'left',
-        fontSize: 10
-      },
-      bodyStyles: {
-        textColor: [0, 0, 0]
+        fontSize: 9,
+        halign: 'center',
+        valign: 'middle',
+        cellPadding: { top: 7, right: 5, bottom: 7, left: 5 }
       },
       alternateRowStyles: {
-        fillColor: colorGrisClaro
+        fillColor: [250, 250, 250] // Gris muy claro
       },
       columnStyles: {
-        0: { cellWidth: 28, halign: 'center' },
-        1: { cellWidth: 82, halign: 'left', fontStyle: 'bold' },
-        2: { cellWidth: 28, halign: 'right' },
-        3: { cellWidth: 18, halign: 'right' },
-        4: { cellWidth: 24, halign: 'right', fontStyle: 'bold' }
+        0: { cellWidth: 18, halign: 'center' },
+        1: { cellWidth: 82, halign: 'left', overflow: 'visible' },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 28, halign: 'right' },
+        4: { cellWidth: 26, halign: 'right' }
       },
-      margin: { left: 15, right: 15 },
+      margin: { left: margin, right: margin },
+      tableWidth: contentWidth,
+      tableLineColor: [220, 220, 220],
+      tableLineWidth: 0,
+      didParseCell: (data: any) => {
+        if (data.section === 'body') {
+          if (data.column.index === 4) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.textColor = colorNegro
+          }
+        }
+      },
       didDrawCell: (data: any) => {
+        // Imágenes de productos
         if (data.section === 'body' && data.column.index === 0) {
           const img = productImages[data.row.index]
-          const x = data.cell.x + 2
-          const y = data.cell.y + 2
-          const w = Math.max(10, data.cell.width - 4)
-          const h = Math.max(10, data.cell.height - 4)
           if (img) {
             try {
-              const maxW = w, maxH = h
-              // relación aprox 4:3 como fallback
-              let drawW = maxW, drawH = maxH
-              if (maxW / maxH > 1.33) {
-                drawW = maxH * 1.33
-              } else {
-                drawH = maxW / 1.33
-              }
-              const cx = x + (maxW - drawW) / 2
-              const cy = y + (maxH - drawH) / 2
-              doc.addImage(img.dataUrl, img.format, cx, cy, drawW, drawH, undefined, 'FAST')
-            } catch (_) {
-              doc.setFillColor(240, 240, 240)
-              doc.rect(x, y, w, h, 'F')
-              doc.setTextColor(150, 150, 150)
-              doc.setFontSize(7)
-              doc.text('sin imagen', x + w / 2, y + h / 2, { align: 'center', baseline: 'middle' })
-            }
-          } else {
-            doc.setFillColor(240, 240, 240)
-            doc.rect(x, y, w, h, 'F')
-            doc.setTextColor(150, 150, 150)
-            doc.setFontSize(7)
-            doc.text('sin imagen', x + w / 2, y + h / 2, { align: 'center', baseline: 'middle' })
+              const imgSize = 14
+              const imgX = data.cell.x + (data.cell.width - imgSize) / 2
+              const imgY = data.cell.y + (data.cell.height - imgSize) / 2
+              doc.addImage(img.dataUrl, img.format, imgX, imgY, imgSize, imgSize, undefined, 'FAST')
+            } catch (_) {}
+          }
+          // Línea divisoria entre rows
+          if (data.row.index < tableData.length - 1) {
+            const rowY = data.cell.y + data.cell.height
+            doc.setDrawColor(220, 220, 220)
+            doc.setLineWidth(0.3)
+            doc.line(margin, rowY, pageWidth - margin, rowY)
           }
         }
       }
     })
     
-    // ============================================
-    // BLOQUE DE TOTALES (Tabla secundaria)
-    // ============================================
+    const tableEndY = (doc as any).lastAutoTable?.finalY || tableStartY
     
-    const finalY = (doc as any).lastAutoTable.finalY || 150
+    cursorY = tableEndY + 18
     
-    // Tabla de totales alineada a la derecha
-    autoTable(doc, {
-      startY: finalY + 8,
-      body: [
-        ['Subtotal:', formatCurrency(totals.subtotal)],
-        ['IVA (15%):', formatCurrency(totals.iva15)],
-        ['Total:', formatCurrency(totals.total)]
-      ],
-      theme: 'plain',
-      styles: {
-        font: 'helvetica',
-        fontSize: 10,
-        cellPadding: 2
-      },
-      bodyStyles: {
-        textColor: [0, 0, 0]
-      },
-      columnStyles: {
-        0: { cellWidth: 35, halign: 'right', fontStyle: 'bold', textColor: colorAzul },
-        1: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
-      },
-      margin: { left: 130 },
-      didParseCell: function(data: any) {
-        if (data.row.index === 2 && data.section === 'body') {
-          data.cell.styles.lineWidth = { top: 0.6 }
-          data.cell.styles.lineColor = colorLinea
-          data.cell.styles.textColor = colorAzul
-        }
-      }
-    })
-
-    const afterTotalsY = (doc as any).lastAutoTable.finalY || finalY + 20
-    // Notas y validez
-    doc.setFontSize(8)
+    // ============================================
+    // TERMS, BANK & TOTALS CON DISEÑO LIMPIO
+    // ============================================
+    const totalsWidth = 80
+    const totalsX = margin + contentWidth - totalsWidth
+    const notesWidth = totalsX - margin - 14
+    
+    // Términos y condiciones en caja
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+    doc.text('Términos y Condiciones', margin, cursorY)
+    
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
-    doc.text('Precios sujetos a cambios.', 15, afterTotalsY + 6)
-    if (cotizacion.validez_dias) {
-      doc.text(`Validez: ${cotizacion.validez_dias} días`, 15, afterTotalsY + 10)
+    doc.setFontSize(8)
+    doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2])
+    const termsText = doc.splitTextToSize(
+      'Pago dentro de 30 días. Entrega entre 2-3 semanas después de la confirmación del pago. Todos los artículos sujetos a disponibilidad.',
+      notesWidth
+    )
+    doc.text(termsText, margin, cursorY + 6)
+    let notesBottomY = cursorY + 6 + termsText.length * 3.8
+    
+    // Sección de totales limpia sin bordes
+    const totalsBoxY = cursorY
+    
+    let totalsRowY = totalsBoxY
+    const drawValueRow = (label: string, value: string, isStrong = false) => {
+      if (isStrong) {
+        // Línea separadora antes del total
+        doc.setDrawColor(colorNegro[0], colorNegro[1], colorNegro[2])
+        doc.setLineWidth(0.5)
+        doc.line(totalsX, totalsRowY, totalsX + totalsWidth, totalsRowY)
+        totalsRowY += 8
+        
+        // Total General en negrita sin fondo
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(11)
+        doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+        doc.text(label, totalsX, totalsRowY)
+        doc.text(value, totalsX + totalsWidth, totalsRowY, { align: 'right' })
+        totalsRowY += 12
+      } else {
+        // Subtotal e IVA con línea punteada
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(colorTexto[0], colorTexto[1], colorTexto[2])
+        doc.text(label, totalsX, totalsRowY)
+        
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text(value, totalsX + totalsWidth, totalsRowY, { align: 'right' })
+        
+        // Línea punteada sutil
+        doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
+        doc.setLineWidth(0.2)
+        doc.setLineDash([1, 1], 0)
+        doc.line(totalsX, totalsRowY + 2, totalsX + totalsWidth, totalsRowY + 2)
+        doc.setLineDash([], 0)
+        
+        totalsRowY += 10
+      }
     }
     
+    drawValueRow('Subtotal', formatCurrency(totals.subtotal))
+    drawValueRow('Impuestos (IVA 15%)', formatCurrency(totals.iva15))
+    
+    // Espacio antes del total
+    totalsRowY += 2
+    
+    drawValueRow('Total General', formatCurrency(totals.total), true)
+    
+    const rightBottomY = totalsRowY
+    cursorY = Math.max(notesBottomY, rightBottomY) + 20
+    
     // ============================================
-    // PIE DE PÁGINA (Footer)
+    // FOOTER MODERNO Y LIMPIO
     // ============================================
+    const footerY = pageHeight - 28
+    doc.setDrawColor(colorLinea[0], colorLinea[1], colorLinea[2])
+    doc.setLineWidth(0.3)
+    doc.line(margin, footerY, pageWidth - margin, footerY)
     
-    const pageHeight = doc.internal.pageSize.height
-    const footerY = pageHeight - 15
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(colorNegro[0], colorNegro[1], colorNegro[2])
+    doc.text('¡Gracias por su preferencia!', pageWidth / 2, footerY + 7, { align: 'center' })
     
-    // Línea divisoria tenue
-    doc.setDrawColor(220, 220, 220)
-    doc.setLineWidth(0.2)
-    doc.line(15, footerY - 5, 195, footerY - 5)
-    
-    // Texto del footer
-    doc.setFontSize(7)
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(colorGris[0], colorGris[1], colorGris[2])
+    doc.setFontSize(7.5)
+    doc.setTextColor(colorMuted[0], colorMuted[1], colorMuted[2])
+    doc.text(`${companyInfo.email}  •  ${companyInfo.phone}`, pageWidth / 2, footerY + 12, { align: 'center' })
     
-    doc.text('FullColor — Rocafuerte 302 y 23 de Abril, Machala', 15, footerY)
-    doc.text('WhatsApp: +593 99 123 4567 | Email: info@fullcolor.ec | fullcolor.ec', 15, footerY + 4)
-    
-    // Generar PDF
     const pdfOutput = doc.output('arraybuffer')
     const pdfBytes = new Uint8Array(pdfOutput)
     
-    console.log('✅ PDF generado con jsPDF exitosamente')
     return pdfBytes
     
   } catch (error) {

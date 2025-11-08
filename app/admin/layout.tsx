@@ -58,15 +58,17 @@ export default function AdminLayout({
         </div>
 
         {/* Desktop header */}
-        <div className="hidden lg:flex sticky top-0 z-30 h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm">
+        <div className="hidden lg:flex sticky top-0 z-30 h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-8 shadow-sm">
           <h1 className="text-lg font-semibold text-gray-900">
             Panel de Administración
           </h1>
           <UserMenu />
         </div>
 
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          <div className="p-6 lg:p-8">
+            {children}
+          </div>
         </main>
       </div>
 

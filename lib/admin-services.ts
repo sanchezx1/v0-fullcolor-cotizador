@@ -130,9 +130,7 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
     
     // Si no se proporciona SKU o está vacío, generar automáticamente
     if (!sku || sku.trim() === '') {
-      console.log('🔢 Generando SKU automático para categoría:', producto.categoria)
       sku = await generarSkuAutomatico(producto.categoria)
-      console.log('✅ SKU generado:', sku)
     } else {
       // Si se proporciona SKU, verificar que sea único
       const esUnico = await verificarSkuUnico(sku)
@@ -143,7 +141,6 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
 
     const persistPayload = prepareProductForPersist(producto)
 
-    console.log('📦 Insertando producto con SKU:', sku)
     const { data, error } = await supabase
       .from('productos')
       .insert({ ...persistPayload, sku })
@@ -164,7 +161,6 @@ export async function createProducto(producto: Omit<Producto, 'id' | 'created_at
       throw new Error('No se devolvió el producto creado')
     }
     
-    console.log('✅ Producto creado exitosamente:', data.id)
     return normalizeProductFromSource(data)
   } catch (error: any) {
     console.error('❌ Error completo en createProducto:', {
@@ -497,7 +493,7 @@ export async function verificarEmailUnico(email: string, leadId?: number): Promi
 export async function getCotizaciones(filtros?: FiltrosCotizaciones): Promise<PaginatedResponse<CotizacionConRelaciones>> {
   let query = supabase
     .from('cotizaciones')
-    .select('*, leads(*)', { count: 'exact' })
+    .select('*, lead:leads(*)', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   // Filtros

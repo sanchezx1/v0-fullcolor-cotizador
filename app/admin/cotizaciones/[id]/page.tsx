@@ -233,91 +233,97 @@ export default function CotizacionDetailPage() {
               <CardTitle>Datos del Cliente</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Nombre</p>
-                    <p className="font-medium">{cotizacion.lead.nombre}</p>
-                  </div>
-                </div>
-
-                {cotizacion.lead.empresa && (
+              {!cotizacion.lead ? (
+                <p className="text-muted-foreground">No hay información del cliente disponible</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3">
-                    <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Empresa</p>
-                      <p className="font-medium">{cotizacion.lead.empresa}</p>
+                      <p className="text-sm text-muted-foreground">Nombre</p>
+                      <p className="font-medium">{cotizacion.lead.nombre}</p>
                     </div>
                   </div>
-                )}
 
-                <div className="flex items-start gap-3">
-                  <MailIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <a
-                      href={`mailto:${cotizacion.lead.email}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {cotizacion.lead.email}
-                    </a>
-                  </div>
-                </div>
+                  {cotizacion.lead.empresa && (
+                    <div className="flex items-start gap-3">
+                      <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Empresa</p>
+                        <p className="font-medium">{cotizacion.lead.empresa}</p>
+                      </div>
+                    </div>
+                  )}
 
-                <div className="flex items-start gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Teléfono</p>
-                    <a
-                      href={`tel:${cotizacion.lead.telefono}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {cotizacion.lead.telefono}
-                    </a>
-                  </div>
-                </div>
-
-                {cotizacion.lead.ciudad && (
                   <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <MailIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Ciudad</p>
-                      <p className="font-medium">{cotizacion.lead.ciudad}</p>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <a
+                        href={`mailto:${cotizacion.lead.email}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {cotizacion.lead.email}
+                      </a>
                     </div>
                   </div>
-                )}
 
-                {cotizacion.lead.ruc_cedula && (
                   <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">RUC/Cédula</p>
-                      <p className="font-medium">{cotizacion.lead.ruc_cedula}</p>
+                      <p className="text-sm text-muted-foreground">Teléfono</p>
+                      <a
+                        href={`tel:${cotizacion.lead.telefono}`}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {cotizacion.lead.telefono}
+                      </a>
                     </div>
                   </div>
-                )}
 
-                {cotizacion.lead.direccion && (
-                  <div className="flex items-start gap-3 md:col-span-2">
-                    <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Dirección</p>
-                      <p className="font-medium">{cotizacion.lead.direccion}</p>
+                  {cotizacion.lead.ciudad && (
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Ciudad</p>
+                        <p className="font-medium">{cotizacion.lead.ciudad}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              <div className="mt-4 pt-4 border-t">
-                <Button
-                  variant="link"
-                  onClick={() => router.push(`/admin/leads/${cotizacion.lead_id}`)}
-                  className="h-auto p-0"
-                >
-                  Ver historial completo del cliente →
-                </Button>
-              </div>
+                  {cotizacion.lead.ruc_cedula && (
+                    <div className="flex items-start gap-3">
+                      <FileText className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">RUC/Cédula</p>
+                        <p className="font-medium">{cotizacion.lead.ruc_cedula}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {cotizacion.lead.direccion && (
+                    <div className="flex items-start gap-3 md:col-span-2">
+                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Dirección</p>
+                        <p className="font-medium">{cotizacion.lead.direccion}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {cotizacion.lead && (
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    variant="link"
+                    onClick={() => router.push(`/admin/leads/${cotizacion.lead_id}`)}
+                    className="h-auto p-0"
+                  >
+                    Ver historial completo del cliente →
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

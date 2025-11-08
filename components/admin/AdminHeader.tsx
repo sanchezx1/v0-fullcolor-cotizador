@@ -11,13 +11,13 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ title, subtitle, action }: AdminHeaderProps) {
   return (
-    <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-6">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm px-6 py-6 mb-6">
       {/* Título y acción */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 truncate">{title}</h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+            <p className="mt-2 text-sm text-gray-600">{subtitle}</p>
           )}
         </div>
         

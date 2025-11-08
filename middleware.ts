@@ -4,9 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { checkRateLimit } from '@/src/lib/rateLimiter'
 
 export async function middleware(request: NextRequest) {
-  // Obtener IP del cliente de forma compatible con Vercel y otros entornos
   const clientIp =
-    (request as any).ip ??
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
     'unknown'
