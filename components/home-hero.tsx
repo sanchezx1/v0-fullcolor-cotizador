@@ -175,10 +175,10 @@ export function HomeHero() {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={cn(
-            "h-1.5 w-12 rounded-full transition-colors duration-300",
-            index === activeIndex ? "bg-[#F5C700]" : "bg-white/40 lg:bg-[#0068A5]/30"
-          )}
+            className={cn(
+              "h-1.5 w-12 rounded-full transition-colors duration-300",
+              index === activeIndex ? "bg-[#F5C700]" : "bg-[#ADCEE2] lg:bg-[#0068A5]/30"
+            )}
           role="presentation"
         />
       ))}
