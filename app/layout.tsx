@@ -10,7 +10,12 @@ export const metadata: Metadata = {
   title: "FullColor - Cotizador de Productos Personalizados",
   description:
     "Cotiza tus productos personalizados con FullColor. Impresión de alta calidad y merchandising corporativo.",
-    generator: 'v0.app'
+  generator: "v0.app",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+  },
 }
 
 export default function RootLayout({

@@ -48,10 +48,14 @@ const slides = [
 
 const MOBILE_LOOP_GROUPS = 3
 const MOBILE_LOOP_CENTER_INDEX = 1
+const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)"
+const DESKTOP_AUTOPLAY_INTERVAL = 6000
 
 export function HomeHero() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [announcement, setAnnouncement] = useState(`${slides[0].title}. ${slides[0].subtitle}`)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [desktopProgress, setDesktopProgress] = useState(0)
   const totalSlides = slides.length
   const trackRef = useRef<HTMLDivElement>(null)
   const virtualIndexRef = useRef(totalSlides * MOBILE_LOOP_CENTER_INDEX)
@@ -82,6 +86,27 @@ export function HomeHero() {
       track.style.scrollBehavior = previousBehavior
     })
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY)
+    const updateMatches = () => setIsDesktop(mediaQuery.matches)
+
+    updateMatches()
+    mediaQuery.addEventListener("change", updateMatches)
+    return () => mediaQuery.removeEventListener("change", updateMatches)
+  }, [])
+
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (totalSlides === 0) return
+      const normalized = ((index % totalSlides) + totalSlides) % totalSlides
+      setActiveIndex(normalized)
+      setDesktopProgress(0)
+    },
+    [totalSlides]
+  )
 
   useEffect(() => {
     setAnnouncement(`${slides[activeIndex].title}. ${slides[activeIndex].subtitle}`)
@@ -154,11 +179,43 @@ export function HomeHero() {
     }
   }, [setTrackScrollQuietly])
 
-  // Desktop: cambiar de slide con modulo circular
-  const goToSlide = (index: number) => {
-    const nextIndex = (index + slides.length) % slides.length
-    setActiveIndex(nextIndex)
-  }
+  useEffect(() => {
+    if (typeof window === "undefined" || !isDesktop || totalSlides <= 1) {
+      setDesktopProgress(0)
+      return
+    }
+
+    let frameId: number | null = null
+    let startTime: number | null = null
+
+    const animateProgress = (timestamp: number) => {
+      if (startTime === null) {
+        startTime = timestamp
+      }
+
+      const elapsed = timestamp - startTime
+      const nextProgress = Math.min(elapsed / DESKTOP_AUTOPLAY_INTERVAL, 1)
+      setDesktopProgress((previous) => {
+        const shouldUpdate = Math.abs(previous - nextProgress) > 0.01
+        return shouldUpdate ? nextProgress : previous
+      })
+
+      if (elapsed >= DESKTOP_AUTOPLAY_INTERVAL) {
+        goToSlide(activeIndex + 1)
+        return
+      }
+
+      frameId = requestAnimationFrame(animateProgress)
+    }
+
+    frameId = requestAnimationFrame(animateProgress)
+
+    return () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId)
+      }
+    }
+  }, [activeIndex, goToSlide, isDesktop, totalSlides])
 
   const handleArrowKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "ArrowRight") {
@@ -170,20 +227,44 @@ export function HomeHero() {
     }
   }
 
-  const renderProgressBars = (className?: string) => (
-    <div className={cn("flex justify-center gap-2", className)}>
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-            className={cn(
-              "h-1.5 w-12 rounded-full transition-colors duration-300",
-              index === activeIndex ? "bg-[#F5C700]" : "bg-[#ADCEE2] lg:bg-[#0068A5]/30"
-            )}
-          role="presentation"
-        />
-      ))}
-    </div>
-  )
+  const renderProgressBars = (className?: string, options?: { animate?: boolean }) => {
+    const shouldAnimate = Boolean(options?.animate)
+    const clampedProgress = Math.min(Math.max(desktopProgress, 0), 1)
+
+    return (
+      <div className={cn("flex justify-center gap-2", className)}>
+        {slides.map((slide, index) => {
+          const isActive = index === activeIndex
+          const widthPercent = isActive
+            ? shouldAnimate
+              ? `${clampedProgress * 100}%`
+              : "100%"
+            : "0%"
+
+          return (
+            <div
+              key={slide.id}
+              className={cn(
+                "relative h-1.5 w-12 overflow-hidden rounded-full transition-colors duration-300",
+                isActive ? "bg-[#F5C700]/25" : "bg-[#ADCEE2] lg:bg-[#0068A5]/30"
+              )}
+              role="presentation"
+            >
+              <span
+                className={cn(
+                  "absolute inset-y-0 left-0 rounded-full bg-[#F5C700] transition-opacity duration-200",
+                  isActive ? "opacity-100" : "opacity-0"
+                )}
+                style={{
+                  width: widthPercent,
+                }}
+              />
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <section className="relative">
@@ -328,7 +409,7 @@ export function HomeHero() {
       </div>
 
       <div className="mt-6 hidden lg:flex">
-        {renderProgressBars("w-full")}
+        {renderProgressBars("w-full", { animate: isDesktop })}
       </div>
 
       <span className="sr-only" aria-live="polite">
