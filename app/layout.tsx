@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { ConditionalLayout } from "@/components/ConditionalLayout"
 
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className} suppressHydrationWarning={true}>
         <ConditionalLayout>{children}</ConditionalLayout>
+        <Analytics />
       </body>
     </html>
   )
