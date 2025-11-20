@@ -1,37 +1,60 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
 // Headers CORS globales
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Content-Type': 'application/json'
+};
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+function normalizePdfPath(rawPath) {
+  if (!rawPath) return null;
+  const match = rawPath.match(/cotizaciones\/(.+)$/);
+  if (match) {
+    return match[1];
+  }
+  return rawPath.replace(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/cotizaciones\//, '');
 }
 
-interface EmailTemplateData {
-  cotizacionNumero: string
-  fecha: string
-  clienteNombre: string
-  clienteEmail: string
-  items: Array<{
-    cantidad: number
-    nombre: string
-    categoria: string
-    precioUnitario: number
-    subtotal: number
-  }>
-  subtotal: number
-  iva15: number
-  total: number
-  pdfUrl: string
-  validezDias: number
-}
+async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: string) {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new HttpError(500, 'Faltan credenciales de Supabase');
+  }
 
+  const quoteToken = typeof rawQuoteToken === 'string' ? rawQuoteToken.trim() : '';
+
+  if (quoteToken) {
+    const { data, error } = await supabase
+      .from('cotizaciones')
+      .select('id')
+      .eq('id', quoteId)
+      .eq('access_token', quoteToken)
+      .single();
+
+    if (error || !data) {
+      throw new HttpError(403, 'Acceso no autorizado a la cotización');
+    }
+    return;
+  }
+
+  await requirePrivilegedAccess({
+    req,
+    supabase,
+    supabaseUrl,
+    supabaseAnonKey,
+    supabaseServiceKey
+  });
+}
 /**
  * Genera HTML para email de notificación al admin
- */
-function generateAdminNotificationHTML(data: EmailTemplateData): string {
-  const itemsHTML = data.items.map(item => `
+ */ function generateAdminNotificationHTML(data) {
+  const itemsHTML = data.items.map((item)=>`
     <tr>
       <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb;">
         <strong style="color: #1a1a1a; font-size: 14px;">${item.nombre}</strong><br/>
@@ -47,8 +70,7 @@ function generateAdminNotificationHTML(data: EmailTemplateData): string {
         $${item.subtotal.toFixed(2)}
       </td>
     </tr>
-  `).join('')
-
+  `).join('');
   return `
 <!DOCTYPE html>
 <html lang="es">
@@ -172,15 +194,13 @@ function generateAdminNotificationHTML(data: EmailTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
-
 /**
  * Genera HTML profesional para el email de cotización
  * Diseño responsive con colores de marca FullColor (#0066a1, #f5c700)
- */
-function generateEmailHTML(data: EmailTemplateData): string {
-  const itemsHTML = data.items.map(item => `
+ */ function generateEmailHTML(data) {
+  const itemsHTML = data.items.map((item)=>`
     <tr>
       <td style="padding: 12px 8px; border-bottom: 1px solid #e5e7eb;">
         <strong style="color: #1a1a1a; font-size: 14px;">${item.nombre}</strong><br/>
@@ -196,8 +216,7 @@ function generateEmailHTML(data: EmailTemplateData): string {
         $${item.subtotal.toFixed(2)}
       </td>
     </tr>
-  `).join('')
-
+  `).join('');
   return `
 <!DOCTYPE html>
 <html lang="es">
@@ -356,35 +375,26 @@ function generateEmailHTML(data: EmailTemplateData): string {
   </table>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
-
 /**
  * Edge Function para enviar emails de cotizaciones usando SendGrid
- */
-Deno.serve(async (req: Request) => {
+ */ Deno.serve(async (req)=>{
   // Manejar preflight OPTIONS
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
+    return new Response(null, {
       status: 200,
       headers: corsHeaders
-    })
+    });
   }
-
   try {
-    console.log('📧 send-email function invoked')
-    console.log('Method:', req.method)
-
-    // Configuración de Supabase
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
+    console.log('📧 send-email function invoked');
+    console.log('Method:', req.method);
     // Configuración de SendGrid
-    const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY')
-    const fromEmail = Deno.env.get('FROM_EMAIL') || 'carlosmatiasflor@gmail.com'
-    const fromName = Deno.env.get('FROM_NAME') || 'FullColor'
-    const adminEmail = Deno.env.get('ADMIN_EMAIL') || fromEmail
-
+    const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
+    const fromEmail = Deno.env.get('FROM_EMAIL') || 'carlosmatiasflor@gmail.com';
+    const fromName = Deno.env.get('FROM_NAME') || 'FullColor';
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || fromEmail;
     console.log('Environment check:', {
       supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
       supabaseServiceKey: supabaseServiceKey ? 'Present' : 'Missing',
@@ -392,70 +402,51 @@ Deno.serve(async (req: Request) => {
       fromEmail,
       fromName,
       adminEmail
-    })
-
+    });
     // Validar variables de entorno
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('❌ Missing Supabase credentials')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Configuración de Supabase incompleta',
-          details: 'Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY'
-        }),
-        { 
-          status: 500,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ Missing Supabase credentials');
+      return new Response(JSON.stringify({
+        error: 'Configuración de Supabase incompleta',
+        details: 'Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY'
+      }), {
+        status: 500,
+        headers: corsHeaders
+      });
     }
-
     if (!sendgridApiKey) {
-      console.error('❌ Missing SendGrid API Key')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Configuración de SendGrid incompleta',
-          details: 'Falta SENDGRID_API_KEY'
-        }),
-        { 
-          status: 500,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ Missing SendGrid API Key');
+      return new Response(JSON.stringify({
+        error: 'Configuración de SendGrid incompleta',
+        details: 'Falta SENDGRID_API_KEY'
+      }), {
+        status: 500,
+        headers: corsHeaders
+      });
     }
-
-    // Inicializar cliente Supabase
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
     // Verificar método HTTP
     if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ error: 'Método no permitido' }),
-        { 
-          status: 405,
-          headers: corsHeaders
-        }
-      )
+      return new Response(JSON.stringify({
+        error: 'Método no permitido'
+      }), {
+        status: 405,
+        headers: corsHeaders
+      });
     }
-
     // Obtener datos del request
-    const { quoteId, recipientEmail } = await req.json()
-    
+    const { quoteId, recipientEmail, quoteToken } = await req.json();
     if (!quoteId) {
-      return new Response(
-        JSON.stringify({ error: 'ID de cotización requerido' }),
-        { 
-          status: 400,
-          headers: corsHeaders
-        }
-      )
+      return new Response(JSON.stringify({
+        error: 'ID de cotización requerido'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
     }
-
-    console.log('📧 Iniciando envío de email para cotización:', quoteId)
-
+    await ensureQuoteAccess(req, quoteId, quoteToken);
+    console.log('📧 Iniciando envío de email para cotización:', quoteId);
     // 1. Obtener datos de la cotización desde la BD
-    const { data: cotizacion, error: cotizacionError } = await supabase
-      .from('cotizaciones')
-      .select(`
+    const { data: cotizacion, error: cotizacionError } = await supabase.from('cotizaciones').select(`
         *,
         leads (
           nombre,
@@ -463,92 +454,90 @@ Deno.serve(async (req: Request) => {
           telefono,
           empresa
         )
-      `)
-      .eq('id', quoteId)
-      .single()
-
+      `).eq('id', quoteId).single();
     if (cotizacionError || !cotizacion) {
-      console.error('❌ Error obteniendo cotización:', cotizacionError)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Cotización no encontrada',
-          details: cotizacionError?.message 
-        }),
-        { 
-          status: 404,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ Error obteniendo cotización:', cotizacionError);
+      return new Response(JSON.stringify({
+        error: 'Cotización no encontrada',
+        details: cotizacionError?.message
+      }), {
+        status: 404,
+        headers: corsHeaders
+      });
     }
-
     // 2. Obtener items de la cotización
-    const { data: items, error: itemsError } = await supabase
-      .from('items_cotizacion')
-      .select(`
+    const { data: items, error: itemsError } = await supabase.from('items_cotizacion').select(`
         *,
         productos (
           nombre,
           categoria
         )
-      `)
-      .eq('cotizacion_id', quoteId)
-
+      `).eq('cotizacion_id', quoteId);
     if (itemsError || !items || items.length === 0) {
-      console.error('❌ Error obteniendo items:', itemsError)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Items de cotización no encontrados',
-          details: itemsError?.message 
-        }),
-        { 
-          status: 404,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ Error obteniendo items:', itemsError);
+      return new Response(JSON.stringify({
+        error: 'Items de cotización no encontrados',
+        details: itemsError?.message
+      }), {
+        status: 404,
+        headers: corsHeaders
+      });
     }
-
     // 3. Determinar email destinatario
-    const toEmail = recipientEmail || cotizacion.leads?.email
-    
+    const toEmail = recipientEmail || cotizacion.leads?.email;
     if (!toEmail) {
-      console.error('❌ No hay email del lead ni email alternativo')
-      return new Response(
-        JSON.stringify({ 
-          error: 'Email destinatario no especificado',
-          details: 'El lead no tiene email configurado y no se proporcionó uno alternativo'
-        }),
-        { 
-          status: 400,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ No hay email del lead ni email alternativo');
+      return new Response(JSON.stringify({
+        error: 'Email destinatario no especificado',
+        details: 'El lead no tiene email configurado y no se proporcionó uno alternativo'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
     }
-
     // 4. Validar que exista PDF
     if (!cotizacion.pdf_url) {
-      console.error('❌ Cotización sin PDF generado')
-      return new Response(
-        JSON.stringify({ 
-          error: 'PDF no generado',
-          details: 'Primero debe generarse el PDF de la cotización'
-        }),
-        { 
-          status: 400,
-          headers: corsHeaders
-        }
-      )
+      console.error('❌ Cotización sin PDF generado');
+      return new Response(JSON.stringify({
+        error: 'PDF no generado',
+        details: 'Primero debe generarse el PDF de la cotización'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
     }
-
+    const pdfStoragePath = normalizePdfPath(cotizacion.pdf_url);
+    if (!pdfStoragePath) {
+      return new Response(JSON.stringify({
+        error: 'Ruta de PDF inválida'
+      }), {
+        status: 400,
+        headers: corsHeaders
+      });
+    }
+    const { data: pdfSignedUrlData, error: pdfSignedUrlError } = await supabase.storage
+      .from('cotizaciones')
+      .createSignedUrl(pdfStoragePath, 86400);
+    if (pdfSignedUrlError || !pdfSignedUrlData) {
+      console.error('❌ Error firmando PDF:', pdfSignedUrlError);
+      return new Response(JSON.stringify({
+        error: 'No se pudo firmar el PDF',
+        details: pdfSignedUrlError?.message
+      }), {
+        status: 500,
+        headers: corsHeaders
+      });
+    }
+    const pdfSignedUrl = pdfSignedUrlData.signedUrl;
     // 5. Calcular totales
-    let subtotal = 0
-    items.forEach(item => {
-      subtotal += item.cantidad * item.precio_unitario_aplicado
-    })
-    const iva15 = subtotal * 0.15
-    const total = subtotal + iva15
-
+    let subtotal = 0;
+    items.forEach((item)=>{
+      subtotal += item.cantidad * item.precio_unitario_aplicado;
+    });
+    const iva15 = subtotal * 0.15;
+    const total = subtotal + iva15;
     // 6. Preparar datos para la plantilla
-    const emailData: EmailTemplateData = {
+    const emailData = {
       cotizacionNumero: `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
       fecha: new Date(cotizacion.created_at).toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -557,33 +546,29 @@ Deno.serve(async (req: Request) => {
       }),
       clienteNombre: cotizacion.leads?.nombre || 'Cliente',
       clienteEmail: toEmail,
-      items: items.map(item => ({
-        cantidad: item.cantidad,
-        nombre: item.productos.nombre,
-        categoria: item.productos.categoria,
-        precioUnitario: parseFloat(item.precio_unitario_aplicado),
-        subtotal: item.cantidad * parseFloat(item.precio_unitario_aplicado)
-      })),
+      items: items.map((item)=>({
+          cantidad: item.cantidad,
+          nombre: item.productos.nombre,
+          categoria: item.productos.categoria,
+          precioUnitario: parseFloat(item.precio_unitario_aplicado),
+          subtotal: item.cantidad * parseFloat(item.precio_unitario_aplicado)
+        })),
       subtotal: Math.round(subtotal * 100) / 100,
       iva15: Math.round(iva15 * 100) / 100,
       total: Math.round(total * 100) / 100,
-      pdfUrl: cotizacion.pdf_url,
+      pdfUrl: pdfSignedUrl,
       validezDias: cotizacion.validez_dias || 30
-    }
-
+    };
     console.log('✅ Datos preparados:', {
       to: toEmail,
       cotizacion: emailData.cotizacionNumero,
       items: emailData.items.length,
       total: emailData.total
-    })
-
+    });
     // 7. Generar contenido del email
-    const htmlContent = generateEmailHTML(emailData)
-
+    const htmlContent = generateEmailHTML(emailData);
     // 8. Enviar email usando SendGrid
-    console.log('📤 Enviando email vía SendGrid...')
-    
+    console.log('📤 Enviando email vía SendGrid...');
     const sendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
@@ -591,38 +576,41 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: toEmail }],
-          subject: `Tu Cotización ${emailData.cotizacionNumero} - FullColor`
-        }],
+        personalizations: [
+          {
+            to: [
+              {
+                email: toEmail
+              }
+            ],
+            subject: `Tu Cotización ${emailData.cotizacionNumero} - FullColor`
+          }
+        ],
         from: {
           email: fromEmail,
           name: fromName
         },
-        content: [{
-          type: 'text/html',
-          value: htmlContent
-        }],
+        content: [
+          {
+            type: 'text/html',
+            value: htmlContent
+          }
+        ],
         reply_to: {
           email: fromEmail,
           name: fromName
         }
       })
-    })
-
+    });
     if (!sendgridResponse.ok) {
-      const errorText = await sendgridResponse.text()
-      console.error('❌ SendGrid error:', errorText)
-      throw new Error(`Error enviando email: ${sendgridResponse.status} - ${errorText}`)
+      const errorText = await sendgridResponse.text();
+      console.error('❌ SendGrid error:', errorText);
+      throw new Error(`Error enviando email: ${sendgridResponse.status} - ${errorText}`);
     }
-
-    console.log('📧 Email enviado exitosamente vía SendGrid al cliente')
-
+    console.log('📧 Email enviado exitosamente vía SendGrid al cliente');
     // 8.5. Enviar notificación al admin
-    console.log('📤 Enviando notificación al admin:', adminEmail)
-    
-    const adminHtmlContent = generateAdminNotificationHTML(emailData)
-    
+    console.log('📤 Enviando notificación al admin:', adminEmail);
+    const adminHtmlContent = generateAdminNotificationHTML(emailData);
     const adminSendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
@@ -630,81 +618,77 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        personalizations: [{
-          to: [{ email: adminEmail }],
-          subject: `🔔 Nueva Cotización ${emailData.cotizacionNumero} - ${emailData.clienteNombre}`
-        }],
+        personalizations: [
+          {
+            to: [
+              {
+                email: adminEmail
+              }
+            ],
+            subject: `🔔 Nueva Cotización ${emailData.cotizacionNumero} - ${emailData.clienteNombre}`
+          }
+        ],
         from: {
           email: fromEmail,
           name: fromName
         },
-        content: [{
-          type: 'text/html',
-          value: adminHtmlContent
-        }],
+        content: [
+          {
+            type: 'text/html',
+            value: adminHtmlContent
+          }
+        ],
         reply_to: {
-          email: toEmail,  // El admin puede responder directamente al cliente
+          email: toEmail,
           name: emailData.clienteNombre
         }
       })
-    })
-
+    });
     if (!adminSendgridResponse.ok) {
-      const errorText = await adminSendgridResponse.text()
-      console.warn('⚠️ Error enviando notificación al admin (no crítico):', errorText)
-      // No lanzar error, el email al cliente ya se envió exitosamente
+      const errorText = await adminSendgridResponse.text();
+      console.warn('⚠️ Error enviando notificación al admin (no crítico):', errorText);
+    // No lanzar error, el email al cliente ya se envió exitosamente
     } else {
-      console.log('✅ Notificación enviada al admin:', adminEmail)
+      console.log('✅ Notificación enviada al admin:', adminEmail);
     }
-
     // 9. Registrar evento en la base de datos
-    const { error: eventoError } = await supabase
-      .from('eventos')
-      .insert({
-        cotizacion_id: quoteId,
-        tipo: 'email_enviado',
-        metadata: {
-          recipient: toEmail,
-          cotizacion_numero: emailData.cotizacionNumero,
-          total: emailData.total,
-          provider: 'sendgrid',
-          sent_at: new Date().toISOString()
-        }
-      })
-
-    if (eventoError) {
-      console.warn('⚠️ Error registrando evento:', eventoError.message)
-    }
-
-    console.log('✅ Email enviado exitosamente a:', toEmail)
-
-    // 10. Retornar respuesta exitosa
-    return new Response(
-      JSON.stringify({ 
-        success: true,
+    const { error: eventoError } = await supabase.from('eventos').insert({
+      cotizacion_id: quoteId,
+      tipo: 'email_enviado',
+      metadata: {
         recipient: toEmail,
-        cotizacionNumero: emailData.cotizacionNumero,
-        message: `Email enviado exitosamente a ${toEmail}`
-      }),
-      { 
-        status: 200,
-        headers: corsHeaders
+        cotizacion_numero: emailData.cotizacionNumero,
+        total: emailData.total,
+        provider: 'sendgrid',
+        storage_path: pdfStoragePath,
+        sent_at: new Date().toISOString()
       }
-    )
-
+    });
+    if (eventoError) {
+      console.warn('⚠️ Error registrando evento:', eventoError.message);
+    }
+    console.log('✅ Email enviado exitosamente a:', toEmail);
+    // 10. Retornar respuesta exitosa
+    return new Response(JSON.stringify({
+      success: true,
+      recipient: toEmail,
+      cotizacionNumero: emailData.cotizacionNumero,
+      message: `Email enviado exitosamente a ${toEmail}`
+    }), {
+      status: 200,
+      headers: corsHeaders
+    });
   } catch (error) {
-    console.error('❌ Error en send-email:', error)
-    
-    return new Response(
-      JSON.stringify({ 
-        error: 'Error interno del servidor',
-        details: error.message,
-        stack: error.stack
-      }),
-      { 
-        status: 500,
-        headers: corsHeaders
-      }
-    )
+    console.error('❌ Error en send-email:', error);
+    const status = error instanceof HttpError ? error.status : 500;
+    const message = error instanceof HttpError ? error.message : 'Error interno del servidor';
+    return new Response(JSON.stringify({
+      error: message,
+      details: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }), {
+      status,
+      headers: corsHeaders
+    });
   }
-})
+});

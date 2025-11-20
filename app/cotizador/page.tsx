@@ -22,6 +22,7 @@ export default function CotizadorPage() {
     loading,
     error,
     leadConflict,
+    canUpdateLead,
     setLeadConflict,
     updateItemQuantity,
     removeItemFromQuote,
@@ -31,7 +32,10 @@ export default function CotizadorPage() {
     validateQuote,
     submitQuote,
     upsertLeadAndContinue,
-    useExistingLeadAndContinue
+    useExistingLeadAndContinue,
+    requestLeadOwnershipVerification,
+    leadVerificationState,
+    leadVerificationError
   } = useQuoteBuilder()
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,7 +52,7 @@ export default function CotizadorPage() {
       
       if (result.success) {
         setSubmitSuccess(true)
-        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+        router.push(`/confirmacion?quoteId=${result.quoteId}&token=${result.quoteToken}`)
       } else if (result.error === 'LEAD_CONFLICT') {
         // El modal se mostrará automáticamente por el estado leadConflict
         console.log('Conflicto de lead detectado, mostrando modal')
@@ -69,7 +73,7 @@ export default function CotizadorPage() {
       
       if (result.success) {
         setSubmitSuccess(true)
-        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+        router.push(`/confirmacion?quoteId=${result.quoteId}&token=${result.quoteToken}`)
       }
     } catch (err) {
       console.error('Error updating lead:', err)
@@ -85,7 +89,7 @@ export default function CotizadorPage() {
       
       if (result.success) {
         setSubmitSuccess(true)
-        router.push(`/confirmacion?quoteId=${result.quoteId}`)
+        router.push(`/confirmacion?quoteId=${result.quoteId}&token=${result.quoteToken}`)
       }
     } catch (err) {
       console.error('Error using existing lead:', err)
@@ -104,6 +108,10 @@ export default function CotizadorPage() {
           isOpen={leadConflict.show}
           existingLead={leadConflict.existingLead}
           newData={leadConflict.newData}
+          canUpdateLead={canUpdateLead}
+          onRequestVerification={requestLeadOwnershipVerification}
+          verificationState={leadVerificationState}
+          verificationError={leadVerificationError}
           onUseExisting={handleUseExisting}
           onUpdateAndContinue={handleUpdateAndContinue}
           onCancel={() => setLeadConflict(null)}

@@ -1,57 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateCache } from '@/src/lib/data'
 
-// Clave secreta para proteger el endpoint
-const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || 'dev-secret'
+const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET
+
+if (!REVALIDATE_SECRET) {
+  throw new Error('Missing REVALIDATE_SECRET environment variable')
+}
+
+const HEADER_CANDIDATES = ['x-revalidate-key', 'x-vercel-reval-key'] as const
+
+function extractProvidedSecret(request: NextRequest): string | null {
+  for (const headerName of HEADER_CANDIDATES) {
+    const headerValue = request.headers.get(headerName)
+    if (headerValue) {
+      return headerValue.trim()
+    }
+  }
+
+  const authHeader = request.headers.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice('Bearer '.length).trim()
+  }
+
+  return null
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autenticación básica
-    const authHeader = request.headers.get('authorization')
-    const expectedAuth = `Bearer ${REVALIDATE_SECRET}`
-    
-    if (authHeader !== expectedAuth) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const providedSecret = extractProvidedSecret(request)
+
+    if (!providedSecret || providedSecret !== REVALIDATE_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Revalidar cache
     await revalidateCache()
 
-    return NextResponse.json({
-      success: true,
-      message: 'Cache revalidated successfully',
-      timestamp: new Date().toISOString()
-    })
-
-  } catch (error) {
-    console.error('Error revalidating cache:', error)
-    return NextResponse.json(
-      { 
-        error: 'Failed to revalidate cache',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
-}
-
-// También permitir GET para facilitar testing
-export async function GET(request: NextRequest) {
-  const url = new URL(request.url)
-  const secret = url.searchParams.get('secret')
-  
-  if (secret !== REVALIDATE_SECRET) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    )
-  }
-
-  try {
-    await revalidateCache()
     return NextResponse.json({
       success: true,
       message: 'Cache revalidated successfully',
@@ -60,7 +43,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error revalidating cache:', error)
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to revalidate cache',
         details: error instanceof Error ? error.message : 'Unknown error'
       },

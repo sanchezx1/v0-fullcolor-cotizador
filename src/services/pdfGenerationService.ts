@@ -1,19 +1,46 @@
 import { supabase } from './supabaseClient'
 
+type QuoteSecurityOptions = {
+  quoteToken?: string
+}
+
 /**
  * Servicio para generar PDFs de cotización
- * Llama a la Edge Function que lee datos frescos desde Supabase
+ * Usa Edge Functions al operar con administradores y rutas internas seguras para clientes públicos
  */
 export class PDFGenerationService {
   constructor() {
     // Las variables de entorno se cargan automáticamente por el cliente Supabase
   }
 
+  private async requestPublicPdfEndpoint(
+    quoteId: number,
+    quoteToken: string,
+    init: RequestInit
+  ) {
+    const response = await fetch(`/api/public/quotes/${quoteId}/pdf`, {
+      ...init,
+      headers: {
+        'x-quote-token': quoteToken,
+        ...(init.headers ?? {})
+      }
+    })
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      throw new Error(payload?.error || 'Error procesando PDF')
+    }
+
+    return response.json()
+  }
+
   /**
    * Genera PDF de cotización usando Edge Function
-   * Genera PDFs reales con Puppeteer, sin modo simulación
    */
-  async generateQuotePDF(quoteId: number): Promise<{
+  async generateQuotePDF(
+    quoteId: number,
+    options: QuoteSecurityOptions = {}
+  ): Promise<{
     success: boolean
     pdfUrl?: string
     fileName?: string
@@ -23,9 +50,26 @@ export class PDFGenerationService {
     error?: string
   }> {
     try {
-      console.log('🔍 Generando PDF real para cotización:', quoteId)
-      
-      // Llamar a la Edge Function
+      console.log('🧾 Generando PDF real para cotización:', quoteId)
+
+      if (options.quoteToken) {
+        const data = await this.requestPublicPdfEndpoint(quoteId, options.quoteToken, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        return {
+          success: true,
+          pdfUrl: data.pdfUrl,
+          fileName: data.fileName,
+          emailSent: data.emailSent || false,
+          emailRecipient: data.emailRecipient,
+          emailError: data.emailError
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('generate-pdf', {
         body: { quoteId }
       })
@@ -39,22 +83,13 @@ export class PDFGenerationService {
       }
 
       if (!data.success) {
-        console.error('❌ Edge Function retornó error:', data.error)
+        console.error('⚠️ Edge Function retornó error:', data.error)
         return {
           success: false,
           error: `Error generando PDF: ${data.error}`
         }
       }
 
-      console.log('✅ PDF real generado exitosamente:', data.pdfUrl)
-      
-      // Incluir información del email automático
-      if (data.emailSent) {
-        console.log('📧 Email enviado automáticamente a:', data.emailRecipient)
-      } else if (data.emailError) {
-        console.warn('⚠️ Email no enviado:', data.emailError)
-      }
-      
       return {
         success: true,
         pdfUrl: data.pdfUrl,
@@ -63,7 +98,6 @@ export class PDFGenerationService {
         emailRecipient: data.emailRecipient,
         emailError: data.emailError
       }
-
     } catch (error) {
       console.error('❌ Error general en generateQuotePDF:', error)
       return {
@@ -73,27 +107,28 @@ export class PDFGenerationService {
     }
   }
 
-
   /**
    * Genera PDF y envía por email (opcional)
    */
-  async generateAndEmailPDF(quoteId: number, email?: string): Promise<{
+  async generateAndEmailPDF(
+    quoteId: number,
+    email?: string,
+    options: QuoteSecurityOptions = {}
+  ): Promise<{
     success: boolean
     pdfUrl?: string
     emailSent?: boolean
     error?: string
   }> {
     try {
-      // Generar PDF
-      const pdfResult = await this.generateQuotePDF(quoteId)
-      
+      const pdfResult = await this.generateQuotePDF(quoteId, options)
+
       if (!pdfResult.success) {
         return pdfResult
       }
 
-      // Si se proporciona email, enviar PDF
       if (email && pdfResult.pdfUrl) {
-        const emailResult = await this.sendPDFByEmail(quoteId, pdfResult.pdfUrl, email)
+        const emailResult = await this.sendPDFByEmail(quoteId, pdfResult.pdfUrl, email, options)
         return {
           ...pdfResult,
           emailSent: emailResult.success
@@ -101,7 +136,6 @@ export class PDFGenerationService {
       }
 
       return pdfResult
-
     } catch (error) {
       console.error('Error in generateAndEmailPDF:', error)
       return {
@@ -114,17 +148,25 @@ export class PDFGenerationService {
   /**
    * Envía PDF por email usando Edge Function
    */
-  private async sendPDFByEmail(quoteId: number, pdfUrl: string, email: string): Promise<{
+  private async sendPDFByEmail(
+    quoteId: number,
+    pdfUrl: string,
+    email: string,
+    options: QuoteSecurityOptions = {}
+  ): Promise<{
     success: boolean
     error?: string
   }> {
     try {
+      const payload = {
+        quoteId,
+        pdfUrl,
+        email,
+        quoteToken: options.quoteToken
+      }
+
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: { 
-          quoteId,
-          pdfUrl,
-          email
-        }
+        body: payload
       })
 
       if (error) {
@@ -138,7 +180,6 @@ export class PDFGenerationService {
         success: data.success || false,
         error: data.error
       }
-
     } catch (error) {
       return {
         success: false,
@@ -148,22 +189,48 @@ export class PDFGenerationService {
   }
 
   /**
-   * Obtiene URL del PDF si ya existe
+   * Obtiene URL firmada del PDF si existe
    */
-  async getExistingPDFUrl(quoteId: number): Promise<string | null> {
+  async getExistingPDFUrl(
+    quoteId: number,
+    options: QuoteSecurityOptions = {}
+  ): Promise<string | null> {
     try {
+      if (options.quoteToken) {
+        const response = await fetch(`/api/public/quotes/${quoteId}/pdf`, {
+          headers: {
+            'x-quote-token': options.quoteToken
+          }
+        })
+
+        if (!response.ok) {
+          return null
+        }
+
+        const payload = await response.json()
+        return payload.pdfUrl ?? null
+      }
+
       const { data, error } = await supabase
         .from('cotizaciones')
         .select('pdf_url')
         .eq('id', quoteId)
         .single()
 
-      if (error || !data) {
+      if (error || !data || !data.pdf_url) {
         return null
       }
 
-      return data.pdf_url
+      const { data: signedUrlData, error: signedError } = await supabase.storage
+        .from('cotizaciones')
+        .createSignedUrl(data.pdf_url, 3600)
 
+      if (signedError || !signedUrlData) {
+        console.error('Error firmando URL del PDF:', signedError)
+        return null
+      }
+
+      return signedUrlData.signedUrl
     } catch (error) {
       console.error('Error getting existing PDF URL:', error)
       return null
@@ -173,8 +240,8 @@ export class PDFGenerationService {
   /**
    * Verifica si el PDF ya existe para una cotización
    */
-  async hasExistingPDF(quoteId: number): Promise<boolean> {
-    const url = await this.getExistingPDFUrl(quoteId)
+  async hasExistingPDF(quoteId: number, options: QuoteSecurityOptions = {}): Promise<boolean> {
+    const url = await this.getExistingPDFUrl(quoteId, options)
     return url !== null
   }
 }

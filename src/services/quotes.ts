@@ -13,54 +13,47 @@ export async function crearLead(leadData: {
   ciudad?: string
 }): Promise<Lead> {
   try {
-    console.log('🔍 Verificando si lead existe con email:', leadData.email)
-    
-    // 1. Verificar si el lead ya existe por email
-    const { data: existingLeads, error: searchError } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('email', leadData.email)
-      .limit(1)
+    console.log('[Lead] Creando lead mediante RPC seguro para email:', leadData.email)
 
-    if (searchError) {
-      console.error('❌ Error buscando lead:', searchError)
-      // No lanzar error, solo continuar creando uno nuevo
-      console.log('⚠️ Error al buscar, creando nuevo lead...')
+    const { data, error } = await supabase.rpc('create_public_lead', {
+      p_nombre: leadData.nombre,
+      p_email: leadData.email,
+      p_telefono: leadData.telefono,
+      p_empresa: leadData.empresa,
+      p_notas: leadData.notas ?? null,
+      p_ruc_cedula: leadData.ruc_cedula ?? null,
+      p_ciudad: leadData.ciudad ?? null
+    })
+
+    if (error) {
+      console.error('[Lead] Error ejecutando create_public_lead:', error)
+      throw new Error(`Error creando lead: ${error.message}`)
     }
 
-    // Si ya existe, lanzar error para que el frontend maneje el conflicto
-    if (existingLeads && existingLeads.length > 0) {
-      const existingLead = existingLeads[0]
-      console.log('📝 Lead existente encontrado:', existingLead.id)
-      
-      // Lanzar error con tipo específico para que el frontend lo detecte
-      const conflictError = new Error('LEAD_EMAIL_EXISTS') as any
-      conflictError.code = 'LEAD_EMAIL_EXISTS'
-      conflictError.existingLead = existingLead
-      conflictError.newData = leadData
-      throw conflictError
+    if (!data) {
+      throw new Error('Error creando lead: respuesta vacía')
     }
 
-    // 2. Si no existe, crear uno nuevo
-    console.log('➕ Lead no existe, creando nuevo...')
-    const { data: newLeads, error: insertError } = await supabase
-      .from('leads')
-      .insert(leadData)
-      .select()
+    if (!data.success) {
+      if (data.code === 'LEAD_EMAIL_EXISTS') {
+        const conflictError = new Error('LEAD_EMAIL_EXISTS') as any
+        conflictError.code = 'LEAD_EMAIL_EXISTS'
+        conflictError.existingLead = data.existing_lead
+        conflictError.newData = data.new_data ?? leadData
+        throw conflictError
+      }
 
-    if (insertError) {
-      console.error('❌ Error creando lead:', insertError)
-      throw new Error(`Error creando lead: ${insertError.message} (Código: ${insertError.code})`)
+      throw new Error('Error creando lead: respuesta inválida del servidor')
     }
 
-    if (!newLeads || newLeads.length === 0) {
-      throw new Error('Error creando lead: No se devolvió ningún registro')
+    if (!data.lead) {
+      throw new Error('Error creando lead: el servidor no devolvió el lead creado')
     }
 
-    console.log('✅ Lead creado exitosamente:', newLeads[0])
-    return newLeads[0]
+    console.log('[Lead] Lead creado exitosamente:', data.lead)
+    return data.lead as Lead
   } catch (error) {
-    console.error('❌ Error en crearLead:', error)
+    console.error('[Lead] Error en crearLead:', error)
     if (error instanceof Error) {
       throw error
     } else {
@@ -69,91 +62,6 @@ export async function crearLead(leadData: {
   }
 }
 
-/**
- * Genera un número de cotización único con reintentos y fallback
- */
-async function generarNumeroCotizacionUnico(): Promise<string> {
-  const maxIntentos = 5
-  
-  for (let intento = 1; intento <= maxIntentos; intento++) {
-    try {
-      console.log(`🔄 Intento ${intento}/${maxIntentos} de generar número único...`)
-      
-      // Generar manualmente siempre (más confiable que RPC en este caso)
-      // Obtener TODOS los números existentes y encontrar el máximo
-      const { data: todasCots, error: searchError } = await supabase
-        .from('cotizaciones')
-        .select('numero')
-        .order('numero', { ascending: false })
-        .limit(100) // Obtener los últimos 100 para analizar
-
-      if (searchError) {
-        console.error('⚠️ Error buscando cotizaciones:', searchError)
-        throw searchError
-      }
-
-      let siguienteNumero = 1
-
-      if (todasCots && todasCots.length > 0) {
-        // Extraer todos los números y encontrar el máximo
-        const numeros = todasCots
-          .map(cot => {
-            const match = cot.numero.match(/COT-(\d+)/)
-            return match ? parseInt(match[1], 10) : 0
-          })
-          .filter(num => num > 0)
-
-        if (numeros.length > 0) {
-          const maxNumero = Math.max(...numeros)
-          siguienteNumero = maxNumero + intento // Sumar el intento para evitar colisiones
-        }
-      }
-
-      const nuevoNumero = `COT-${siguienteNumero.toString().padStart(5, '0')}`
-      console.log(`📝 Número candidato: ${nuevoNumero}`)
-
-      // Verificar que no exista
-      const { data: existe, error: checkError } = await supabase
-        .from('cotizaciones')
-        .select('numero')
-        .eq('numero', nuevoNumero)
-        .limit(1)
-
-      if (checkError) {
-        console.error('⚠️ Error verificando número:', checkError)
-        throw checkError
-      }
-
-      if (!existe || existe.length === 0) {
-        console.log(`✅ Número único confirmado: ${nuevoNumero}`)
-        return nuevoNumero
-      }
-
-      // Si existe, esperar y reintentar
-      console.log(`⚠️ Número ${nuevoNumero} ya existe, reintentando en ${100 * intento}ms...`)
-      await new Promise(resolve => setTimeout(resolve, 100 * intento))
-      
-    } catch (error) {
-      console.error(`❌ Error en intento ${intento}:`, error)
-      
-      // Si no es el último intento, esperar y continuar
-      if (intento < maxIntentos) {
-        await new Promise(resolve => setTimeout(resolve, 150 * intento))
-        continue
-      }
-      
-      // En el último intento, usar fallback con timestamp único
-      console.log('⚠️ Todos los intentos fallaron, usando fallback...')
-    }
-  }
-
-  // Fallback final: timestamp + random
-  const timestamp = Date.now()
-  const random = Math.floor(Math.random() * 1000)
-  const fallbackNumero = `COT-T${timestamp.toString().slice(-4)}${random.toString().padStart(3, '0')}`
-  console.log('🆘 Usando número fallback único:', fallbackNumero)
-  return fallbackNumero
-}
 
 /**
  * Crea una nueva cotización con sus ítems
@@ -170,86 +78,35 @@ export async function crearCotizacion(cotizacionData: {
   notas?: string
 }): Promise<{ cotizacion: Cotizacion; items: ItemCotizacion[] }> {
   try {
-    console.log('🔍 Creando cotización para lead:', cotizacionData.leadId)
-    
-    // Calcular total
-    const total = cotizacionData.items.reduce((sum, item) => sum + item.subtotal, 0)
-    console.log('💰 Total calculado:', total)
+    console.log('🔎 Creando cotización para lead:', cotizacionData.leadId)
 
-    // Generar número de cotización único
-    const numero = await generarNumeroCotizacionUnico()
-    console.log('📄 Número de cotización generado:', numero)
-
-    // Crear la cotización
-    const { data: cotizacion, error: cotizacionError } = await supabase
-      .from('cotizaciones')
-      .insert({
-        lead_id: cotizacionData.leadId,
-        numero,
-        estado: 'pendiente',
-        total,
-        validez_dias: 30,
-        canal: cotizacionData.canal,
-        notas: cotizacionData.notas
-      })
-      .select()
-      .single()
-
-    if (cotizacionError) {
-      console.error('❌ Error creando cotización:', {
-        message: cotizacionError.message,
-        details: cotizacionError.details,
-        hint: cotizacionError.hint,
-        code: cotizacionError.code
-      })
-      throw new Error(`Error creando cotización: ${cotizacionError.message} (Código: ${cotizacionError.code})`)
-    }
-
-    console.log('✅ Cotización creada:', cotizacion.id)
-
-    // Crear los ítems de la cotización
-    const itemsData = cotizacionData.items.map(item => ({
-      cotizacion_id: cotizacion.id,
+    const itemsPayload = cotizacionData.items.map(item => ({
       producto_id: item.productoId,
       cantidad: item.cantidad,
-      precio_unitario_aplicado: item.precioUnitario,
+      precio_unitario: item.precioUnitario,
       subtotal: item.subtotal
     }))
 
-    console.log('📦 Insertando', itemsData.length, 'items...')
+    const { data, error } = await supabase.rpc('create_public_quote', {
+      p_lead_id: cotizacionData.leadId,
+      p_items: itemsPayload,
+      p_canal: cotizacionData.canal,
+      p_notas: cotizacionData.notas ?? null
+    })
 
-    const { data: items, error: itemsError } = await supabase
-      .from('items_cotizacion')
-      .insert(itemsData)
-      .select()
-
-    if (itemsError) {
-      console.error('❌ Error creando items de cotización:', {
-        message: itemsError.message,
-        details: itemsError.details,
-        hint: itemsError.hint,
-        code: itemsError.code
-      })
-      throw new Error(`Error creando items: ${itemsError.message} (Código: ${itemsError.code})`)
+    if (error) {
+      console.error('❌ Error ejecutando create_public_quote:', error)
+      throw new Error(`Error creando cotización: ${error.message}`)
     }
 
-    console.log('✅ Items creados:', items.length)
-
-    // Registrar evento de creación
-    try {
-      await registrarEvento({
-        cotizacionId: cotizacion.id,
-        tipo: 'cotizacion_creada',
-        metadata: {
-          total_items: cotizacionData.items.length,
-          canal: cotizacionData.canal
-        }
-      })
-      console.log('✅ Evento registrado')
-    } catch (eventoError) {
-      // No fallar si el evento no se puede registrar
-      console.warn('⚠️ No se pudo registrar evento:', eventoError)
+    if (!data || !data.cotizacion) {
+      throw new Error('Error creando cotización: el servidor no devolvió la cotización')
     }
+
+    const cotizacion = data.cotizacion as Cotizacion
+    const items = (data.items as ItemCotizacion[]) || []
+
+    console.log('✅ Cotización creada vía RPC:', cotizacion.id)
 
     return { cotizacion, items }
   } catch (error) {

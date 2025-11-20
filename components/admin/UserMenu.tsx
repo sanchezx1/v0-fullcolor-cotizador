@@ -49,7 +49,7 @@ export function UserMenu() {
 
   if (loading) {
     return (
-      <Button variant="ghost" className="relative h-10 w-10 rounded-full" disabled>
+      <Button variant="ghost" className="relative h-10 w-10 rounded-md" disabled>
         <Avatar>
           <AvatarFallback className="bg-gray-200">
             <span className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -66,7 +66,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:ring-2 hover:ring-[#0066a1] transition-all">
+        <Button variant="ghost" className="relative h-10 w-10 rounded-md hover:ring-2 hover:ring-[#0066a1] transition-all">
           <Avatar>
             <AvatarFallback className="bg-[#0066a1] text-white font-semibold">
               {initials}

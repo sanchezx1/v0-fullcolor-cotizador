@@ -233,7 +233,7 @@ export default function CatalogoPage() {
               <AlertCircle className="mx-auto mb-4 h-14 w-14 text-[#0066CC]" />
               <h1 className="text-3xl font-semibold text-slate-900">Error al cargar productos</h1>
               <p className="mt-3 text-base text-slate-600">{error}</p>
-              <Button className="mt-6 rounded-full bg-[#0066CC] px-6 py-2 text-sm font-semibold text-white hover:bg-[#005bb5]" onClick={() => void loadProducts()}>
+              <Button className="mt-6 rounded-md bg-[#0066CC] px-6 py-2 text-sm font-semibold text-white hover:bg-[#005bb5]" onClick={() => void loadProducts()}>
                 Reintentar
               </Button>
             </div>

@@ -1,5 +1,3 @@
-'use client'
-
 import { Settings, Building, Mail, Phone, MapPin, FileText, Palette } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'

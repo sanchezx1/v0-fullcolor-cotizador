@@ -9,10 +9,11 @@ import { pdfGenerationService } from "@/src/services/pdfGenerationService"
 interface PDFGeneratorProps {
   quoteId: number
   quoteNumber: string
+  quoteToken: string
   className?: string
 }
 
-export function PDFGenerator({ quoteId, quoteNumber, className }: PDFGeneratorProps) {
+export function PDFGenerator({ quoteId, quoteNumber, quoteToken, className }: PDFGeneratorProps) {
   const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle')
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,9 @@ export function PDFGenerator({ quoteId, quoteNumber, className }: PDFGeneratorPr
 
   const checkExistingPDF = async () => {
     try {
-      const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId)
+      const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId, {
+        quoteToken
+      })
       if (existingUrl) {
         setPdfUrl(existingUrl)
         setPdfStatus('success')
@@ -39,7 +42,9 @@ export function PDFGenerator({ quoteId, quoteNumber, className }: PDFGeneratorPr
       setPdfStatus('generating')
       setError(null)
 
-      const result = await pdfGenerationService.generateQuotePDF(quoteId)
+      const result = await pdfGenerationService.generateQuotePDF(quoteId, {
+        quoteToken
+      })
       
       if (result.success && result.pdfUrl) {
         setPdfUrl(result.pdfUrl)

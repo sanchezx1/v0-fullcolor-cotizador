@@ -55,7 +55,11 @@ jest.mock('@/src/services/supabaseClient', () => ({
           }))
         }))
       }))
-    }))
+    })),
+    rpc: jest.fn(() => Promise.resolve({ data: null, error: null })),
+    functions: {
+      invoke: jest.fn()
+    }
   }
 }))
 
@@ -76,19 +80,13 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
         updated_at: new Date().toISOString()
       }
 
-      // Mock: email no existe
-      const fromMock = jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-          }))
-        })),
-        insert: jest.fn(() => ({
-          select: jest.fn(() => Promise.resolve({ data: [mockLead], error: null }))
-        }))
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
+      ;(supabase.rpc as jest.Mock).mockResolvedValue({
+        data: {
+          success: true,
+          lead: mockLead
+        },
+        error: null
+      })
 
       const result = await crearLead({
         nombre: 'Juan Pérez',
@@ -98,7 +96,12 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
       })
 
       expect(result).toEqual(mockLead)
-      expect(fromMock).toHaveBeenCalledWith('leads')
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        'create_public_lead',
+        expect.objectContaining({
+          p_email: 'juan@example.com'
+        })
+      )
     })
 
     it('debe lanzar error LEAD_EMAIL_EXISTS cuando el email ya existe', async () => {
@@ -110,15 +113,18 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
         empresa: 'Empresa Test'
       }
 
-      const fromMock = jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            limit: jest.fn(() => Promise.resolve({ data: [existingLead], error: null }))
-          }))
-        }))
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
+      ;(supabase.rpc as jest.Mock).mockResolvedValue({
+        data: {
+          success: false,
+          code: 'LEAD_EMAIL_EXISTS',
+          existing_lead: existingLead,
+          new_data: {
+            nombre: 'Juan P�rez',
+            email: 'juan@example.com'
+          }
+        },
+        error: null
+      })
 
       await expect(crearLead({
         nombre: 'Juan Pérez',
@@ -141,18 +147,13 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
         created_at: new Date().toISOString()
       }
 
-      const fromMock = jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-          }))
-        })),
-        insert: jest.fn(() => ({
-          select: jest.fn(() => Promise.resolve({ data: [mockLead], error: null }))
-        }))
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
+      ;(supabase.rpc as jest.Mock).mockResolvedValue({
+        data: {
+          success: true,
+          lead: mockLead
+        },
+        error: null
+      })
 
       const result = await crearLead({
         nombre: 'María González',
@@ -169,469 +170,74 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
       expect(result.notas).toBe('Cliente preferencial')
     })
 
-    it('debe manejar errores de base de datos correctamente', async () => {
-      const fromMock = jest.fn(() => ({
-        select: jest.fn(() => ({
-          eq: jest.fn(() => ({
-            limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-          }))
-        })),
-        insert: jest.fn(() => ({
-          select: jest.fn(() => Promise.resolve({ 
-            data: null, 
-            error: { message: 'Database error', code: '23505' } 
-          }))
-        }))
-      }))
 
-      ;(supabase.from as jest.Mock) = fromMock
+    it('debe manejar errores de base de datos correctamente', async () => {
+      ;(supabase.rpc as jest.Mock).mockResolvedValue({
+        data: null,
+        error: { message: 'Database error' }
+      })
 
       await expect(crearLead({
         nombre: 'Test',
         email: 'test@example.com',
         telefono: '0999999999',
         empresa: 'Test'
-      })).rejects.toThrow('Error creando lead')
+      })).rejects.toThrow('Error creando lead: Database error')
     })
   })
 
   describe('crearCotizacion', () => {
-    it('debe crear una cotización con items correctamente', async () => {
-      const mockCotizacion = {
-        id: 1,
-        lead_id: 1,
-        numero: 'COT-00001',
-        estado: 'pendiente',
-        total: 150.00,
-        validez_dias: 30,
-        canal: 'web',
-        created_at: new Date().toISOString()
+    it('debe crear una cotización mediante la RPC segura', async () => {
+      const mockResponse = {
+        cotizacion: {
+          id: 1,
+          lead_id: 1,
+          numero: 'COT-00010',
+          estado: 'pendiente',
+          total: 150,
+          canal: 'web'
+        },
+        items: [
+          { id: 1, cotizacion_id: 1, producto_id: 1, cantidad: 2, precio_unitario_aplicado: 50, subtotal: 100 },
+          { id: 2, cotizacion_id: 1, producto_id: 2, cantidad: 1, precio_unitario_aplicado: 50, subtotal: 50 }
+        ]
       }
 
-      const mockItems = [
-        {
-          id: 1,
-          cotizacion_id: 1,
-          producto_id: 1,
-          cantidad: 2,
-          precio_unitario_aplicado: 50.00,
-          subtotal: 100.00
-        },
-        {
-          id: 2,
-          cotizacion_id: 1,
-          producto_id: 2,
-          cantidad: 1,
-          precio_unitario_aplicado: 50.00,
-          subtotal: 50.00
-        }
-      ]
-
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            select: jest.fn(() => ({
-              order: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              })),
-              eq: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              }))
-            })),
-            insert: jest.fn(() => ({
-              select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({ data: mockCotizacion, error: null }))
-              }))
-            }))
-          }
-        }
-        if (table === 'items_cotizacion') {
-          return {
-            insert: jest.fn(() => ({
-              select: jest.fn(() => Promise.resolve({ data: mockItems, error: null }))
-            }))
-          }
-        }
-        // Para eventos
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
+      ;(supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: mockResponse,
+        error: null
       })
-
-      ;(supabase.from as jest.Mock) = fromMock
 
       const result = await crearCotizacion({
         leadId: 1,
         items: [
-          { productoId: 1, cantidad: 2, precioUnitario: 50.00, subtotal: 100.00 },
-          { productoId: 2, cantidad: 1, precioUnitario: 50.00, subtotal: 50.00 }
+          { productoId: 1, cantidad: 2, precioUnitario: 50, subtotal: 100 },
+          { productoId: 2, cantidad: 1, precioUnitario: 50, subtotal: 50 }
         ],
-        canal: 'web'
+        canal: 'web',
+        notas: 'Cliente preferencial'
       })
 
-      expect(result.cotizacion).toBeDefined()
-      expect(result.cotizacion.total).toBe(150.00)
+      expect(supabase.rpc).toHaveBeenCalledWith('create_public_quote', expect.objectContaining({
+        p_lead_id: 1,
+        p_canal: 'web',
+        p_notas: 'Cliente preferencial'
+      }))
+      expect(result.cotizacion.id).toBe(1)
       expect(result.items).toHaveLength(2)
     })
 
-    it('debe calcular el total correctamente', async () => {
-      const mockCotizacion = {
-        id: 2,
-        lead_id: 2,
-        numero: 'COT-00002',
-        estado: 'pendiente',
-        total: 350.75,
-        validez_dias: 30,
-        canal: 'whatsapp'
-      }
-
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            select: jest.fn(() => ({
-              order: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              })),
-              eq: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              }))
-            })),
-            insert: jest.fn((data: any) => {
-              expect(data.total).toBe(350.75)
-              return {
-                select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({ data: mockCotizacion, error: null }))
-                }))
-              }
-            })
-          }
-        }
-        if (table === 'items_cotizacion') {
-          return {
-            insert: jest.fn(() => ({
-              select: jest.fn(() => Promise.resolve({ data: [], error: null }))
-            }))
-          }
-        }
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
+    it('debe lanzar error cuando la RPC falla', async () => {
+      ;(supabase.rpc as jest.Mock).mockResolvedValueOnce({
+        data: null,
+        error: { message: 'DB error' }
       })
 
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await crearCotizacion({
-        leadId: 2,
-        items: [
-          { productoId: 1, cantidad: 3, precioUnitario: 100.25, subtotal: 300.75 },
-          { productoId: 2, cantidad: 1, precioUnitario: 50.00, subtotal: 50.00 }
-        ],
-        canal: 'whatsapp'
-      })
-    })
-
-    it('debe generar números de cotización únicos con formato COT-XXXXX', async () => {
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            select: jest.fn(() => ({
-              order: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ 
-                  data: [{ numero: 'COT-00001' }, { numero: 'COT-00002' }], 
-                  error: null 
-                }))
-              })),
-              eq: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              }))
-            })),
-            insert: jest.fn((data: any) => {
-              expect(data.numero).toMatch(/^COT-\d{5}$/)
-              return {
-                select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({ 
-                    data: { ...data, id: 1 }, 
-                    error: null 
-                  }))
-                }))
-              }
-            })
-          }
-        }
-        if (table === 'items_cotizacion') {
-          return {
-            insert: jest.fn(() => ({
-              select: jest.fn(() => Promise.resolve({ data: [], error: null }))
-            }))
-          }
-        }
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
-      })
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await crearCotizacion({
-        leadId: 1,
+      await expect(crearCotizacion({
+        leadId: 9,
         items: [{ productoId: 1, cantidad: 1, precioUnitario: 100, subtotal: 100 }],
         canal: 'web'
-      })
-    })
-
-    it('debe incluir notas cuando se proporcionan', async () => {
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            select: jest.fn(() => ({
-              order: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              })),
-              eq: jest.fn(() => ({
-                limit: jest.fn(() => Promise.resolve({ data: [], error: null }))
-              }))
-            })),
-            insert: jest.fn((data: any) => {
-              expect(data.notas).toBe('Cliente preferencial - envío urgente')
-              return {
-                select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({ 
-                    data: { ...data, id: 1 }, 
-                    error: null 
-                  }))
-                }))
-              }
-            })
-          }
-        }
-        if (table === 'items_cotizacion') {
-          return {
-            insert: jest.fn(() => ({
-              select: jest.fn(() => Promise.resolve({ data: [], error: null }))
-            }))
-          }
-        }
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
-      })
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await crearCotizacion({
-        leadId: 1,
-        items: [{ productoId: 1, cantidad: 1, precioUnitario: 100, subtotal: 100 }],
-        canal: 'email',
-        notas: 'Cliente preferencial - envío urgente'
-      })
-    })
-  })
-
-  describe('registrarEvento', () => {
-    it('debe registrar un evento de tipo cotizacion_creada', async () => {
-      const mockEvento = {
-        id: 1,
-        cotizacion_id: 1,
-        tipo: 'cotizacion_creada',
-        metadata: { total_items: 3, canal: 'web' },
-        created_at: new Date().toISOString()
-      }
-
-      const fromMock = jest.fn(() => ({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: mockEvento, error: null }))
-          }))
-        }))
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      const result = await registrarEvento({
-        cotizacionId: 1,
-        tipo: 'cotizacion_creada',
-        metadata: { total_items: 3, canal: 'web' }
-      })
-
-      expect(result.tipo).toBe('cotizacion_creada')
-      expect(result.metadata).toEqual({ total_items: 3, canal: 'web' })
-    })
-
-    it('debe registrar un evento de tipo pdf_generado', async () => {
-      const mockEvento = {
-        id: 2,
-        cotizacion_id: 1,
-        tipo: 'pdf_generado',
-        metadata: { file_size: 1024 },
-        created_at: new Date().toISOString()
-      }
-
-      const fromMock = jest.fn(() => ({
-        insert: jest.fn((data: any) => {
-          expect(data.tipo).toBe('pdf_generado')
-          return {
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: mockEvento, error: null }))
-            }))
-          }
-        })
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await registrarEvento({
-        cotizacionId: 1,
-        tipo: 'pdf_generado',
-        metadata: { file_size: 1024 }
-      })
-    })
-
-    it('debe manejar errores al registrar eventos', async () => {
-      const fromMock = jest.fn(() => ({
-        insert: jest.fn(() => ({
-          select: jest.fn(() => ({
-            single: jest.fn(() => Promise.reject(new Error('Database error')))
-          }))
-        }))
-      }))
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await expect(registrarEvento({
-        cotizacionId: 1,
-        tipo: 'email_enviado'
-      })).rejects.toThrow('Database error')
-    })
-  })
-
-  describe('actualizarEstadoCotizacion', () => {
-    it('debe actualizar el estado de una cotización', async () => {
-      const mockCotizacion = {
-        id: 1,
-        numero: 'COT-00001',
-        estado: 'enviada',
-        total: 150.00
-      }
-
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            update: jest.fn((data: any) => {
-              expect(data.estado).toBe('enviada')
-              return {
-                eq: jest.fn(() => ({
-                  select: jest.fn(() => ({
-                    single: jest.fn(() => Promise.resolve({ data: mockCotizacion, error: null }))
-                  }))
-                }))
-              }
-            })
-          }
-        }
-        // Para eventos
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
-      })
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      const result = await actualizarEstadoCotizacion(1, 'enviada')
-      expect(result.estado).toBe('enviada')
-    })
-
-    it('debe actualizar el estado y el PDF URL', async () => {
-      const pdfUrl = 'https://storage.example.com/pdfs/COT-00001.pdf'
-      const mockCotizacion = {
-        id: 1,
-        numero: 'COT-00001',
-        estado: 'enviada',
-        pdf_url: pdfUrl
-      }
-
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            update: jest.fn((data: any) => {
-              expect(data.pdf_url).toBe(pdfUrl)
-              return {
-                eq: jest.fn(() => ({
-                  select: jest.fn(() => ({
-                    single: jest.fn(() => Promise.resolve({ data: mockCotizacion, error: null }))
-                  }))
-                }))
-              }
-            })
-          }
-        }
-        return {
-          insert: jest.fn(() => ({
-            select: jest.fn(() => ({
-              single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-            }))
-          }))
-        }
-      })
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      const result = await actualizarEstadoCotizacion(1, 'enviada', pdfUrl)
-      expect(result.pdf_url).toBe(pdfUrl)
-    })
-
-    it('debe registrar un evento después de actualizar', async () => {
-      const fromMock = jest.fn((table: string) => {
-        if (table === 'cotizaciones') {
-          return {
-            update: jest.fn(() => ({
-              eq: jest.fn(() => ({
-                select: jest.fn(() => ({
-                  single: jest.fn(() => Promise.resolve({ 
-                    data: { id: 1, estado: 'aprobada' }, 
-                    error: null 
-                  }))
-                }))
-              }))
-            }))
-          }
-        }
-        // Verificar que se llama a eventos
-        return {
-          insert: jest.fn((data: any) => {
-            expect(data.tipo).toBe('cotizacion_actualizada')
-            expect(data.metadata.nuevo_estado).toBe('aprobada')
-            return {
-              select: jest.fn(() => ({
-                single: jest.fn(() => Promise.resolve({ data: {}, error: null }))
-              }))
-            }
-          })
-        }
-      })
-
-      ;(supabase.from as jest.Mock) = fromMock
-
-      await actualizarEstadoCotizacion(1, 'aprobada')
+      })).rejects.toThrow('Error creando cotización: DB error')
     })
   })
 

@@ -86,6 +86,7 @@ export interface Cotizacion {
   notas?: string
   created_at: string
   updated_at: string
+  access_token: string
 }
 
 export interface ItemCotizacion {

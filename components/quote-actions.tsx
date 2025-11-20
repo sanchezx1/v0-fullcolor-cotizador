@@ -12,11 +12,12 @@ import { EmailSender } from './email-sender'
 interface QuoteActionsProps {
   quoteId: number
   quoteNumber: string
+  quoteToken: string
   autoSendEmail?: boolean
   className?: string
 }
 
-export function QuoteActions({ quoteId, quoteNumber, autoSendEmail = false, className }: QuoteActionsProps) {
+export function QuoteActions({ quoteId, quoteNumber, quoteToken, autoSendEmail = false, className }: QuoteActionsProps) {
   const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'success' | 'error'>('idle')
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [pdfError, setPdfError] = useState<string | null>(null)
@@ -34,7 +35,7 @@ export function QuoteActions({ quoteId, quoteNumber, autoSendEmail = false, clas
 
   const checkExistingPDF = async () => {
     try {
-      const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId)
+      const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId, { quoteToken })
       if (existingUrl) {
         setPdfUrl(existingUrl)
         setPdfStatus('success')
@@ -52,7 +53,7 @@ export function QuoteActions({ quoteId, quoteNumber, autoSendEmail = false, clas
       setEmailError(null)
 
       console.log('📄 Generando PDF...')
-      const pdfResult = await pdfGenerationService.generateQuotePDF(quoteId)
+      const pdfResult = await pdfGenerationService.generateQuotePDF(quoteId, { quoteToken })
       
       if (!pdfResult.success || !pdfResult.pdfUrl) {
         setPdfError(pdfResult.error || 'Error generando PDF')
@@ -73,7 +74,7 @@ export function QuoteActions({ quoteId, quoteNumber, autoSendEmail = false, clas
         const leadEmail = await getLeadEmail(quoteId)
         
         if (leadEmail) {
-          const emailResult = await sendQuoteEmail(quoteId, leadEmail)
+          const emailResult = await sendQuoteEmail(quoteId, leadEmail, { quoteToken })
           
           if (emailResult.success) {
             setEmailSent(true)
@@ -251,6 +252,7 @@ export function QuoteActions({ quoteId, quoteNumber, autoSendEmail = false, clas
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
                   <EmailSender
                     quoteId={quoteId}
+                    quoteToken={quoteToken}
                     initialEmail={emailRecipient || undefined}
                     onEmailSent={handleManualEmailSent}
                   />

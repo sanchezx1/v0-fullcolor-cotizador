@@ -9,6 +9,7 @@ import { Mail, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 
 interface EmailSenderProps {
   quoteId: number
+  quoteToken: string
   initialEmail?: string
   onEmailSent?: (recipient: string) => void
   autoSend?: boolean
@@ -16,7 +17,7 @@ interface EmailSenderProps {
 
 type EmailState = 'idle' | 'sending' | 'success' | 'error'
 
-export function EmailSender({ quoteId, initialEmail, onEmailSent, autoSend = false }: EmailSenderProps) {
+export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, autoSend = false }: EmailSenderProps) {
   const [email, setEmail] = useState(initialEmail || '')
   const [state, setState] = useState<EmailState>('idle')
   const [message, setMessage] = useState('')
@@ -74,7 +75,7 @@ export function EmailSender({ quoteId, initialEmail, onEmailSent, autoSend = fal
     setMessage('Enviando email...')
 
     try {
-      const result: SendEmailResult = await sendQuoteEmail(quoteId, email)
+      const result: SendEmailResult = await sendQuoteEmail(quoteId, email, { quoteToken })
 
       if (result.success) {
         setState('success')

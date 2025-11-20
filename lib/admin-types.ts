@@ -69,6 +69,7 @@ export interface Cotizacion {
   iva: number
   total: number
   pdf_url?: string
+  access_token: string
   created_at: string
   updated_at: string
 }

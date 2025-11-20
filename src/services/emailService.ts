@@ -17,9 +17,14 @@ export interface SendEmailResult {
  * @param quoteId - ID de la cotización
  * @param recipientEmail - Email destinatario (opcional, usa el del lead si no se proporciona)
  */
+type EmailSecurityOptions = {
+  quoteToken?: string
+}
+
 export async function sendQuoteEmail(
   quoteId: number,
-  recipientEmail?: string
+  recipientEmail?: string,
+  options: EmailSecurityOptions = {}
 ): Promise<SendEmailResult> {
   try {
     console.log('📧 Enviando email de cotización:', { quoteId, recipientEmail })
@@ -27,7 +32,8 @@ export async function sendQuoteEmail(
     const { data, error } = await supabase.functions.invoke('send-email', {
       body: {
         quoteId,
-        recipientEmail
+        recipientEmail,
+        quoteToken: options.quoteToken
       }
     })
 

@@ -41,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getCotizaciones } from '@/lib/admin-services'
 import type { CotizacionConRelaciones, EstadoCotizacion, FiltrosCotizaciones } from '@/lib/admin-types'
 import { toast } from 'sonner'
+import { pdfGenerationService } from '@/src/services/pdfGenerationService'
 
 export default function CotizacionesListPage() {
   const router = useRouter()
@@ -49,6 +50,7 @@ export default function CotizacionesListPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [downloadingPdfId, setDownloadingPdfId] = useState<number | null>(null)
   
   // Filtros
   const [search, setSearch] = useState('')
@@ -99,6 +101,29 @@ export default function CotizacionesListPage() {
       toast.error('Error al cargar cotizaciones')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleOpenPdf(cotizacionId: number, token?: string) {
+    if (!token) {
+      toast.error('PDF no disponible para esta cotización')
+      return
+    }
+    try {
+      setDownloadingPdfId(cotizacionId)
+      const signedUrl = await pdfGenerationService.getExistingPDFUrl(cotizacionId, {
+        quoteToken: token
+      })
+      if (!signedUrl) {
+        toast.error('No se pudo obtener el PDF')
+        return
+      }
+      window.open(signedUrl, '_blank')
+    } catch (error) {
+      console.error('Error abriendo PDF:', error)
+      toast.error('Error al abrir el PDF')
+    } finally {
+      setDownloadingPdfId(null)
     }
   }
 
@@ -334,7 +359,8 @@ export default function CotizacionesListPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => window.open(cotizacion.pdf_url, '_blank')}
+                          onClick={() => handleOpenPdf(cotizacion.id, cotizacion.access_token)}
+                          disabled={downloadingPdfId === cotizacion.id}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -353,7 +379,9 @@ export default function CotizacionesListPage() {
                             Editar
                           </DropdownMenuItem>
                           {cotizacion.pdf_url && (
-                            <DropdownMenuItem onClick={() => window.open(cotizacion.pdf_url, '_blank')}>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenPdf(cotizacion.id, cotizacion.access_token)}
+                            >
                               Descargar PDF
                             </DropdownMenuItem>
                           )}

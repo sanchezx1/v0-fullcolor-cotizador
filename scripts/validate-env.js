@@ -18,6 +18,12 @@ const requiredEnvVars = [
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     critical: true,
   },
+  {
+    name: 'REVALIDATE_SECRET',
+    description: 'Token secreto para autorizar /api/revalidate',
+    example: 'super-seguro-usa-algo-aleatorio',
+    critical: true,
+  },
 ];
 
 const optionalEnvVars = [

@@ -66,6 +66,7 @@ import {
   clonarCotizacion,
   deleteCotizacion
 } from '@/lib/admin-services'
+import { pdfGenerationService } from '@/src/services/pdfGenerationService'
 import type { CotizacionCompleta, Evento, EstadoCotizacion } from '@/lib/admin-types'
 import { toast } from 'sonner'
 
@@ -78,6 +79,7 @@ export default function CotizacionDetailPage() {
   const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingAction, setLoadingAction] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   useEffect(() => {
@@ -128,6 +130,30 @@ export default function CotizacionDetailPage() {
       toast.error('Error al cambiar estado')
     } finally {
       setLoadingAction(false)
+    }
+  }
+
+  const handleOpenPdf = async () => {
+    if (!cotizacion) return
+    if (!cotizacion.pdf_url || !cotizacion.access_token) {
+      toast.error('PDF no disponible para esta cotización')
+      return
+    }
+    try {
+      setPdfLoading(true)
+      const signedUrl = await pdfGenerationService.getExistingPDFUrl(cotizacion.id, {
+        quoteToken: cotizacion.access_token
+      })
+      if (!signedUrl) {
+        toast.error('No se pudo obtener el PDF')
+        return
+      }
+      window.open(signedUrl, '_blank')
+    } catch (error) {
+      console.error('Error abriendo PDF:', error)
+      toast.error('Error al abrir el PDF')
+    } finally {
+      setPdfLoading(false)
     }
   }
 
@@ -422,14 +448,16 @@ export default function CotizacionDetailPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(cotizacion.pdf_url, '_blank')}
+                      onClick={handleOpenPdf}
+                      disabled={pdfLoading}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Ver
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => window.open(cotizacion.pdf_url, '_blank')}
+                      onClick={handleOpenPdf}
+                      disabled={pdfLoading}
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Descargar

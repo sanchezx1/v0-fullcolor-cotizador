@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { crearLead, crearCotizacion, registrarEvento } from '../services/quotes'
 import { calculatePriceForProduct } from '../lib/data'
 import { pdfGenerationService } from '../services/pdfGenerationService'
@@ -43,6 +44,13 @@ export function useQuoteBuilder() {
     existingLead: any
     newData: any
   } | null>(null)
+  const [canUpdateLead, setCanUpdateLead] = useState(false)
+  const [sessionInfo, setSessionInfo] = useState<{ email: string | null; role: string | null }>({
+    email: null,
+    role: null
+  })
+  const [leadVerificationState, setLeadVerificationState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [leadVerificationError, setLeadVerificationError] = useState<string | null>(null)
 
   // Cargar cotización desde localStorage al inicializar
   useEffect(() => {
@@ -74,6 +82,119 @@ export function useQuoteBuilder() {
       })
     )
   }, [quoteItems])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const applySession = async (session: Session | null) => {
+      if (!isMounted) return
+
+      const normalizedEmail = session?.user?.email
+        ? session.user.email.toLowerCase()
+        : null
+
+      let role: string | null = null
+
+      if (session?.user?.id) {
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .maybeSingle()
+
+          if (profileError) {
+            console.warn('Error obteniendo perfil para ver permisos de lead:', profileError)
+          } else {
+            role = profile?.role ?? null
+          }
+        } catch (profileErr) {
+          console.warn('Fallo al obtener perfil de usuario:', profileErr)
+        }
+      }
+
+      if (isMounted) {
+        setSessionInfo({ email: normalizedEmail, role })
+      }
+    }
+
+    const hydrateSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession()
+        await applySession(data?.session ?? null)
+      } catch (err) {
+        console.error('Error obteniendo sesión de Supabase:', err)
+        if (isMounted) {
+          setSessionInfo({ email: null, role: null })
+        }
+      }
+    }
+
+    hydrateSession()
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session)
+    })
+
+    return () => {
+      isMounted = false
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    const isAdmin = sessionInfo.role === 'admin'
+    const emailMatches = !!(
+      sessionInfo.email &&
+      leadConflict?.existingLead?.email &&
+      sessionInfo.email === leadConflict.existingLead.email.toLowerCase()
+    )
+
+    setCanUpdateLead(isAdmin || emailMatches)
+  }, [sessionInfo, leadConflict])
+
+  useEffect(() => {
+    if (!leadConflict) {
+      setLeadVerificationState('idle')
+      setLeadVerificationError(null)
+    }
+  }, [leadConflict])
+
+  const requestLeadOwnershipVerification = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!leadConflict?.existingLead?.email) {
+      return { success: false, error: 'No hay un contacto para verificar' }
+    }
+
+    if (typeof window === 'undefined') {
+      return { success: false, error: 'La verificación solo está disponible desde el navegador' }
+    }
+
+    setLeadVerificationError(null)
+    setLeadVerificationState('sending')
+
+    try {
+      const redirectTo = `${window.location.origin}/cotizador`
+      const { error } = await supabase.auth.signInWithOtp({
+        email: leadConflict.existingLead.email,
+        options: {
+          emailRedirectTo: redirectTo
+        }
+      })
+
+      if (error) {
+        throw error
+      }
+
+      setLeadVerificationState('sent')
+      return { success: true }
+    } catch (err) {
+      console.error('Error solicitando verificación de correo para lead:', err)
+      const message = err instanceof Error ? err.message : 'Error al enviar el enlace de verificación'
+      setLeadVerificationError(message)
+      setLeadVerificationState('error')
+      return { success: false, error: message }
+    }
+  }
 
   const addItemToQuote = async (productId: number, name: string, category: string, quantity: number) => {
     try {
@@ -225,7 +346,7 @@ export function useQuoteBuilder() {
     }
   }
 
-  const submitQuote = async (): Promise<{ success: boolean; quoteId?: number; error?: string }> => {
+  const submitQuote = async (): Promise<{ success: boolean; quoteId?: number; quoteToken?: string; error?: string }> => {
     try {
       setLoading(true)
       setError(null)
@@ -280,7 +401,9 @@ export function useQuoteBuilder() {
 
       // Generar PDF automáticamente
       try {
-        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id, {
+          quoteToken: cotizacion.access_token
+        })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
         } else {
@@ -294,7 +417,7 @@ export function useQuoteBuilder() {
       // Limpiar cotización local
       clearQuote()
 
-      return { success: true, quoteId: cotizacion.id }
+      return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
     } catch (err: any) {
       console.error('❌ Error submitting quote:', err)
       console.error('❌ Error detallado:', {
@@ -311,7 +434,7 @@ export function useQuoteBuilder() {
   }
 
   // Función para generar PDF de una cotización existente
-  const generatePDF = async (quoteId: number): Promise<{
+  const generatePDF = async (quoteId: number, quoteToken?: string): Promise<{
     success: boolean
     pdfUrl?: string
     error?: string
@@ -320,7 +443,7 @@ export function useQuoteBuilder() {
       setLoading(true)
       setError(null)
 
-      const result = await pdfGenerationService.generateQuotePDF(quoteId)
+      const result = await pdfGenerationService.generateQuotePDF(quoteId, { quoteToken })
       
       if (!result.success) {
         setError(result.error || 'Error generando PDF')
@@ -339,9 +462,9 @@ export function useQuoteBuilder() {
   }
 
   // Función para obtener URL de PDF existente
-  const getPDFUrl = async (quoteId: number): Promise<string | null> => {
+  const getPDFUrl = async (quoteId: number, quoteToken?: string): Promise<string | null> => {
     try {
-      return await pdfGenerationService.getExistingPDFUrl(quoteId)
+      return await pdfGenerationService.getExistingPDFUrl(quoteId, { quoteToken })
     } catch (err) {
       console.error('Error getting PDF URL:', err)
       return null
@@ -349,9 +472,9 @@ export function useQuoteBuilder() {
   }
 
   // Función para verificar si existe PDF
-  const hasPDF = async (quoteId: number): Promise<boolean> => {
+  const hasPDF = async (quoteId: number, quoteToken?: string): Promise<boolean> => {
     try {
-      return await pdfGenerationService.hasExistingPDF(quoteId)
+      return await pdfGenerationService.hasExistingPDF(quoteId, { quoteToken })
     } catch (err) {
       console.error('Error checking PDF existence:', err)
       return false
@@ -359,13 +482,19 @@ export function useQuoteBuilder() {
   }
 
   // Función para actualizar lead usando Edge Function privilegiada
-  const upsertLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; error?: string }> => {
+  const upsertLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; quoteToken?: string; error?: string }> => {
     try {
       setLoading(true)
       setError(null)
 
       if (!leadConflict) {
         throw new Error('No hay conflicto de lead para resolver')
+      }
+
+      if (!canUpdateLead) {
+        const message = 'Solo administradores pueden actualizar los datos del contacto existente.'
+        setError(message)
+        return { success: false, error: message }
       }
 
       // Llamar a Edge Function upsert-lead
@@ -404,7 +533,9 @@ export function useQuoteBuilder() {
 
       // Generar PDF automáticamente
       try {
-        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id, {
+          quoteToken: cotizacion.access_token
+        })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
         }
@@ -413,7 +544,7 @@ export function useQuoteBuilder() {
       }
 
       clearQuote()
-      return { success: true, quoteId: cotizacion.id }
+      return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
     } catch (err: any) {
       console.error('❌ Error en upsertLeadAndContinue:', err)
       const errorMessage = err instanceof Error ? err.message : 'Error al actualizar lead'
@@ -425,7 +556,7 @@ export function useQuoteBuilder() {
   }
 
   // Función para usar lead existente sin actualizar
-  const useExistingLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; error?: string }> => {
+  const useExistingLeadAndContinue = async (): Promise<{ success: boolean; quoteId?: number; quoteToken?: string; error?: string }> => {
     try {
       setLoading(true)
       setError(null)
@@ -457,7 +588,9 @@ export function useQuoteBuilder() {
 
       // Generar PDF automáticamente
       try {
-        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id)
+        const pdfResult = await pdfGenerationService.generateQuotePDF(cotizacion.id, {
+          quoteToken: cotizacion.access_token
+        })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
         }
@@ -466,7 +599,7 @@ export function useQuoteBuilder() {
       }
 
       clearQuote()
-      return { success: true, quoteId: cotizacion.id }
+      return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
     } catch (err: any) {
       console.error('❌ Error en useExistingLeadAndContinue:', err)
       const errorMessage = err instanceof Error ? err.message : 'Error al crear cotización'
@@ -484,6 +617,7 @@ export function useQuoteBuilder() {
     loading,
     error,
     leadConflict,
+    canUpdateLead,
     setLeadConflict,
     addItemToQuote,
     updateItemQuantity,
@@ -498,7 +632,9 @@ export function useQuoteBuilder() {
     useExistingLeadAndContinue,
     generatePDF,
     getPDFUrl,
-    hasPDF
+    hasPDF,
+    leadVerificationState,
+    leadVerificationError,
+    requestLeadOwnershipVerification
   }
 }
-

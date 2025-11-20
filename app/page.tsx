@@ -232,7 +232,7 @@ export default function HomePage() {
               <AlertCircle className="mx-auto mb-3 h-10 w-10 text-red-500" aria-hidden="true" />
               <h3 className="text-xl font-semibold text-red-700">Ups, algo salio mal</h3>
               <p className="mt-2 text-sm text-red-600">{error}</p>
-              <Button className="mt-6 rounded-full px-6" onClick={loadFeaturedProducts}>
+              <Button className="mt-6 rounded-md px-6" onClick={loadFeaturedProducts}>
                 Reintentar carga
               </Button>
             </div>

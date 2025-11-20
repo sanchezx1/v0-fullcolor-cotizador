@@ -1,43 +1,31 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react'
+import { triggerDashboardRevalidation } from '@/app/admin/actions/revalidate'
 
 interface RevalidateButtonProps {
   className?: string
 }
 
 export function RevalidateButton({ className }: RevalidateButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const handleRevalidate = async () => {
-    setIsLoading(true)
+  const handleRevalidate = () => {
     setError(null)
 
-    try {
-      const response = await fetch('/api/revalidate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_REVALIDATE_SECRET || 'dev-secret'}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    startTransition(async () => {
+      try {
+        const data = await triggerDashboardRevalidation()
+        setLastUpdate(data.timestamp)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido')
       }
-
-      const data = await response.json()
-      setLastUpdate(data.timestamp)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   return (
@@ -55,10 +43,10 @@ export function RevalidateButton({ className }: RevalidateButtonProps) {
         
         <Button 
           onClick={handleRevalidate}
-          disabled={isLoading}
+          disabled={isPending}
           className="w-full"
         >
-          {isLoading ? (
+          {isPending ? (
             <>
               <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               Actualizando...

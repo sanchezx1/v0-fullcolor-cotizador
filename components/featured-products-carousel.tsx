@@ -355,7 +355,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
       ) : null}
 
       <div className="mt-8 flex justify-center">
-        <Button asChild variant="outline" className="rounded-full border-[#0068A5]/30 px-8 py-5 text-sm font-semibold text-[#0068A5] hover:border-[#0068A5] hover:bg-[#0068A5]/10">
+        <Button asChild variant="outline" className="rounded-md border-[#0068A5]/30 px-8 py-5 text-sm font-semibold text-[#0068A5] hover:border-[#0068A5] hover:bg-[#0068A5]/10">
           <Link href="/catalogo">Ver todo el catalogo</Link>
         </Button>
       </div>

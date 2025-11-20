@@ -24,6 +24,10 @@ interface LeadConflictModalProps {
   onUpdateAndContinue: () => void
   onCancel: () => void
   isUpdating?: boolean
+  canUpdateLead?: boolean
+  onRequestVerification?: () => void
+  verificationState?: 'idle' | 'sending' | 'sent' | 'error'
+  verificationError?: string | null
 }
 
 export default function LeadConflictModal({
@@ -33,7 +37,11 @@ export default function LeadConflictModal({
   onUseExisting,
   onUpdateAndContinue,
   onCancel,
-  isUpdating = false
+  isUpdating = false,
+  canUpdateLead = true,
+  onRequestVerification,
+  verificationState = 'idle',
+  verificationError = null
 }: LeadConflictModalProps) {
   if (!isOpen) return null
 
@@ -179,7 +187,7 @@ export default function LeadConflictModal({
           </button>
           <button
             onClick={onUpdateAndContinue}
-            disabled={isUpdating}
+            disabled={isUpdating || !canUpdateLead}
             className="flex-1 px-6 py-3 bg-gradient-to-r from-[#0066CC] to-[#0052A3] text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isUpdating ? (
@@ -187,11 +195,44 @@ export default function LeadConflictModal({
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Actualizando...
               </>
-            ) : (
+            ) : canUpdateLead ? (
               'Actualizar y continuar'
+            ) : (
+              'Actualización restringida'
             )}
           </button>
         </div>
+        {!canUpdateLead && (
+          <div className="px-6 pb-6 space-y-3 text-sm text-red-600">
+            <p>
+              Para actualizar los datos necesitamos confirmar que eres el propietario del correo. Verifica tu identidad y
+              vuelve a intentar.
+            </p>
+            {onRequestVerification && (
+              <button
+                onClick={onRequestVerification}
+                disabled={isUpdating || verificationState === 'sending'}
+                className="w-full px-4 py-2 border border-red-200 rounded-lg text-red-700 font-semibold hover:bg-red-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {verificationState === 'sent'
+                  ? 'Enlace enviado, revisa tu correo'
+                  : verificationState === 'sending'
+                    ? 'Enviando enlace de verificación...'
+                    : 'Verificar correo para actualizar'}
+              </button>
+            )}
+            {verificationState === 'sent' && (
+              <p className="text-green-700">
+                Revisa tu bandeja de entrada y sigue el enlace para autenticarte. Vuelve a esta pantalla después de confirmar.
+              </p>
+            )}
+            {verificationError && (
+              <p className="text-red-700">
+                {verificationError}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -8,15 +8,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle2, Mail, Phone, Building2, FileText, ArrowRight, Home, Package } from "lucide-react"
 import PDFGenerator from "@/components/pdf-generator"
-import { supabase } from "@/src/services/supabaseClient"
 
 interface QuoteData {
   cotizacion: {
     id: number
+    numero?: string
     estado: string
     total: number
     created_at: string
-    pdf_url?: string
+    validez_dias?: number
   }
   lead: {
     nombre: string
@@ -42,69 +42,40 @@ interface QuoteData {
 export default function ConfirmacionPage() {
   const searchParams = useSearchParams()
   const quoteId = searchParams.get('quoteId')
+  const quoteToken = searchParams.get('token') || undefined
   
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!quoteId) {
+    if (!quoteId || !quoteToken) {
+      setError('Falta la información necesaria para mostrar tu cotización.')
       setLoading(false)
       return
     }
 
-    loadQuoteData(parseInt(quoteId))
-  }, [quoteId])
+    loadQuoteData(parseInt(quoteId), quoteToken)
+  }, [quoteId, quoteToken])
 
-  const loadQuoteData = async (id: number) => {
+  const loadQuoteData = async (id: number, token: string) => {
     try {
       setLoading(true)
       setError(null)
 
-      // Obtener cotización completa con lead e items
-      const { data: cotizacion, error: cotizacionError } = await supabase
-        .from('cotizaciones')
-        .select(`
-          *,
-          leads (
-            nombre,
-            email,
-            telefono,
-            empresa,
-            ruc_cedula,
-            ciudad,
-            notas
-          )
-        `)
-        .eq('id', id)
-        .single()
-
-      if (cotizacionError) {
-        throw new Error(`Error obteniendo cotización: ${cotizacionError.message}`)
-      }
-
-      // Obtener items de la cotización
-      const { data: items, error: itemsError } = await supabase
-        .from('items_cotizacion')
-        .select(`
-          *,
-          productos (
-            nombre,
-            categoria,
-            imagen_url
-          )
-        `)
-        .eq('cotizacion_id', id)
-
-      if (itemsError) {
-        throw new Error(`Error obteniendo items: ${itemsError.message}`)
-      }
-
-      setQuoteData({
-        cotizacion,
-        lead: cotizacion.leads,
-        items
+      const response = await fetch(`/api/public/quotes/${id}`, {
+        headers: {
+          'x-quote-token': token
+        }
       })
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error || 'No se pudo cargar la cotización')
+      }
+
+      const payload = await response.json()
+      setQuoteData(payload)
 
     } catch (err) {
       console.error('Error loading quote data:', err)
@@ -358,11 +329,14 @@ export default function ConfirmacionPage() {
         </Card>
 
         {/* PDF Generator */}
-        <PDFGenerator 
-          quoteId={quoteData.cotizacion.id}
-          quoteNumber={quoteNumber}
-          className="mb-6"
-        />
+        {quoteToken && (
+          <PDFGenerator 
+            quoteId={quoteData.cotizacion.id}
+            quoteNumber={quoteNumber}
+            quoteToken={quoteToken}
+            className="mb-6"
+          />
+        )}
 
         {/* Next Steps */}
         <Card className="mb-8 bg-muted/50">
