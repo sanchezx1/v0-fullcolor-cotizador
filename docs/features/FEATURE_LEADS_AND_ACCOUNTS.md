@@ -65,7 +65,7 @@ Este feature agrupa tres grandes bloques funcionales:
    - Enviar correos relevantes cuando cambie el estado de una cotización (por ejemplo, en revisión, aprobada, rechazada o vencida).
    - Mantener informado al cliente sin obligarlo a revisar manualmente el panel.
 
-Los detalles técnicos y la implementación concreta de cada bloque se definirán en los archivos de tareas (`tasks.md`) asociados a este feature.
+Los detalles técnicos y la implementación concreta de cada bloque se definirán en los archivos de tareas (`FEATURE_LEADS_AND_ACCOUNTS.tasks`) asociados a este feature.
 
 ---
 
@@ -192,7 +192,7 @@ La elección del proveedor de correo, el formato de las plantillas y los detalle
 
 ## 8. Implementación por fases (vista general)
 
-La implementación de este feature se organizará en **fases**, con más detalle en el archivo de tareas (`tasks.md`) correspondiente:
+La implementación de este feature se organizará en **fases**, con más detalle en el archivo de tareas (`FEATURE_LEADS_AND_ACCOUNTS.tasks`) correspondiente:
 
 - **Fase 0 – Arquitectura / Diseño funcional**  
   Aterrizar el alcance definitivo del feature, revisar este documento y definir el contrato funcional entre leads, cuentas, cotizaciones y correos.
@@ -212,6 +212,6 @@ La implementación de este feature se organizará en **fases**, con más detalle
 - **Fase 5 – Pruebas, QA y documentación final**  
   Probar flujos completos, ajustar detalles de UX, revisar textos y actualizar la documentación de cara a futuro.
 
-Los detalles técnicos de cada fase (tareas concretas, endpoints, consultas, etc.) se mantienen fuera de este archivo y se gestionan en `tasks.md` y en la documentación técnica asociada.
+Los detalles técnicos de cada fase (tareas concretas, endpoints, consultas, etc.) se mantienen fuera de este archivo y se gestionan en `FEATURE_LEADS_AND_ACCOUNTS.tasks` y en la documentación técnica asociada.
 
 ---
