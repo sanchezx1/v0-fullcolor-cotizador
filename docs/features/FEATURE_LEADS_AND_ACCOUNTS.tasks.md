@@ -11,74 +11,77 @@ Plan técnico por fases para leads, cuentas de usuario y recordatorios por corre
 
 ---
 
-## Fase 0 – Arquitectura / Diseño funcional (Agente Arquitectura)
+## Fase 0 - Arquitectura / Diseño funcional (Agente Arquitectura)
 
 Objetivo: dejar claro el modelo y los flujos antes de tocar DB o código.
 
-- [ ] Leer este archivo de tareas completo.
-- [ ] Leer el documento funcional de este feature en `docs/` (por ejemplo `FEATURE_LEADS_AND_ACCOUNTS.md`).
-- [ ] Si hace falta aclarar dudas de arquitectura o buenas prácticas de tecnologías (Next.js, Supabase, shadcn/ui, etc.), usar el MCP de **context7** para consultar documentación externa y oficial.
-- [ ] Hacer un resumen corto (5–10 puntos) de:
+- [x] Leer este archivo de tareas completo.
+- [x] Leer el documento funcional de este feature en `docs/` (por ejemplo `FEATURE_LEADS_AND_ACCOUNTS.md`).
+- [x] Si hace falta aclarar dudas de arquitectura o buenas prácticas de tecnologías (Next.js, Supabase, shadcn/ui, etc.), usar el MCP de **context7** para consultar documentación externa y oficial.
+- [x] Hacer un resumen corto (5-10 puntos) de:
   - cómo se relacionan leads, cuentas y cotizaciones,
-  - qué rol tendrá “Mi cuenta”,
+  - qué rol tendrá "Mi cuenta",
   - qué tipo de correos se enviarán.
-- [ ] Definir, a nivel conceptual (sin SQL todavía):
+- [x] Definir, a nivel conceptual (sin SQL todavía):
   - qué datos mínimos necesita un lead,
   - qué datos mínimos necesita una cuenta de usuario,
-  - qué necesita una cotización para mostrar bien el estado en “Mi cuenta” y en los correos.
-- [ ] Documentar las decisiones al final de este archivo (sección **“Notas de arquitectura”**), sin entrar en nombres concretos de tablas/columnas.
+  - qué necesita una cotización para mostrar bien el estado en "Mi cuenta" y en los correos.
+- [x] Documentar las decisiones al final de este archivo (sección **"Notas de arquitectura"**), sin entrar en nombres concretos de tablas/columnas.
 
 > No avanzar a Fase 1 hasta que estos puntos estén claros y escritos.
 
 ---
 
-## Fase 1 – Base de datos y seguridad (Agente Supabase / Security)
+## Fase 1 - Base de datos y seguridad (Agente Supabase / Security)
 
 Objetivo: ajustar el modelo de datos y RLS para soportar leads + cuentas + cotizaciones de forma segura.
 
-- [ ] Leer el resumen de Fase 0 en **“Notas de arquitectura”**.
-- [ ] Usar el MCP de **Supabase** para:
+- [x] Leer el resumen de Fase 0 en **"Notas de arquitectura"**.
+- [x] Usar el MCP de **Supabase** para:
   - inspeccionar tablas actuales de leads, cotizaciones y cualquier tabla relacionada,
   - revisar las RLS/policies actuales.
-- [ ] Definir qué cambios son necesarios a nivel de estructura, por ejemplo:
+- [x] Definir qué cambios son necesarios a nivel de estructura, por ejemplo:
   - campo para vincular lead con usuario autenticado (por ejemplo `user_id`),
   - si hace falta una tabla extra para historial de estados de cotización,
   - si hace falta una tabla para logs de emails (opcional).
-- [ ] Si hay dudas sobre patrones recomendados (por ejemplo, diseño de tablas de historial o logs), usar **context7** para consultar documentación externa de Supabase / Postgres.
-- [ ] Proponer cambios de RLS a nivel conceptual:
+- [x] Si hay dudas sobre patrones recomendados (por ejemplo, diseño de tablas de historial o logs), usar **context7** para consultar documentación externa de Supabase / Postgres.
+- [x] Proponer cambios de RLS a nivel conceptual:
   - qué puede ver/editar un invitado,
   - qué puede ver/editar un usuario autenticado,
   - qué puede ver/editar un admin.
-- [ ] Aplicar los cambios en Supabase usando el MCP, asegurándose de:
+- [x] Aplicar los cambios en Supabase usando el MCP, asegurándose de:
   - no romper flujos actuales,
   - no exponer datos de otros leads/usuarios.
-- [ ] Dejar un resumen de los cambios de DB y RLS al final de este archivo (sección **“Notas de DB y seguridad”**).
+- [x] Dejar un resumen de los cambios de DB y RLS al final de este archivo (sección **"Notas de DB y seguridad"**).
 
-> No avanzar a Fase 2 si las RLS no están claras o si queda alguna duda importante de seguridad.
+> Fase 1 (DB/RLS) completada.
 
 ---
 
-## Fase 2 – Lógica de negocio / Backend (Agente Backend)
+## Fase 2 - Lógica de negocio / Backend (Agente Backend)
 
-Objetivo: implementar la lógica que conecta el flujo de cotización con leads, cuentas y “Mi cuenta”.
+Objetivo: implementar la lógica que conecta el flujo de cotización con leads, cuentas y "Mi cuenta".
 
-- [ ] Revisar el documento funcional en `docs/` y las **“Notas de DB y seguridad”** de la Fase 1.
-- [ ] Revisar el código actual relacionado con:
+- [x] Revisar el documento funcional en `docs/` y las **"Notas de DB y seguridad"** de la Fase 1.
+- [x] Revisar el código actual relacionado con:
   - creación de cotizaciones,
   - manejo de leads,
   - cualquier RPC o Edge Function ya existente.
-- [ ] Si hace falta confirmar buenas prácticas de diseño de APIs (por ejemplo, uso de server actions, Edge Functions, patrones de RPC en Supabase), usar **context7** para consultar documentación externa de Next.js / Supabase.
-- [ ] Diseñar y/o ajustar la lógica de:
+- [x] Si hace falta confirmar buenas prácticas de diseño de APIs (por ejemplo, uso de server actions, Edge Functions, patrones de RPC en Supabase), usar **context7** para consultar documentación externa de Next.js / Supabase.
+- [x] Diseñar y/o ajustar la lógica de:
   - primera cotización como invitado (crear lead + cotización),
-  - detección de “correo ya usado” sin exponer datos sensibles,
+  - detección de "correo ya usado" sin exponer datos sensibles,
   - vinculación de leads existentes con una cuenta de usuario cuando el usuario decide registrarse.
-- [ ] Implementar o actualizar las funciones necesarias (RPC/Edge Functions/server actions), por ejemplo:
+- [x] Implementar deduplicación de leads por email en backend:
+  - reusar lead con `user_id IS NULL` si ya existe,
+  - al registrar cuenta con ese correo, actualizar ese lead a `user_id = auth.uid()` tomando el más reciente como principal y dejando los otros históricos.
+- [x] Implementar o actualizar las funciones necesarias (RPC/Edge Functions/server actions), por ejemplo:
   - crear cotización a partir de la info del formulario o de la cuenta del usuario,
   - obtener listado de cotizaciones de un usuario autenticado,
   - obtener detalle de una cotización (solo si pertenece al usuario o si es admin),
   - actualizar datos de contacto/facturación del usuario autenticado.
-- [ ] Asegurarse de que todas las funciones respetan las RLS definidas en la Fase 1.
-- [ ] Añadir notas breves sobre las nuevas funciones/endpoints en la sección **“Notas de backend”** al final de este archivo.
+- [x] Asegurarse de que todas las funciones respetan las RLS definidas en la Fase 1.
+- [x] Añadir notas breves sobre las nuevas funciones/endpoints en la sección **"Notas de backend"** al final de este archivo.
 
 ---
 
@@ -117,7 +120,7 @@ Objetivo: crear/adaptar las pantallas y componentes para “Mi cuenta” y los n
 Objetivo: enviar correos claros y coherentes con los cambios de estado de las cotizaciones.
 
 - [ ] Revisar en el repo cualquier código actual relacionado con envío de correos (Edge Functions, servicios, etc.).
-- [ ] Si hay dudas sobre integración con el proveedor de correo (SendGrid u otro), usar **context7** para consultar documentación externa de ese proveedor o de patrones recomendados (por ejemplo, en Supabase Edge Functions).
+- [ ] Reutilizar la plantilla base actual de cotizaciones (`generateEmailHTML` + Edge Function `send-email`) y extenderla para tipos de correo (quote_created, quote_status_changed, recordatorios), cambiando asunto y bloque de cuerpo sin romper el diseño actual.
 - [ ] Definir qué eventos de cambio de estado disparan correos (por ejemplo: en revisión, aprobada, rechazada, vencida), alineado con lo definido en los docs de `docs/`.
 - [ ] Crear o ajustar la función central (RPC o Edge Function) encargada de:
   - recibir la info mínima (por ejemplo: `id` de cotización + nuevo estado),
@@ -126,7 +129,7 @@ Objetivo: enviar correos claros y coherentes con los cambios de estado de las co
   - llamar al proveedor de correo configurado en el proyecto.
 - [ ] Asegurar que:
   - no se envían correos duplicados por el mismo cambio de estado,
-  - se registran errores o logs mínimos para debug (si aplica, usando estructura definida en Fase 1).
+  - se registran errores o logs mínimos en `email_logs` (quote_id?, tipo, estado_envio, error_message?, sendgrid_message_id?) para debug/auditoría.
 - [ ] Revisar textos de correos:
   - claros,
   - cortos,
@@ -158,19 +161,38 @@ Objetivo: comprobar que el flujo completo funciona bien y dejar documentado el r
 
 ## Notas de arquitectura
 
-_(Usar esta sección para anotar decisiones importantes de Fase 0.)_
+- Relación base: cada cotización se liga a un lead; si se crea una cuenta con ese correo, el lead invitado se actualiza con `user_id` y las cotizaciones existentes quedan visibles en "Mi cuenta".
+- Lead invitado: primera cotización crea lead con correo + `user_id = NULL` y se reutiliza en cotizaciones posteriores con el mismo correo. Si el usuario se registra, se busca el lead con `user_id = NULL`, se actualiza con `auth.uid()` y no se genera un lead nuevo.
+- Lead activo por correo: si existen múltiples leads históricos con el mismo correo, se elige el más reciente como principal para vincularlo a la cuenta y para futuras cotizaciones; los demás quedan solo como histórico. Si el usuario cambia su correo desde "Mi cuenta", se actualiza el lead principal en lugar de crear otro.
+- Usuarios autenticados: nuevas cotizaciones usan los datos actuales de la cuenta (con opción “Modificar mis datos”), manteniendo la referencia al lead vinculado y al `user_id`.
+- "Mi cuenta": botón estable; clientes autenticados ven listado/detalle de sus cotizaciones y administran datos de contacto/facturación futura. Administradores que hagan clic son redirigidos al dashboard de admin, no al panel de cliente.
+- Datos mínimos: lead necesita nombre, correo, teléfono opcional y contexto/origen; cuenta requiere identificador de autenticación más datos de contacto y espacio para facturación; cotización debe guardar referencias a lead/cuenta según aplique, resumen de productos, timestamps y estado visible.
+- Seguridad: nunca mostrar datos previos solo por ingresar un correo; cada usuario autenticado solo ve sus cotizaciones y los administradores operan desde su panel.
+- Correos: todas las notificaciones de cotizaciones/estados se envían mediante una función central (`send-email` sobre SendGrid) reutilizando la plantilla HTML existente (`generateEmailHTML`) como base visual (header, colores, CTA); se debe extenderla para admitir tipos de correo/estados distintos sin romper la versión actual.
+- Logging: se creará una tabla simple `email_logs` con campos `id`, `quote_id` opcional, `to_email`, `tipo_correo`, `estado_envio`, `error_message` opcional, `sendgrid_message_id` opcional y `created_at` para auditar envíos/errores sin lógica extra.
 
 ---
 
 ## Notas de DB y seguridad
 
-_(Usar esta sección para anotar decisiones importantes de Fase 1: tablas, campos, RLS, etc., a nivel de resumen.)_
+- Estructura: se añadió `user_id uuid` a `leads` (ref. `auth.users`, ON DELETE SET NULL) y a `cotizaciones` para vincular cotizaciones de usuarios autenticados sin perder la relación con el lead invitado; índices en `leads.user_id`, `leads lower(email)`, `cotizaciones.user_id`.
+- Estados: la columna `estado` de `cotizaciones` ahora permite `borrador|pendiente|enviada|en_revision|aprobada|rechazada|vencida` (default `pendiente`).
+- Logging de correos: se creó `email_logs(id, quote_id?, to_email, tipo_correo, estado_envio, error_message?, sendgrid_message_id?, created_at)` para auditar envíos/errores de SendGrid.
+- RLS leads: además de admin y anon insert, se agregaron políticas para que usuarios autenticados puedan leer/actualizar sus leads (`user_id = auth.uid()`) e insertar leads propios (o sin `user_id`).
+- RLS cotizaciones: usuarios autenticados pueden leer cotizaciones vinculadas a su `user_id` o a leads con su `user_id`; pueden insertar cotizaciones si apuntan a un lead propio o sin `user_id`. Admin mantiene control total y anon puede crear (flujo invitado).
+- RLS items_cotizacion: usuarios autenticados pueden leer/insertar ítems solo si pertenecen a cotizaciones ligadas a su `user_id` o a leads suyos; admin conserva control y anon puede insertar (flujo invitado).
+- RLS email_logs: sólo admins (según `profiles.role = 'admin'`) pueden operar sobre el log; pensado para uso de la función central de correos/SendGrid.
+- Nota: la deduplicación por email y la actualización del lead principal al registrar cuenta se implementarán en la lógica de backend (Fase 2), sin más cambios de esquema.
 
 ---
 
 ## Notas de backend
 
-_(Usar esta sección para anotar, de forma breve, qué funciones/RPC/Edge Functions se añadieron o modificaron en Fase 2.)_
+- RPC `create_public_lead` ahora reutiliza lead por email (prioriza invite `user_id IS NULL`), actualiza `user_id` si el actor autenticado coincide y retorna sólo datos no sensibles (id, email, user_id).
+- RPC `create_public_quote` asigna `user_id` en la cotización tomando el del lead o del actor, manteniendo la referencia al lead invitado.
+- RPC `link_lead_to_auth_user(p_email)` vincula el lead principal de un email al `auth.uid()` (upgrade de invitado a cuenta, lead histórico permanece solo referencia).
+- RPC `check_lead_email_exists(p_email)` permite detectar si el correo ya cotizó sin exponer datos.
+- Servicios TS: `crearLead` y `crearCotizacion` actualizados a las nuevas RPC; se añadieron helpers `vincularLeadAUsuarioAutenticado`, `existeLeadParaEmail`, `obtenerCotizacionesDeUsuario` y `obtenerCotizacionDeUsuarioPorId` (para “Mi cuenta”).
 
 ---
 

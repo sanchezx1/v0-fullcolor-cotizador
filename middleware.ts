@@ -88,19 +88,60 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error) {
+    const message = (error as any)?.message || (error as any)?.name || "unknown"
+    if (message !== "AuthSessionMissingError") {
+      console.warn("Error obteniendo usuario en middleware:", error)
+    }
+    user = null
+  }
 
-  // Si no hay usuario y está intentando acceder al admin, redirigir a login
+  // Si no hay usuario y accede a admin, redirigir a login
   if (!user && request.nextUrl.pathname.startsWith('/admin')) {
     const loginUrl = new URL('/auth/login', request.url)
-    // Guardar la URL original para redirigir después del login
-    loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname + request.nextUrl.search)
     return NextResponse.redirect(loginUrl)
   }
 
-  // Si hay usuario y está en login, redirigir al admin
-  if (user && request.nextUrl.pathname === '/auth/login') {
-    return NextResponse.redirect(new URL('/admin', request.url))
+  // Si hay usuario y accede a rutas de auth, redirigir segun rol
+  if (user && request.nextUrl.pathname.startsWith('/auth')) {
+    let role: string | null = null
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+      role = profile?.role ?? null
+    } catch (error) {
+      console.warn('No se pudo obtener rol en middleware:', error)
+    }
+
+    const target = role === 'admin' ? '/admin' : '/mi-cuenta'
+    return NextResponse.redirect(new URL(target, request.url))
+  }
+
+  // Si hay usuario pero no es admin e intenta admin, enviarlo a mi-cuenta
+  if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    let role: string | null = null
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+      role = profile?.role ?? null
+    } catch (error) {
+      console.warn('No se pudo obtener rol en middleware (protegiendo admin):', error)
+    }
+
+    if (role !== 'admin') {
+      return NextResponse.redirect(new URL('/mi-cuenta', request.url))
+    }
   }
 
   return response

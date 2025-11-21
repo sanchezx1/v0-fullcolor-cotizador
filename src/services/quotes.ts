@@ -1,7 +1,9 @@
-import { supabase, Lead, Cotizacion, ItemCotizacion, Evento } from './supabaseClient'
+import { supabase, Lead, LeadReference, Cotizacion, ItemCotizacion, Evento } from "./supabaseClient"
 
 /**
- * Crea o actualiza un lead (contacto) basado en el email
+ * Crea o reutiliza un lead (contacto) basado en el email.
+ * El RPC maneja la deduplicación y, si el usuario está autenticado con el mismo email,
+ * actualiza `user_id` para vincular el lead a la cuenta.
  */
 export async function crearLead(leadData: {
   nombre: string
@@ -11,49 +13,40 @@ export async function crearLead(leadData: {
   notas?: string
   ruc_cedula?: string
   ciudad?: string
-}): Promise<Lead> {
+}): Promise<LeadReference> {
   try {
-    console.log('[Lead] Creando lead mediante RPC seguro para email:', leadData.email)
+    console.log("[Lead] Creando/reutilizando lead mediante RPC seguro para email:", leadData.email)
 
-    const { data, error } = await supabase.rpc('create_public_lead', {
+    const { data, error } = await supabase.rpc("create_public_lead", {
       p_nombre: leadData.nombre,
       p_email: leadData.email,
       p_telefono: leadData.telefono,
       p_empresa: leadData.empresa,
       p_notas: leadData.notas ?? null,
       p_ruc_cedula: leadData.ruc_cedula ?? null,
-      p_ciudad: leadData.ciudad ?? null
+      p_ciudad: leadData.ciudad ?? null,
     })
 
     if (error) {
-      console.error('[Lead] Error ejecutando create_public_lead:', error)
+      console.error("[Lead] Error ejecutando create_public_lead:", error)
       throw new Error(`Error creando lead: ${error.message}`)
     }
 
-    if (!data) {
-      throw new Error('Error creando lead: respuesta vacía')
+    if (!data || !data.success || !data.lead) {
+      throw new Error("Error creando lead: respuesta inválida del servidor")
     }
 
-    if (!data.success) {
-      if (data.code === 'LEAD_EMAIL_EXISTS') {
-        const conflictError = new Error('LEAD_EMAIL_EXISTS') as any
-        conflictError.code = 'LEAD_EMAIL_EXISTS'
-        conflictError.existingLead = data.existing_lead
-        conflictError.newData = data.new_data ?? leadData
-        throw conflictError
-      }
+    const lead = data.lead as LeadReference
 
-      throw new Error('Error creando lead: respuesta inválida del servidor')
-    }
+    console.log("[Lead] Lead asegurado (nuevo o reutilizado):", {
+      id: lead.id,
+      reused: !!data.reused,
+      upgraded: !!data.upgraded_to_user,
+    })
 
-    if (!data.lead) {
-      throw new Error('Error creando lead: el servidor no devolvió el lead creado')
-    }
-
-    console.log('[Lead] Lead creado exitosamente:', data.lead)
-    return data.lead as Lead
+    return lead
   } catch (error) {
-    console.error('[Lead] Error en crearLead:', error)
+    console.error("[Lead] Error en crearLead:", error)
     if (error instanceof Error) {
       throw error
     } else {
@@ -62,9 +55,9 @@ export async function crearLead(leadData: {
   }
 }
 
-
 /**
- * Crea una nueva cotización con sus ítems
+ * Crea una nueva cotización con sus ítems.
+ * El RPC asigna user_id si el lead ya está vinculado o si el actor autenticado coincide.
  */
 export async function crearCotizacion(cotizacionData: {
   leadId: number
@@ -74,43 +67,43 @@ export async function crearCotizacion(cotizacionData: {
     precioUnitario: number
     subtotal: number
   }>
-  canal: 'web' | 'whatsapp' | 'email'
+  canal: "web" | "whatsapp" | "email"
   notas?: string
 }): Promise<{ cotizacion: Cotizacion; items: ItemCotizacion[] }> {
   try {
-    console.log('🔎 Creando cotización para lead:', cotizacionData.leadId)
+    console.log("🔎 Creando cotización para lead:", cotizacionData.leadId)
 
-    const itemsPayload = cotizacionData.items.map(item => ({
+    const itemsPayload = cotizacionData.items.map((item) => ({
       producto_id: item.productoId,
       cantidad: item.cantidad,
       precio_unitario: item.precioUnitario,
-      subtotal: item.subtotal
+      subtotal: item.subtotal,
     }))
 
-    const { data, error } = await supabase.rpc('create_public_quote', {
+    const { data, error } = await supabase.rpc("create_public_quote", {
       p_lead_id: cotizacionData.leadId,
       p_items: itemsPayload,
       p_canal: cotizacionData.canal,
-      p_notas: cotizacionData.notas ?? null
+      p_notas: cotizacionData.notas ?? null,
     })
 
     if (error) {
-      console.error('❌ Error ejecutando create_public_quote:', error)
+      console.error("❌ Error ejecutando create_public_quote:", error)
       throw new Error(`Error creando cotización: ${error.message}`)
     }
 
     if (!data || !data.cotizacion) {
-      throw new Error('Error creando cotización: el servidor no devolvió la cotización')
+      throw new Error("Error creando cotización: el servidor no devolvió la cotización")
     }
 
     const cotizacion = data.cotizacion as Cotizacion
     const items = (data.items as ItemCotizacion[]) || []
 
-    console.log('✅ Cotización creada vía RPC:', cotizacion.id)
+    console.log("✅ Cotización creada vía RPC:", cotizacion.id, "user_id:", cotizacion.user_id)
 
     return { cotizacion, items }
   } catch (error) {
-    console.error('❌ Error en crearCotizacion:', error)
+    console.error("❌ Error en crearCotizacion:", error)
     if (error instanceof Error) {
       throw error
     } else {
@@ -120,42 +113,42 @@ export async function crearCotizacion(cotizacionData: {
 }
 
 /**
- * Registra un evento relacionado con una cotización
+ * Registra un evento relacionado con una cotización.
  */
 export async function registrarEvento(eventoData: {
   cotizacionId: number
-  tipo: 'pdf_generado' | 'email_enviado' | 'whatsapp_share' | 'cotizacion_creada' | 'cotizacion_actualizada'
+  tipo: "pdf_generado" | "email_enviado" | "whatsapp_share" | "cotizacion_creada" | "cotizacion_actualizada"
   metadata?: Record<string, any>
 }): Promise<Evento> {
   try {
     const { data, error } = await supabase
-      .from('eventos')
+      .from("eventos")
       .insert({
         cotizacion_id: eventoData.cotizacionId,
         tipo: eventoData.tipo,
-        metadata: eventoData.metadata
+        metadata: eventoData.metadata,
       })
       .select()
       .single()
 
     if (error) {
-      console.error('Error registering event:', error)
+      console.error("Error registering event:", error)
       throw error
     }
 
     return data
   } catch (error) {
-    console.error('Error in registrarEvento:', error)
+    console.error("Error in registrarEvento:", error)
     throw error
   }
 }
 
 /**
- * Actualiza el estado de una cotización
+ * Actualiza el estado de una cotización.
  */
 export async function actualizarEstadoCotizacion(
   cotizacionId: number,
-  nuevoEstado: Cotizacion['estado'],
+  nuevoEstado: Cotizacion["estado"],
   pdfUrl?: string
 ): Promise<Cotizacion> {
   try {
@@ -165,36 +158,36 @@ export async function actualizarEstadoCotizacion(
     }
 
     const { data, error } = await supabase
-      .from('cotizaciones')
+      .from("cotizaciones")
       .update(updateData)
-      .eq('id', cotizacionId)
+      .eq("id", cotizacionId)
       .select()
       .single()
 
     if (error) {
-      console.error('Error updating quote status:', error)
+      console.error("Error updating quote status:", error)
       throw error
     }
 
     // Registrar evento de actualización
     await registrarEvento({
       cotizacionId,
-      tipo: 'cotizacion_actualizada',
+      tipo: "cotizacion_actualizada",
       metadata: {
         nuevo_estado: nuevoEstado,
-        pdf_url: pdfUrl
-      }
+        pdf_url: pdfUrl,
+      },
     })
 
     return data
   } catch (error) {
-    console.error('Error in actualizarEstadoCotizacion:', error)
+    console.error("Error in actualizarEstadoCotizacion:", error)
     throw error
   }
 }
 
 /**
- * Obtiene una cotización con todos sus datos relacionados
+ * Obtiene una cotización con todos sus datos relacionados.
  */
 export async function obtenerCotizacionCompleta(cotizacionId: number): Promise<{
   cotizacion: Cotizacion
@@ -203,9 +196,8 @@ export async function obtenerCotizacionCompleta(cotizacionId: number): Promise<{
   eventos: Evento[]
 }> {
   try {
-    // Obtener cotización
     const { data: cotizacion, error: cotizacionError } = await supabase
-      .from('cotizaciones')
+      .from("cotizaciones")
       .select(`
         *,
         leads (*),
@@ -214,35 +206,112 @@ export async function obtenerCotizacionCompleta(cotizacionId: number): Promise<{
           productos (*)
         )
       `)
-      .eq('id', cotizacionId)
+      .eq("id", cotizacionId)
       .single()
 
     if (cotizacionError) {
-      console.error('Error fetching quote:', cotizacionError)
+      console.error("Error fetching quote:", cotizacionError)
       throw cotizacionError
     }
 
-    // Obtener eventos
     const { data: eventos, error: eventosError } = await supabase
-      .from('eventos')
-      .select('*')
-      .eq('cotizacion_id', cotizacionId)
-      .order('created_at', { ascending: true })
+      .from("eventos")
+      .select("*")
+      .eq("cotizacion_id", cotizacionId)
+      .order("created_at", { ascending: true })
 
     if (eventosError) {
-      console.error('Error fetching events:', eventosError)
+      console.error("Error fetching events:", eventosError)
       throw eventosError
     }
 
     return {
       cotizacion,
-      lead: cotizacion.leads,
-      items: cotizacion.items_cotizacion,
-      eventos: eventos || []
+      lead: (cotizacion as any).leads,
+      items: (cotizacion as any).items_cotizacion,
+      eventos: eventos || [],
     }
   } catch (error) {
-    console.error('Error in obtenerCotizacionCompleta:', error)
+    console.error("Error in obtenerCotizacionCompleta:", error)
     throw error
   }
 }
 
+/**
+ * Vincula el lead principal de un email al usuario autenticado (upgrade de invitado a cuenta).
+ */
+export async function vincularLeadAUsuarioAutenticado(email: string): Promise<{ linked: boolean; leadId?: number | null }> {
+  if (!email) {
+    throw new Error("Email requerido para vincular lead")
+  }
+
+  try {
+    const { data, error } = await supabase.rpc("link_lead_to_auth_user", { p_email: email })
+
+    if (error) {
+      throw error
+    }
+
+    return { linked: !!data?.linked, leadId: data?.lead_id ?? null }
+  } catch (error) {
+    console.warn("No se pudo vincular lead a usuario autenticado:", error)
+    return { linked: false, leadId: null }
+  }
+}
+
+/**
+ * Detecta si ya existe un lead para el email (sin exponer datos del lead).
+ */
+export async function existeLeadParaEmail(email: string): Promise<boolean> {
+  if (!email) return false
+  const { data, error } = await supabase.rpc("check_lead_email_exists", { p_email: email })
+  if (error) {
+    console.error("Error revisando existencia de lead:", error)
+    return false
+  }
+  return Boolean(data)
+}
+
+/**
+ * Obtiene cotizaciones visibles para el usuario autenticado (panel "Mi cuenta").
+ */
+export async function obtenerCotizacionesDeUsuario(): Promise<Array<Cotizacion & { leads: Lead }>> {
+  const { data, error } = await supabase
+    .from("cotizaciones")
+    .select("*, leads(*)")
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("Error obteniendo cotizaciones del usuario:", error)
+    throw error
+  }
+
+  // RLS ya filtra por user_id o lead.user_id; retornamos datos tipados
+  return (data as Array<Cotizacion & { leads: Lead }>) ?? []
+}
+
+/**
+ * Obtiene detalle de una cotización para el usuario autenticado (respeta RLS).
+ */
+export async function obtenerCotizacionDeUsuarioPorId(
+  cotizacionId: number
+): Promise<(Cotizacion & { leads: Lead; items_cotizacion: (ItemCotizacion & { productos: any })[] }) | null> {
+  const { data, error } = await supabase
+    .from("cotizaciones")
+    .select(
+      `
+      *,
+      leads (*),
+      items_cotizacion (*, productos (*))
+    `
+    )
+    .eq("id", cotizacionId)
+    .maybeSingle()
+
+  if (error) {
+    console.error("Error obteniendo detalle de cotización del usuario:", error)
+    throw error
+  }
+
+  return data as any
+}

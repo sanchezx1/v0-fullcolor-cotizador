@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, AlertCircle, CheckCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
+import { useAuthSession } from "@/src/hooks/useAuthSession"
+import { asegurarLeadVinculado, obtenerLeadDeUsuario } from "@/src/services/accounts"
+import { existeLeadParaEmail } from "@/src/services/quotes"
 import LeadConflictModal from "@/components/lead-conflict-modal"
 
 export default function CotizadorPage() {
@@ -37,9 +41,90 @@ export default function CotizadorPage() {
     leadVerificationState,
     leadVerificationError
   } = useQuoteBuilder()
+  const { isAuthenticated, isAdmin, user: authUser } = useAuthSession()
+  const [contactPrefillLoading, setContactPrefillLoading] = useState(false)
+  const [useAccountContact, setUseAccountContact] = useState(false)
+  const [editingContact, setEditingContact] = useState(false)
+  const [existingEmailDialogOpen, setExistingEmailDialogOpen] = useState(false)
+  const [emailPrompted, setEmailPrompted] = useState<string | null>(null)
+  const [checkingExistingEmail, setCheckingExistingEmail] = useState(false)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+
+  useEffect(() => {
+    if (!isAuthenticated || !authUser || isAdmin) {
+      setUseAccountContact(false)
+      setEditingContact(false)
+      return
+    }
+
+    let isActive = true
+
+    const hydrateContactFromAccount = async () => {
+      try {
+        setContactPrefillLoading(true)
+        await asegurarLeadVinculado(authUser.email)
+        const lead = await obtenerLeadDeUsuario()
+
+        if (!isActive) return
+
+        if (lead) {
+          setContactInfo((prev) => ({
+            ...prev,
+            nombreRazonSocial: lead.nombre || prev.nombreRazonSocial,
+            rucCedula: lead.ruc_cedula || prev.rucCedula,
+            email: lead.email || prev.email,
+            ciudad: lead.ciudad || prev.ciudad,
+            telefono: lead.telefono || prev.telefono,
+          }))
+          setUseAccountContact(true)
+          setEditingContact(false)
+        }
+      } catch (error) {
+        console.warn("No se pudo precargar datos de contacto desde la cuenta:", error)
+      } finally {
+        if (isActive) {
+          setContactPrefillLoading(false)
+        }
+      }
+    }
+
+    hydrateContactFromAccount()
+
+    return () => {
+      isActive = false
+    }
+  }, [authUser, isAdmin, isAuthenticated, setContactInfo])
+
+  useEffect(() => {
+    if (isAuthenticated) return
+
+    const normalizedEmail = contactInfo.email.trim().toLowerCase()
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+
+    if (!emailValid) {
+      setEmailPrompted(null)
+      return
+    }
+
+    if (emailPrompted === normalizedEmail && !existingEmailDialogOpen) return
+
+    const timer = window.setTimeout(async () => {
+      setCheckingExistingEmail(true)
+      const exists = await existeLeadParaEmail(normalizedEmail)
+      setCheckingExistingEmail(false)
+
+      if (exists) {
+        setExistingEmailDialogOpen(true)
+        setEmailPrompted(normalizedEmail)
+      } else {
+        setEmailPrompted(null)
+      }
+    }, 800)
+
+    return () => window.clearTimeout(timer)
+  }, [contactInfo.email, emailPrompted, existingEmailDialogOpen, isAuthenticated])
 
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,6 +184,8 @@ export default function CotizadorPage() {
   }
 
   const validation = validateQuote()
+  const contactFieldsDisabled =
+    contactPrefillLoading || loading || isSubmitting || (isAuthenticated && useAccountContact && !editingContact)
 
   return (
     <>
@@ -118,6 +205,43 @@ export default function CotizadorPage() {
           isUpdating={isSubmitting}
         />
       )}
+
+      <Dialog open={existingEmailDialogOpen} onOpenChange={setExistingEmailDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ya cotizaste con este correo</DialogTitle>
+            <DialogDescription>
+              Crea tu cuenta para vincular tus cotizaciones y seguir cotizando con tus datos guardados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
+              <p className="font-semibold text-foreground">Ventajas de crear tu cuenta:</p>
+              <ul className="mt-2 space-y-1 list-disc list-inside">
+                <li>Guardar tus datos y solicitar cotizaciones mas rapido.</li>
+                <li>Ver historial y seguimiento de cotizaciones y pedidos.</li>
+                <li>Reutilizar tus datos en solicitudes futuras.</li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                className="flex-1 bg-primary text-white hover:bg-primary-hover"
+                onClick={() => window.location.assign(`/auth/login?redirectTo=/cotizador&tab=register`)}
+              >
+                Crear cuenta y vincular mis cotizaciones
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setExistingEmailDialogOpen(false)}
+              >
+                Seguir como invitado
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="py-12">
       <div className="container mx-auto px-4">
@@ -163,6 +287,30 @@ export default function CotizadorPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {isAuthenticated && useAccountContact && !editingContact && (
+                      <div className="flex items-start justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary">
+                        <p>Usaremos los datos guardados en tu cuenta.</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingContact(true)
+                            setUseAccountContact(false)
+                          }}
+                          className="border-primary/40 text-primary hover:bg-primary/10"
+                        >
+                          Modificar datos
+                        </Button>
+                      </div>
+                    )}
+
+                    {contactPrefillLoading && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                        Sincronizando tus datos guardados...
+                      </div>
+                    )}
                     {quoteItems.map((item) => (
                       <div key={item.productId}>
                         <div className="flex gap-4">
@@ -264,7 +412,7 @@ export default function CotizadorPage() {
                         value={contactInfo.nombreRazonSocial}
                         onChange={(e) => setContactInfo({ ...contactInfo, nombreRazonSocial: e.target.value })}
                         placeholder="Juan Pérez o Mi Empresa S.A."
-                        disabled={loading || isSubmitting}
+                        disabled={contactFieldsDisabled}
                       />
                     </div>
 
@@ -278,7 +426,7 @@ export default function CotizadorPage() {
                         value={contactInfo.rucCedula}
                         onChange={(e) => setContactInfo({ ...contactInfo, rucCedula: e.target.value })}
                         placeholder="1234567890123 o 1234567890"
-                        disabled={loading || isSubmitting}
+                        disabled={contactFieldsDisabled}
                       />
                     </div>
 
@@ -293,8 +441,11 @@ export default function CotizadorPage() {
                         value={contactInfo.email}
                         onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
                         placeholder="juan@empresa.com"
-                        disabled={loading || isSubmitting}
+                        disabled={contactFieldsDisabled}
                       />
+                      {!isAuthenticated && checkingExistingEmail && (
+                        <p className="text-xs text-muted-foreground">Revisando si ya cotizaste con este correo...</p>
+                      )}
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -305,7 +456,7 @@ export default function CotizadorPage() {
                           value={contactInfo.ciudad || ''}
                           onChange={(e) => setContactInfo({ ...contactInfo, ciudad: e.target.value })}
                           placeholder="Quito"
-                          disabled={loading || isSubmitting}
+                          disabled={contactFieldsDisabled}
                         />
                       </div>
                       <div className="space-y-2">
@@ -316,7 +467,7 @@ export default function CotizadorPage() {
                           value={contactInfo.telefono || ''}
                           onChange={(e) => setContactInfo({ ...contactInfo, telefono: e.target.value })}
                           placeholder="+593 99 123 4567"
-                          disabled={loading || isSubmitting}
+                          disabled={contactFieldsDisabled}
                         />
                       </div>
                     </div>
@@ -329,7 +480,7 @@ export default function CotizadorPage() {
                         onChange={(e) => setContactInfo({ ...contactInfo, mensaje: e.target.value })}
                         placeholder="Detalles especiales, fecha de entrega deseada, etc."
                         rows={4}
-                        disabled={loading || isSubmitting}
+                        disabled={contactFieldsDisabled}
                       />
                     </div>
 

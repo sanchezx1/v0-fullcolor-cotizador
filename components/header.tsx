@@ -1,10 +1,22 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, ShoppingCart, X } from "lucide-react"
+import { Menu, ShoppingCart, UserRound, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useAuthSession } from "@/src/hooks/useAuthSession"
+import { supabase } from "@/src/services/supabaseClient"
+import { toast } from "sonner"
 import type { QuoteItem } from "@/src/hooks/useQuoteBuilder"
 
 const STORAGE_KEY = "fullcolor_quote"
@@ -38,6 +50,35 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [quoteCount, setQuoteCount] = useState(0)
   const [animateBadge, setAnimateBadge] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const { isAuthenticated, isAdmin, user: authUser, status: authStatus } = useAuthSession()
+  const router = useRouter()
+
+  const handleAccountNavigate = () => {
+    if (isAdmin) {
+      router.push("/admin")
+    } else if (isAuthenticated) {
+      router.push("/mi-cuenta")
+    } else {
+      router.push("/auth/login")
+    }
+    setIsMenuOpen(false)
+  }
+
+  const handleSignOut = async () => {
+    try {
+      setSigningOut(true)
+      await supabase.auth.signOut()
+      toast.success("Sesion cerrada correctamente")
+      router.push("/")
+      router.refresh()
+    } catch (error) {
+      console.error("Error cerrando sesion:", error)
+      toast.error("No pudimos cerrar tu sesion")
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   useEffect(() => {
     document.body.classList.toggle("overflow-hidden", isMenuOpen)
@@ -140,6 +181,9 @@ export function Header() {
           <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
             Inicio
           </Link>
+          <Link href="/catalogo" className="text-sm font-medium transition-colors hover:text-primary">
+            Catalogo
+          </Link>
           <Link href="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
             Contacto
           </Link>
@@ -176,9 +220,15 @@ export function Header() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button asChild size="sm" className="bg-primary text-white hover:bg-primary-hover">
-            <Link href="/catalogo">Explorar catálogo</Link>
-          </Button>
+          <AccountButton
+            isAuthenticated={isAuthenticated}
+            isAdmin={isAdmin}
+            userEmail={authUser?.email ?? ""}
+            status={authStatus}
+            signingOut={signingOut}
+            onNavigate={handleAccountNavigate}
+            onSignOut={handleSignOut}
+          />
           <Button
             asChild
             variant="outline"
@@ -251,11 +301,121 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+
+            <div className="mt-6 space-y-3 border-t border-slate-200 pt-6">
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href={isAdmin ? "/admin" : "/mi-cuenta"}
+                    onClick={closeMenu}
+                    className="block rounded-lg bg-[#0066CC]/10 px-4 py-3 text-lg font-semibold text-[#1F2937] transition-colors duration-200 hover:bg-[#0066CC]/15 hover:text-[#0066CC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  >
+                    {isAdmin ? "Ir al panel admin" : "Mi cuenta"}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMenu()
+                      handleSignOut()
+                    }}
+                    className="block w-full rounded-lg px-4 py-3 text-left text-lg font-semibold text-[#B91C1C] transition-colors duration-200 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                    disabled={signingOut}
+                  >
+                    {signingOut ? "Cerrando..." : "Cerrar sesion"}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  onClick={closeMenu}
+                  className="block w-full rounded-lg bg-[#0066CC]/10 px-4 py-3 text-left text-lg font-semibold text-[#1F2937] transition-colors duration-200 hover:bg-[#0066CC]/15 hover:text-[#0066CC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                >
+                  Mi cuenta
+                </Link>
+              )}
+            </div>
           </nav>
         </aside>
       </div>
     </header>
     <div className="h-16 w-full md:hidden" aria-hidden="true" />
   </>
+  )
+}
+
+interface AccountButtonProps {
+  isAuthenticated: boolean
+  isAdmin: boolean
+  userEmail: string
+  status: "loading" | "authenticated" | "unauthenticated"
+  signingOut: boolean
+  onNavigate: () => void
+  onSignOut: () => void
+}
+
+function AccountButton({
+  isAuthenticated,
+  isAdmin,
+  userEmail,
+  status,
+  signingOut,
+  onNavigate,
+  onSignOut,
+}: AccountButtonProps) {
+  if (status === "loading") {
+    return (
+      <Button variant="outline" size="sm" disabled className="bg-transparent px-3 sm:px-4">
+        <span className="h-4 w-4 animate-pulse rounded-full bg-primary/60" aria-hidden="true" />
+        <span className="sr-only">Cargando</span>
+      </Button>
+    )
+  }
+
+  if (isAuthenticated) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="relative bg-transparent px-3 sm:px-4">
+            <UserRound className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">{isAdmin ? "Admin" : "Mi cuenta"}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="truncate text-xs text-muted-foreground">
+            {userEmail || "Sesion activa"}
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault()
+              onNavigate()
+            }}
+          >
+            {isAdmin ? "Ir al panel admin" : "Abrir Mi cuenta"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault()
+              onSignOut()
+            }}
+            className="text-destructive"
+          >
+            {signingOut ? "Cerrando..." : "Cerrar sesion"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="relative bg-transparent px-3 sm:px-4"
+      onClick={onNavigate}
+    >
+      <UserRound className="h-4 w-4" aria-hidden="true" />
+      <span className="hidden sm:inline">Mi cuenta</span>
+    </Button>
   )
 }

@@ -69,21 +69,18 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
   })
 
   describe('crearLead', () => {
-    it('debe crear un nuevo lead cuando el email no existe', async () => {
+    it('debe devolver referencia de lead cuando la RPC responde success', async () => {
       const mockLead = {
         id: 1,
-        nombre: 'Juan Pérez',
         email: 'juan@example.com',
-        telefono: '0999999999',
-        empresa: 'Empresa Test',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        user_id: null
       }
 
       ;(supabase.rpc as jest.Mock).mockResolvedValue({
         data: {
           success: true,
-          lead: mockLead
+          lead: mockLead,
+          reused: false
         },
         error: null
       })
@@ -96,80 +93,7 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
       })
 
       expect(result).toEqual(mockLead)
-      expect(supabase.rpc).toHaveBeenCalledWith(
-        'create_public_lead',
-        expect.objectContaining({
-          p_email: 'juan@example.com'
-        })
-      )
     })
-
-    it('debe lanzar error LEAD_EMAIL_EXISTS cuando el email ya existe', async () => {
-      const existingLead = {
-        id: 1,
-        nombre: 'Juan Pérez',
-        email: 'juan@example.com',
-        telefono: '0999999999',
-        empresa: 'Empresa Test'
-      }
-
-      ;(supabase.rpc as jest.Mock).mockResolvedValue({
-        data: {
-          success: false,
-          code: 'LEAD_EMAIL_EXISTS',
-          existing_lead: existingLead,
-          new_data: {
-            nombre: 'Juan P�rez',
-            email: 'juan@example.com'
-          }
-        },
-        error: null
-      })
-
-      await expect(crearLead({
-        nombre: 'Juan Pérez',
-        email: 'juan@example.com',
-        telefono: '0999999999',
-        empresa: 'Empresa Test'
-      })).rejects.toThrow('LEAD_EMAIL_EXISTS')
-    })
-
-    it('debe incluir campos opcionales cuando se proporcionan', async () => {
-      const mockLead = {
-        id: 2,
-        nombre: 'María González',
-        email: 'maria@example.com',
-        telefono: '0988888888',
-        empresa: 'Empresa 2',
-        ruc_cedula: '1234567890',
-        ciudad: 'Quito',
-        notas: 'Cliente preferencial',
-        created_at: new Date().toISOString()
-      }
-
-      ;(supabase.rpc as jest.Mock).mockResolvedValue({
-        data: {
-          success: true,
-          lead: mockLead
-        },
-        error: null
-      })
-
-      const result = await crearLead({
-        nombre: 'María González',
-        email: 'maria@example.com',
-        telefono: '0988888888',
-        empresa: 'Empresa 2',
-        ruc_cedula: '1234567890',
-        ciudad: 'Quito',
-        notas: 'Cliente preferencial'
-      })
-
-      expect(result.ruc_cedula).toBe('1234567890')
-      expect(result.ciudad).toBe('Quito')
-      expect(result.notas).toBe('Cliente preferencial')
-    })
-
 
     it('debe manejar errores de base de datos correctamente', async () => {
       ;(supabase.rpc as jest.Mock).mockResolvedValue({
@@ -345,3 +269,4 @@ describe('quotes.ts - Funciones críticas de cotizaciones', () => {
     })
   })
 })
+

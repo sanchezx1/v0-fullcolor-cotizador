@@ -1,44 +1,37 @@
-import { createClient } from '@supabase/supabase-js'
+"use client"
 
-// Variables de entorno para Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { createBrowserClient } from "@supabase/ssr"
 
-// Debug solo en desarrollo y solo en servidor
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('🔍 Debug - Variables de entorno:')
-  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Presente' : 'Ausente')
-  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Ausente')
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  const errorMessage = 'Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set.'
-  if (typeof window === 'undefined') {
-    console.error('❌ Variables de entorno faltantes:')
-    console.error('URL:', supabaseUrl)
-    console.error('Key:', supabaseAnonKey ? 'Presente' : 'Ausente')
+  const errorMessage =
+    "Missing Supabase environment variables. Please check your .env file and ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
+
+  if (typeof window === "undefined") {
+    console.error("Warning: variables de entorno faltantes:")
+    console.error("URL:", supabaseUrl)
+    console.error("Key:", supabaseAnonKey ? "Presente" : "Ausente")
     throw new Error(errorMessage)
   } else {
-    // En el cliente, no hacer throw para evitar errores no manejados
-    console.error('❌ [Supabase Client] ' + errorMessage)
+    console.error("Warning [Supabase Client]: " + errorMessage)
   }
 }
 
-// Singleton Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createBrowserClient<Database>(supabaseUrl!, supabaseAnonKey!, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
   },
   global: {
     headers: {
-      'apikey': supabaseAnonKey
-    }
-  }
+      apikey: supabaseAnonKey!,
+    },
+  },
 })
 
-// Types for our database schema
 export interface Producto {
   id: number
   nombre: string
@@ -66,23 +59,30 @@ export interface Lead {
   id: number
   nombre: string
   email: string
-  telefono: string
-  empresa: string
+  telefono?: string
+  empresa?: string
   notas?: string
   ruc_cedula?: string
   ciudad?: string
+  user_id?: string | null
   created_at: string
   updated_at: string
 }
 
+export type LeadReference = Pick<Lead, "id" | "email"> & { user_id?: string | null }
+
 export interface Cotizacion {
   id: number
   lead_id: number
-  estado: 'pendiente' | 'enviada' | 'aprobada' | 'rechazada'
+  user_id?: string | null
+  estado: "borrador" | "pendiente" | "enviada" | "en_revision" | "aprobada" | "rechazada" | "vencida"
   total: number
+  subtotal: number
+  iva: number
   validez_dias: number
   pdf_url?: string
-  canal: 'web' | 'whatsapp' | 'email'
+  numero: string
+  canal: "web" | "whatsapp" | "email"
   notas?: string
   created_at: string
   updated_at: string
@@ -102,46 +102,44 @@ export interface ItemCotizacion {
 export interface Evento {
   id: number
   cotizacion_id: number
-  tipo: 'pdf_generado' | 'email_enviado' | 'whatsapp_share' | 'cotizacion_creada' | 'cotizacion_actualizada'
+  tipo: "pdf_generado" | "email_enviado" | "whatsapp_share" | "cotizacion_creada" | "cotizacion_actualizada"
   metadata?: Record<string, any>
   created_at: string
 }
 
-// Database types
 export interface Database {
   public: {
     Tables: {
       productos: {
         Row: Producto
-        Insert: Omit<Producto, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Producto, 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<Producto, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<Producto, "id" | "created_at" | "updated_at">>
       }
       precios_escalonados: {
         Row: PrecioEscalonado
-        Insert: Omit<PrecioEscalonado, 'id' | 'created_at'>
-        Update: Partial<Omit<PrecioEscalonado, 'id' | 'created_at'>>
+        Insert: Omit<PrecioEscalonado, "id" | "created_at">
+        Update: Partial<Omit<PrecioEscalonado, "id" | "created_at">>
       }
       leads: {
         Row: Lead
-        Insert: Omit<Lead, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Lead, 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<Lead, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<Lead, "id" | "created_at" | "updated_at">>
       }
       cotizaciones: {
         Row: Cotizacion
-        Insert: Omit<Cotizacion, 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Omit<Cotizacion, 'id' | 'created_at' | 'updated_at'>>
+        Insert: Omit<Cotizacion, "id" | "created_at" | "updated_at">
+        Update: Partial<Omit<Cotizacion, "id" | "created_at" | "updated_at">>
       }
       items_cotizacion: {
         Row: ItemCotizacion
-        Insert: Omit<ItemCotizacion, 'id' | 'created_at'>
-        Update: Partial<Omit<ItemCotizacion, 'id' | 'created_at'>>
+        Insert: Omit<ItemCotizacion, "id" | "created_at">
+        Update: Partial<Omit<ItemCotizacion, "id" | "created_at">>
       }
       eventos: {
         Row: Evento
-        Insert: Omit<Evento, 'id' | 'created_at'>
-        Update: Partial<Omit<Evento, 'id' | 'created_at'>>
+        Insert: Omit<Evento, "id" | "created_at">
+        Update: Partial<Omit<Evento, "id" | "created_at">>
       }
     }
   }
 }
-
