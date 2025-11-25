@@ -126,7 +126,12 @@ async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: 
         body: {
           quoteId,
           quoteToken
-        }
+        },
+        headers: supabaseServiceKey
+          ? {
+              Authorization: `Bearer ${supabaseServiceKey}`
+            }
+          : undefined
       });
       if (emailResponse.error) {
         throw emailResponse.error;
@@ -768,5 +773,4 @@ function formatCurrency(n) {
     throw error;
   }
 }
-
 

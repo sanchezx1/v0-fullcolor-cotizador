@@ -15,7 +15,7 @@ export async function crearLead(leadData: {
   ciudad?: string
 }): Promise<LeadReference> {
   try {
-    console.log("[Lead] Creando/reutilizando lead mediante RPC seguro para email:", leadData.email)
+    console.debug("[Lead] Creando/reutilizando lead mediante RPC seguro")
 
     const { data, error } = await supabase.rpc("create_public_lead", {
       p_nombre: leadData.nombre,
@@ -38,7 +38,7 @@ export async function crearLead(leadData: {
 
     const lead = data.lead as LeadReference
 
-    console.log("[Lead] Lead asegurado (nuevo o reutilizado):", {
+    console.debug("[Lead] Lead asegurado (nuevo o reutilizado):", {
       id: lead.id,
       reused: !!data.reused,
       upgraded: !!data.upgraded_to_user,
@@ -71,7 +71,7 @@ export async function crearCotizacion(cotizacionData: {
   notas?: string
 }): Promise<{ cotizacion: Cotizacion; items: ItemCotizacion[] }> {
   try {
-    console.log("🔎 Creando cotización para lead:", cotizacionData.leadId)
+    console.debug("Creando cotizacion via RPC")
 
     const itemsPayload = cotizacionData.items.map((item) => ({
       producto_id: item.productoId,
@@ -99,7 +99,7 @@ export async function crearCotizacion(cotizacionData: {
     const cotizacion = data.cotizacion as Cotizacion
     const items = (data.items as ItemCotizacion[]) || []
 
-    console.log("✅ Cotización creada vía RPC:", cotizacion.id, "user_id:", cotizacion.user_id)
+    console.debug("Cotizacion creada via RPC", { id: cotizacion.id })
 
     return { cotizacion, items }
   } catch (error) {

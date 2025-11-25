@@ -29,30 +29,7 @@ export function ImageUpload({ value, onChange, onRemove, disabled, currentImageU
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-
-    if (disabled) return
-
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      handleFile(files[0])
-    }
-  }, [disabled])
-
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault()
-    if (disabled) return
-
-    const files = e.target.files
-    if (files && files[0]) {
-      handleFile(files[0])
-    }
-  }, [disabled])
-
-  const handleFile = (file: File) => {
+  const handleFile = useCallback((file: File) => {
     // Validar tipo
     if (!file.type.startsWith('image/')) {
       alert('Solo se permiten archivos de imagen')
@@ -73,7 +50,30 @@ export function ImageUpload({ value, onChange, onRemove, disabled, currentImageU
     reader.readAsDataURL(file)
 
     onChange(file)
-  }
+  }, [onChange])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
+    if (disabled) return
+
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handleFile(files[0])
+    }
+  }, [disabled, handleFile])
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    if (disabled) return
+
+    const files = e.target.files
+    if (files && files[0]) {
+      handleFile(files[0])
+    }
+  }, [disabled, handleFile])
 
   const handleRemove = () => {
     setPreview(null)

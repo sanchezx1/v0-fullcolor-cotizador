@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
@@ -64,11 +64,7 @@ export default function PreciosEscalonadosPage() {
   })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    loadData()
-  }, [productoId])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [productoData, preciosData] = await Promise.all([
@@ -84,7 +80,11 @@ export default function PreciosEscalonadosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [productoId, router])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const openDialog = (precio?: PrecioEscalonado) => {
     if (precio) {

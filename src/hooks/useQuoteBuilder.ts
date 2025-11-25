@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { crearLead, crearCotizacion, registrarEvento } from '../services/quotes'
 import { calculatePriceForProduct } from '../lib/data'
 import { pdfGenerationService } from '../services/pdfGenerationService'
+import { sendQuoteEmail } from '../services/emailService'
 import { supabase } from '../services/supabaseClient'
 
 export interface QuoteItem {
@@ -406,6 +407,25 @@ export function useQuoteBuilder() {
         })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+
+          // Enviar email al cliente con la cotización
+          try {
+            console.log('📧 Enviando email de cotización al cliente...')
+            const emailResult = await sendQuoteEmail(
+              cotizacion.id,
+              contactInfo.email,
+              { quoteToken: cotizacion.access_token }
+            )
+
+            if (emailResult.success) {
+              console.log('✅ Email enviado exitosamente al cliente:', emailResult.recipient)
+            } else {
+              console.warn('⚠️ Error enviando email al cliente:', emailResult.error)
+            }
+          } catch (emailError) {
+            console.warn('⚠️ Error en envío de email (no crítico):', emailError)
+            // No fallar la cotización por error de email
+          }
         } else {
           console.warn('Error generando PDF:', pdfResult.error)
         }
@@ -538,6 +558,25 @@ export function useQuoteBuilder() {
         })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+
+          // Enviar email al cliente con la cotización
+          try {
+            console.log('📧 Enviando email de cotización al cliente...')
+            const emailResult = await sendQuoteEmail(
+              cotizacion.id,
+              contactInfo.email,
+              { quoteToken: cotizacion.access_token }
+            )
+
+            if (emailResult.success) {
+              console.log('✅ Email enviado exitosamente al cliente:', emailResult.recipient)
+            } else {
+              console.warn('⚠️ Error enviando email al cliente:', emailResult.error)
+            }
+          } catch (emailError) {
+            console.warn('⚠️ Error en envío de email (no crítico):', emailError)
+            // No fallar la cotización por error de email
+          }
         }
       } catch (pdfError) {
         console.warn('Error en generación de PDF:', pdfError)
@@ -593,6 +632,25 @@ export function useQuoteBuilder() {
         })
         if (pdfResult.success) {
           console.log('PDF generado exitosamente:', pdfResult.pdfUrl)
+
+          // Enviar email al cliente con la cotización
+          try {
+            console.log('📧 Enviando email de cotización al cliente...')
+            const emailResult = await sendQuoteEmail(
+              cotizacion.id,
+              contactInfo.email,
+              { quoteToken: cotizacion.access_token }
+            )
+
+            if (emailResult.success) {
+              console.log('✅ Email enviado exitosamente al cliente:', emailResult.recipient)
+            } else {
+              console.warn('⚠️ Error enviando email al cliente:', emailResult.error)
+            }
+          } catch (emailError) {
+            console.warn('⚠️ Error en envío de email (no crítico):', emailError)
+            // No fallar la cotización por error de email
+          }
         }
       } catch (pdfError) {
         console.warn('Error en generación de PDF:', pdfError)

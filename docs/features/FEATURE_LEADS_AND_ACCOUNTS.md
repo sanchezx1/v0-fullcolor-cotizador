@@ -215,3 +215,12 @@ La implementación de este feature se organizará en **fases**, con más detalle
 Los detalles técnicos de cada fase (tareas concretas, endpoints, consultas, etc.) se mantienen fuera de este archivo y se gestionan en `FEATURE_LEADS_AND_ACCOUNTS.tasks` y en la documentación técnica asociada.
 
 ---
+
+## Fase 5 - QA y notas finales
+
+- Lint (`npm run lint`): sin errores ni advertencias tras ajustar dependencias de hooks.
+- Tests unitarios/integracion (`npm run test`): 12 suites OK.
+- Playwright (`npm run test:e2e -- --project=chromium`): OK con mocks que interceptan el dominio completo de Supabase, la API pública de cotizaciones/PDF y fixtures con productos activos y tiers de precio. Los specs agregan producto antes de validar formularios/accesibilidad y usan selectores robustos (data-testid en cantidad, totales y headings).
+- Flujos/permisos revisados: "Mi cuenta" fuerza login y redirige admins a `/admin`; el modal de email existente se muestra a invitados; `asegurarLeadVinculado` y las policies RLS limitan la visibilidad de cotizaciones al propietario; estados en UI (`quoteStatusMeta`) y correos (`send-email`) usan las mismas etiquetas.
+- Pendientes inmediatos: mantener sincronizados fixtures/mocks si cambian esquemas o endpoints y revisar nuevos avisos de accesibilidad si se agregan secciones.
+

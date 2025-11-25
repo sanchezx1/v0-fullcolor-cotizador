@@ -58,7 +58,7 @@ export interface LeadConEstadisticas extends Lead {
 }
 
 // ============= COTIZACIONES =============
-export type EstadoCotizacion = 'borrador' | 'enviada' | 'aprobada' | 'rechazada' | 'pendiente'
+export type EstadoCotizacion = 'enviada' | 'en_revision' | 'aprobada' | 'rechazada'
 
 export interface Cotizacion {
   id: number
@@ -278,17 +278,15 @@ export type CategoriaProducto = typeof CATEGORIAS_PRODUCTO[number]
 
 // ============= BADGES DE ESTADO =============
 export const ESTADO_COLORS: Record<EstadoCotizacion, string> = {
-  borrador: 'bg-gray-100 text-gray-800 border-gray-300',
   enviada: 'bg-blue-100 text-blue-800 border-blue-300',
+  en_revision: 'bg-amber-100 text-amber-800 border-amber-300',
   aprobada: 'bg-green-100 text-green-800 border-green-300',
   rechazada: 'bg-red-100 text-red-800 border-red-300',
-  pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300'
 }
 
 export const ESTADO_LABELS: Record<EstadoCotizacion, string> = {
-  borrador: 'Borrador',
   enviada: 'Enviada',
+  en_revision: 'En revisión',
   aprobada: 'Aprobada',
-  rechazada: 'Rechazada',
-  pendiente: 'Pendiente'
+  rechazada: 'Rechazada'
 }

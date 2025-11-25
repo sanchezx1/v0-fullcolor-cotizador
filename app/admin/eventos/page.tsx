@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Filter, FileText, Mail, Edit, ArrowRight, Activity, ExternalLink, Eye } from 'lucide-react'
 import { toast } from 'sonner'
@@ -37,7 +37,7 @@ export default function EventosPage() {
   const [cotizacionId, setCotizacionId] = useState('')
 
   // Cargar eventos
-  const loadEventos = async () => {
+  const loadEventos = useCallback(async () => {
     try {
       setLoading(true)
       const filtros: FiltrosEventos = {
@@ -57,24 +57,24 @@ export default function EventosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [cotizacionId, page, tipoEvento])
 
   useEffect(() => {
-    loadEventos()
-  }, [page])
+    void loadEventos()
+  }, [loadEventos])
 
   // Búsqueda con debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (page === 1) {
-        loadEventos()
+        void loadEventos()
       } else {
         setPage(1)
       }
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [tipoEvento, cotizacionId])
+  }, [cotizacionId, loadEventos, page, tipoEvento])
 
   // Limpiar filtros
   const clearFilters = () => {

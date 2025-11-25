@@ -43,9 +43,18 @@ describe('emailService.ts - Servicio de envío de emails', () => {
       expect(result.success).toBe(true)
       expect(result.recipient).toBe('cliente@example.com')
       expect(result.cotizacionNumero).toBe('COT-00001')
-      expect(supabase.functions.invoke).toHaveBeenCalledWith('send-email', {
-        body: { quoteId: 1, recipientEmail: undefined }
-      })
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'send-email',
+        expect.objectContaining({
+          body: {
+            quoteId: 1,
+            recipientEmail: undefined,
+            quoteToken: undefined,
+            emailType: 'quote_created',
+            newStatus: undefined
+          }
+        })
+      )
     })
 
     it('debe enviar email a destinatario específico', async () => {
@@ -64,9 +73,18 @@ describe('emailService.ts - Servicio de envío de emails', () => {
 
       expect(result.success).toBe(true)
       expect(result.recipient).toBe('otro@example.com')
-      expect(supabase.functions.invoke).toHaveBeenCalledWith('send-email', {
-        body: { quoteId: 2, recipientEmail: 'otro@example.com' }
-      })
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'send-email',
+        expect.objectContaining({
+          body: {
+            quoteId: 2,
+            recipientEmail: 'otro@example.com',
+            quoteToken: undefined,
+            emailType: 'quote_created',
+            newStatus: undefined
+          }
+        })
+      )
     })
 
     it('debe manejar error al invocar función', async () => {

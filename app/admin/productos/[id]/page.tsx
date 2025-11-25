@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
@@ -65,11 +65,7 @@ export default function EditarProductoPage() {
   })
   const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
 
-  useEffect(() => {
-    loadProducto()
-  }, [productoId])
-
-  const loadProducto = async () => {
+  const loadProducto = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getProducto(productoId)
@@ -103,7 +99,11 @@ export default function EditarProductoPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadGalleryForProduct, productoId, router])
+
+  useEffect(() => {
+    void loadProducto()
+  }, [loadProducto])
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {}
@@ -142,13 +142,13 @@ export default function EditarProductoPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const extractStoragePath = (url?: string | null): string | null => {
+  const extractStoragePath = useCallback((url?: string | null): string | null => {
     if (!url) return null
     const parts = url.split('/productos/')
     return parts[1] || null
-  }
+  }, [])
 
-  const loadGalleryForProduct = async (productData: ProductoConPrecios | null) => {
+  const loadGalleryForProduct = useCallback(async (productData: ProductoConPrecios | null) => {
     if (!productData) {
       setGalleryItems([])
       return
@@ -209,7 +209,7 @@ export default function EditarProductoPage() {
         setGalleryItems([])
       }
     }
-  }
+  }, [extractStoragePath])
 
   const createGalleryId = () => {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {

@@ -1,9 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import type { ElementType } from "react"
-import { Mail, MessageCircle, PhoneCall } from "lucide-react"
+import { Mail, MessageCircle, PhoneCall, MapPin, Clock, ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 
 type Detail = {
   label: string
@@ -18,29 +20,31 @@ type ContactMethod = {
   description: string
   details: Detail[]
   cta?: { label: string; href: string }
+  variant?: "primary" | "default"
 }
 
 const contactMethods: ContactMethod[] = [
   {
-    title: "Chatea con nosotros",
+    title: "WhatsApp",
     icon: MessageCircle,
-    description: "Ideal para consultas rápidas o soporte de pedidos.",
+    description: "La forma más rápida de contactarnos. Ideal para consultas rápidas o soporte.",
+    variant: "primary",
     details: [
       {
-        label: "WhatsApp",
+        label: "Número",
         value: "0988705311",
         href: "https://wa.me/message/NMOTUO5GTAI3C1"
       }
     ],
     cta: {
-      label: "Abrir WhatsApp",
+      label: "Chatear ahora",
       href: "https://wa.me/message/NMOTUO5GTAI3C1"
     }
   },
   {
-    title: "Llámanos",
+    title: "Llamada Telefónica",
     icon: PhoneCall,
-    description: "Recibe asesoría personalizada de nuestro equipo comercial.",
+    description: "Habla directamente con nuestro equipo comercial para asesoría personalizada.",
     details: [
       {
         label: "Número",
@@ -48,13 +52,8 @@ const contactMethods: ContactMethod[] = [
         href: "tel:0988705311"
       },
       {
-        label: "Importante",
-        value: "Preferimos que nos envíes un mensaje de texto identificándote antes de llamarnos.",
-        type: "note"
-      },
-      {
         label: "Horario",
-        value: "Lunes a viernes 8h00 a 18h00 – Sábados 9h00 a 13h00.",
+        value: "Lun-Vie 8:00-18:00",
         type: "note"
       }
     ],
@@ -64,18 +63,18 @@ const contactMethods: ContactMethod[] = [
     }
   },
   {
-    title: "Escríbenos por correo",
+    title: "Correo Electrónico",
     icon: Mail,
-    description: "Ideal para solicitudes de cotización o envío de archivos.",
+    description: "Para envío de archivos pesados, solicitudes formales o cotizaciones detalladas.",
     details: [
       {
-        label: "Correo",
+        label: "Email",
         value: "fullcolorecuador@yahoo.com",
         href: "mailto:fullcolorecuador@yahoo.com"
       },
       {
-        label: "Tiempo estimado de respuesta",
-        value: "Dentro del siguiente día hábil.",
+        label: "Respuesta",
+        value: "Máx. 24 horas hábiles",
         type: "note"
       }
     ],
@@ -94,135 +93,156 @@ export const metadata: Metadata = {
 
 export default function ContactoPage() {
   return (
-    <div className="relative overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 -z-10 flex justify-center"
-      >
-        <div className="h-[420px] w-[420px] rounded-full bg-primary/10 blur-[140px] md:h-[520px] md:w-[520px]" />
-      </div>
-
-      <section className="container mx-auto px-4 pb-12 pt-24 sm:pt-28 md:pb-16 lg:pb-20">
-        <div className="mx-auto max-w-3xl text-center md:text-left">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-primary">
-            Estamos para ayudarte
-          </span>
-          <h1 className="mt-6 text-3xl font-semibold text-slate-900 sm:text-4xl md:text-5xl">
-            ¿Cómo contactarnos?
-          </h1>
-          <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-            Mantén una comunicación directa con el equipo FullColor. Elige el
-            canal que mejor se adapte a tus necesidades: estamos atentos para
-            acompañarte en cada etapa de tu proyecto gráfico.
-          </p>
+    <div className="min-h-screen bg-slate-50/50">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-white pb-16 pt-24 lg:pt-32">
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
+        
+        <div className="container relative mx-auto px-4 text-center">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+              <span className="mr-2 h-2 w-2 rounded-full bg-primary animate-pulse" />
+              Estamos en línea para ayudarte
+            </div>
+            
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+              Hablemos de tu próximo <span className="text-primary">proyecto</span>
+            </h1>
+            
+            <p className="mx-auto max-w-2xl text-lg text-slate-600 leading-relaxed">
+              Ya sea que tengas una idea clara o necesites asesoría desde cero, 
+              nuestro equipo está listo para escuchar tus necesidades y brindarte 
+              la mejor solución gráfica.
+            </p>
+          </div>
         </div>
+      </section>
 
-        <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:mt-16 md:gap-8">
+      {/* Contact Cards Grid */}
+      <section className="container mx-auto px-4 py-12 lg:py-16 -mt-12 relative z-10">
+        <div className="grid gap-6 md:grid-cols-3 lg:gap-8">
           {contactMethods.map((method) => {
             const Icon = method.icon
+            const isPrimary = method.variant === "primary"
 
             return (
-              <article
-                key={method.title}
-                className="group relative overflow-hidden rounded-3xl border border-white/60 bg-white/90 p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)] backdrop-blur transition-transform hover:-translate-y-1 hover:shadow-[0_32px_72px_-32px_rgba(15,23,42,0.45)] md:p-8"
+              <Card 
+                key={method.title} 
+                className={`flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                  isPrimary ? "border-primary/20 shadow-lg shadow-primary/5 ring-1 ring-primary/10" : "hover:border-primary/20"
+                }`}
               >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -top-24 right-[-40px] h-40 w-40 rounded-full bg-primary/15 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100 md:h-48 md:w-48"
-                />
-                <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-                  <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] sm:h-16 sm:w-16">
-                    <Icon aria-hidden className="h-6 w-6 sm:h-7 sm:w-7" />
-                  </span>
-
-                  <div className="flex-1">
-                    <div className="max-w-xl">
-                      <h2 className="text-2xl font-semibold text-slate-900">
-                        {method.title}
-                      </h2>
-                      <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                        {method.description}
-                      </p>
-                    </div>
-
-                    <dl className="mt-6 space-y-4">
-                      {method.details.map((detail) => (
-                        <div key={`${method.title}-${detail.label}`} className="space-y-1">
-                          <dt className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                            {detail.label}
-                          </dt>
-                          <dd
-                            className={
-                              detail.type === "note"
-                                ? "text-sm leading-relaxed text-slate-600"
-                                : "text-lg font-semibold text-slate-900"
-                            }
-                          >
-                            {detail.href ? (
-                              <Link
-                                href={detail.href}
-                                className={
-                                  detail.type === "note"
-                                    ? "underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary hover:decoration-primary"
-                                    : "text-primary transition-colors hover:text-primary/80"
-                                }
-                                target={
-                                  detail.href.startsWith("http")
-                                    ? "_blank"
-                                    : undefined
-                                }
-                                rel={
-                                  detail.href.startsWith("http")
-                                    ? "noopener noreferrer"
-                                    : undefined
-                                }
-                              >
-                                {detail.value}
-                              </Link>
-                            ) : (
-                              detail.value
-                            )}
-                          </dd>
-                        </div>
-                      ))}
-                    </dl>
-
-                    {method.cta ? (
-                      <div className="mt-6">
-                        <Button
-                          asChild
-                          className="w-full rounded-full bg-primary text-white shadow-sm transition hover:bg-primary/90 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:w-auto"
-                        >
-                          <Link
-                            href={method.cta.href}
-                            target={
-                              method.cta.href.startsWith("http") ? "_blank" : undefined
-                            }
-                            rel={
-                              method.cta.href.startsWith("http")
-                                ? "noopener noreferrer"
-                                : undefined
-                            }
-                          >
-                            {method.cta.label}
-                          </Link>
-                        </Button>
-                      </div>
-                    ) : null}
+                <CardHeader>
+                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl ${
+                    isPrimary ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-slate-100 text-slate-600"
+                  }`}>
+                    <Icon className="h-6 w-6" />
                   </div>
-                </div>
-              </article>
+                  <CardTitle className="text-xl">{method.title}</CardTitle>
+                  <CardDescription className="text-base mt-2">
+                    {method.description}
+                  </CardDescription>
+                </CardHeader>
+                
+                <CardContent className="flex-1">
+                  <div className="space-y-4">
+                    {method.details.map((detail, idx) => (
+                      <div key={idx} className="group">
+                        <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1">
+                          {detail.label}
+                        </p>
+                        {detail.href ? (
+                          <Link 
+                            href={detail.href}
+                            className="text-base font-semibold text-slate-900 hover:text-primary transition-colors flex items-center gap-1"
+                            target={detail.href.startsWith("http") ? "_blank" : undefined}
+                          >
+                            {detail.value}
+                            {detail.href.startsWith("http") && <ArrowRight className="h-3 w-3 opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0" />}
+                          </Link>
+                        ) : (
+                          <p className="text-sm text-slate-700">{detail.value}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+
+                <CardFooter className="pt-2">
+                  {method.cta && (
+                    <Button 
+                      asChild 
+                      className={`w-full ${isPrimary ? "bg-primary hover:bg-primary/90" : ""}`}
+                      variant={isPrimary ? "default" : "outline"}
+                    >
+                      <Link 
+                        href={method.cta.href}
+                        target={method.cta.href.startsWith("http") ? "_blank" : undefined}
+                      >
+                        {method.cta.label}
+                      </Link>
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
             )
           })}
         </div>
       </section>
 
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 -z-10 flex justify-center pb-10"
-      >
-        <div className="h-48 w-[420px] bg-gradient-to-t from-[#FFD700]/30 to-transparent blur-3xl md:w-[560px]" />
-      </div>
+      {/* Additional Info / Location */}
+      <section className="container mx-auto px-4 py-16 lg:py-24">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-center">
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">Visítanos en nuestra planta</h2>
+              <p className="text-lg text-slate-600">
+                Conoce nuestras instalaciones y revisa muestras físicas de nuestros materiales y acabados.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">Ubicación</h3>
+                  <p className="text-slate-600 mt-1">
+                    Quito, Ecuador<br />
+                    (Dirección exacta previa cita)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Clock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">Horario de Atención</h3>
+                  <p className="text-slate-600 mt-1">
+                    Lunes a Viernes: 8:00 AM - 6:00 PM<br />
+                    Sábados: 9:00 AM - 1:00 PM
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-100 shadow-2xl ring-1 ring-slate-900/5 lg:aspect-square">
+             {/* Placeholder for map or office image */}
+             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400">
+                <div className="text-center space-y-2">
+                  <MapPin className="h-12 w-12 mx-auto opacity-20" />
+                  <p className="text-sm font-medium">Mapa de ubicación</p>
+                </div>
+             </div>
+             {/* If you have a real map iframe, put it here */}
+             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

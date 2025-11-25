@@ -23,6 +23,9 @@ yarn-error.log*
 # vscode settings with sensitive data
 .vscode/mcp.json
 
+# MCP configuration (may contain project-specific references)
+.mcp.json
+
 # vercel
 .vercel
 

@@ -46,15 +46,14 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Adm
         style={{ background: 'linear-gradient(180deg, #003d6b 0%, #0066a1 100%)' }}
       >
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center border-b border-white/10 px-4">
-          <Link href="/admin" className="flex items-center gap-3 min-w-0">
-            <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-lg">
+        <div className="flex h-20 shrink-0 items-center border-b border-white/10 px-4">
+          <Link href="/admin" className="flex items-center gap-3 min-w-0 group">
+            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-105">
               <span className="font-bold text-xl" style={{ color: '#0066a1' }}>FC</span>
             </div>
             {!collapsed && (
-              <div className="min-w-0 overflow-hidden">
-                <h1 className="text-white font-bold text-lg truncate">FullColor</h1>
-                <p className="text-white/70 text-xs truncate">Panel de Administración</p>
+              <div className="min-w-0 overflow-hidden flex flex-col justify-center">
+                <h1 className="text-white font-bold text-xl tracking-tight truncate">FullColor</h1>
               </div>
             )}
           </Link>
@@ -87,17 +86,17 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Adm
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  'group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'text-[#003d6b]'
-                    : 'text-white/90 hover:bg-white/10 hover:text-white',
-                  collapsed && 'justify-center'
+                    ? 'text-[#003d6b] shadow-md font-bold'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white hover:translate-x-1',
+                  collapsed && 'justify-center hover:translate-x-0'
                 )}
                 style={isActive ? { backgroundColor: '#f5c700' } : undefined}
                 title={collapsed ? item.name : undefined}
               >
                 <item.icon className={cn(
-                  'h-5 w-5 shrink-0',
+                  'h-5 w-5 shrink-0 transition-colors',
                   isActive ? 'text-[#003d6b]' : 'text-white/70 group-hover:text-white'
                 )} />
                 {!collapsed && <span className="truncate">{item.name}</span>}
@@ -132,14 +131,13 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Adm
         style={{ background: 'linear-gradient(180deg, #003d6b 0%, #0066a1 100%)' }}
       >
         {/* Logo & Close button */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-white/10 px-4">
+        <div className="flex h-20 shrink-0 items-center justify-between border-b border-white/10 px-4">
           <Link href="/admin" className="flex items-center gap-3" onClick={onClose}>
-            <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center shadow-lg">
+            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shadow-lg">
               <span className="font-bold text-xl" style={{ color: '#0066a1' }}>FC</span>
             </div>
             <div>
-              <h1 className="text-white font-bold text-lg">FullColor</h1>
-              <p className="text-white/70 text-xs">Panel de Administración</p>
+              <h1 className="text-white font-bold text-xl tracking-tight">FullColor</h1>
             </div>
           </Link>
           <button
@@ -163,15 +161,15 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Adm
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  'group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200',
                   isActive
-                    ? 'text-[#003d6b]'
-                    : 'text-white/90 hover:bg-white/10 hover:text-white'
+                    ? 'text-[#003d6b] shadow-md font-bold'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white hover:translate-x-1'
                 )}
                 style={isActive ? { backgroundColor: '#f5c700' } : undefined}
               >
                 <item.icon className={cn(
-                  'h-5 w-5 shrink-0',
+                  'h-5 w-5 shrink-0 transition-colors',
                   isActive ? 'text-[#003d6b]' : 'text-white/70 group-hover:text-white'
                 )} />
                 {item.name}

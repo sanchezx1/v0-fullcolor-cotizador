@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,21 +23,12 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
   const [message, setMessage] = useState('')
   const [isLoadingLeadEmail, setIsLoadingLeadEmail] = useState(false)
 
-  // Cargar email del lead si no se proporcionó
-  useEffect(() => {
-    if (!initialEmail && quoteId) {
-      loadLeadEmail()
-    }
-  }, [quoteId, initialEmail])
+  const validateEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(value)
+  }
 
-  // Auto-enviar si autoSend está habilitado y hay email
-  useEffect(() => {
-    if (autoSend && email && state === 'idle') {
-      handleSendEmail()
-    }
-  }, [autoSend, email])
-
-  const loadLeadEmail = async () => {
+  const loadLeadEmail = useCallback(async () => {
     setIsLoadingLeadEmail(true)
     try {
       const leadEmail = await getLeadEmail(quoteId)
@@ -49,15 +40,9 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
     } finally {
       setIsLoadingLeadEmail(false)
     }
-  }
+  }, [quoteId])
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
-  const handleSendEmail = async () => {
-    // Validar email
+  const handleSendEmail = useCallback(async () => {
     if (!email.trim()) {
       setState('error')
       setMessage('Por favor ingresa un email')
@@ -66,11 +51,10 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
 
     if (!validateEmail(email)) {
       setState('error')
-      setMessage('Por favor ingresa un email válido')
+      setMessage('Por favor ingresa un email valido')
       return
     }
 
-    // Enviar email
     setState('sending')
     setMessage('Enviando email...')
 
@@ -79,27 +63,37 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
 
       if (result.success) {
         setState('success')
-        setMessage(`✅ Email enviado exitosamente a ${result.recipient}`)
-        
-        // Notificar al padre
+        setMessage(`Email enviado exitosamente a ${result.recipient}`)
+
         if (onEmailSent && result.recipient) {
           onEmailSent(result.recipient)
         }
 
-        // Resetear después de 5 segundos
         setTimeout(() => {
           setState('idle')
           setMessage('')
         }, 5000)
       } else {
         setState('error')
-        setMessage(`❌ Error: ${result.error || 'No se pudo enviar el email'}`)
+        setMessage(`Error: ${result.error || 'No se pudo enviar el email'}`)
       }
     } catch (error) {
       setState('error')
-      setMessage(`❌ Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`)
+      setMessage(`Error inesperado: ${error instanceof Error ? error.message : 'Error desconocido'}`)
     }
-  }
+  }, [email, onEmailSent, quoteId, quoteToken])
+
+  useEffect(() => {
+    if (!initialEmail && quoteId) {
+      void loadLeadEmail()
+    }
+  }, [initialEmail, loadLeadEmail, quoteId])
+
+  useEffect(() => {
+    if (autoSend && email && state === 'idle') {
+      void handleSendEmail()
+    }
+  }, [autoSend, email, handleSendEmail, state])
 
   const getStateIcon = () => {
     switch (state) {
@@ -120,77 +114,48 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
         return 'bg-green-50 text-green-700 border-green-200'
       case 'error':
         return 'bg-red-50 text-red-700 border-red-200'
-      default:
+      case 'sending':
         return 'bg-blue-50 text-blue-700 border-blue-200'
+      default:
+        return 'bg-slate-50 text-slate-700 border-slate-200'
     }
-  }
-
-  // Si es auto-send, no mostrar UI
-  if (autoSend) {
-    return null
   }
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <Mail className="h-5 w-5 text-blue-600" />
-        <h3 className="font-semibold text-lg">Enviar Cotización por Email</h3>
-      </div>
-
-      {/* Email Input */}
-      <div className="space-y-2">
-        <Label htmlFor="recipient-email">Email Destinatario</Label>
-        <div className="flex gap-2">
-          <Input
-            id="recipient-email"
-            type="email"
-            placeholder="cliente@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={state === 'sending' || isLoadingLeadEmail}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSendEmail}
-            disabled={state === 'sending' || !email.trim() || isLoadingLeadEmail}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
+      <div>
+        <Label htmlFor="email" className="text-sm font-medium">
+          Email del cliente
+        </Label>
+        <div className="mt-2 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="cliente@empresa.com"
+              className="pl-10"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={state === 'sending' || isLoadingLeadEmail}
+            />
+          </div>
+          <Button onClick={handleSendEmail} disabled={state === 'sending' || !email}>
             {getStateIcon()}
-            <span className="ml-2">
-              {state === 'sending' ? 'Enviando...' : 'Enviar Email'}
-            </span>
+            <span className="ml-2">Enviar</span>
           </Button>
         </div>
-        <p className="text-sm text-gray-500">
-          Se enviará la cotización en PDF al email especificado
-        </p>
+        {isLoadingLeadEmail && (
+          <p className="mt-1 text-xs text-muted-foreground">Buscando email del lead...</p>
+        )}
       </div>
 
-      {/* Status Message */}
       {message && (
-        <div
-          className={`p-4 rounded-lg border flex items-start gap-3 transition-all ${getStateColor()}`}
-        >
-          <div className="mt-0.5">{getStateIcon()}</div>
-          <p className="text-sm flex-1">{message}</p>
+        <div className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm ${getStateColor()}`}>
+          {getStateIcon()}
+          <span>{message}</span>
         </div>
       )}
-
-      {/* Información adicional */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-amber-800">
-            <p className="font-medium mb-1">Nota:</p>
-            <ul className="list-disc list-inside space-y-1 text-amber-700">
-              <li>El PDF debe estar generado previamente</li>
-              <li>El email incluye un link para descargar el PDF</li>
-              <li>Se registrará el envío en el historial</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

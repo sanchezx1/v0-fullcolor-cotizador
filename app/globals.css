@@ -221,3 +221,12 @@
 /* Utilidades de gradiente */
 .bg-gradient-radial-soft { background: radial-gradient(ellipse at center, var(--tw-gradient-stops)); }
 .bg-gradient-diagonal { background: linear-gradient(135deg, var(--tw-gradient-stops)); }
+
+@keyframes progress-loading {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-progress-loading {
+  animation: progress-loading linear forwards;
+}

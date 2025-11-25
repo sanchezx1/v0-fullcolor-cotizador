@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -37,15 +37,6 @@ export default function ProductPage() {
 
   // Hook para manejar cotizaciones
   const { addItemToQuote, loading: quoteLoading } = useQuoteBuilder()
-
-  useEffect(() => {
-    isMountedRef.current = true
-    loadProduct()
-
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [productId])
 
   const showQuoteToast = () => {
     toast.custom((id) => (
@@ -132,7 +123,7 @@ export default function ProductPage() {
     }
   }
 
-  const loadProduct = async () => {
+  const loadProduct = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -186,7 +177,16 @@ export default function ProductPage() {
         setLoading(false)
       }
     }
-  }
+  }, [productId])
+
+  useEffect(() => {
+    isMountedRef.current = true
+    void loadProduct()
+
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [loadProduct])
 
   const handleAddToQuote = async () => {
     if (!product) return
@@ -362,14 +362,15 @@ export default function ProductPage() {
                   </Label>
                   <Input
                     id="quantity"
-                    type="number"
-                    min={minQuantity}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={quantity}
-                    onChange={(e) => handleQuantityChange(e.target.value)}
-                    aria-invalid={isBelowMinimum}
-                    aria-describedby={isBelowMinimum ? quantityErrorId : undefined}
+                  type="number"
+                  min={minQuantity}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  data-testid="quantity-input"
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(e.target.value)}
+                  aria-invalid={isBelowMinimum}
+                  aria-describedby={isBelowMinimum ? quantityErrorId : undefined}
                     className={`mt-2 ${outOfStock ? 'cursor-not-allowed opacity-80' : ''}`}
                     disabled={outOfStock}
                     aria-disabled={outOfStock || undefined}

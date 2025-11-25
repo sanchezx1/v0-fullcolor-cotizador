@@ -10,12 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, AlertCircle, CheckCircle } from "lucide-react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
 import { useAuthSession } from "@/src/hooks/useAuthSession"
 import { asegurarLeadVinculado, obtenerLeadDeUsuario } from "@/src/services/accounts"
 import { existeLeadParaEmail } from "@/src/services/quotes"
 import LeadConflictModal from "@/components/lead-conflict-modal"
+import { ExistingEmailDialog } from "@/components/existing-email-dialog"
 
 export default function CotizadorPage() {
   const router = useRouter()
@@ -206,42 +206,12 @@ export default function CotizadorPage() {
         />
       )}
 
-      <Dialog open={existingEmailDialogOpen} onOpenChange={setExistingEmailDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Ya cotizaste con este correo</DialogTitle>
-            <DialogDescription>
-              Crea tu cuenta para vincular tus cotizaciones y seguir cotizando con tus datos guardados.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="rounded-lg border border-border/70 bg-muted/40 p-4 text-sm text-muted-foreground">
-              <p className="font-semibold text-foreground">Ventajas de crear tu cuenta:</p>
-              <ul className="mt-2 space-y-1 list-disc list-inside">
-                <li>Guardar tus datos y solicitar cotizaciones mas rapido.</li>
-                <li>Ver historial y seguimiento de cotizaciones y pedidos.</li>
-                <li>Reutilizar tus datos en solicitudes futuras.</li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                className="flex-1 bg-primary text-white hover:bg-primary-hover"
-                onClick={() => window.location.assign(`/auth/login?redirectTo=/cotizador&tab=register`)}
-              >
-                Crear cuenta y vincular mis cotizaciones
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setExistingEmailDialogOpen(false)}
-              >
-                Seguir como invitado
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ExistingEmailDialog 
+        open={existingEmailDialogOpen} 
+        onOpenChange={setExistingEmailDialogOpen}
+        onLogin={() => window.location.assign(`/auth/login?redirectTo=/cotizador&tab=register`)}
+        onContinueAsGuest={() => setExistingEmailDialogOpen(false)}
+      />
 
       <div className="py-12">
       <div className="container mx-auto px-4">

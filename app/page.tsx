@@ -180,6 +180,7 @@ export default function HomePage() {
         variant="floating"
         message="Hola FullColor, me gustaria cotizar un proyecto."
       />
+      <h1 className="sr-only">FullColor cotizador de impresion y merchandising</h1>
 
       <HomeHero />
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -67,7 +67,9 @@ import {
   deleteCotizacion
 } from '@/lib/admin-services'
 import { pdfGenerationService } from '@/src/services/pdfGenerationService'
+import { getLeadEmail, sendQuoteStatusEmail } from '@/src/services/emailService'
 import type { CotizacionCompleta, Evento, EstadoCotizacion } from '@/lib/admin-types'
+import { ESTADO_LABELS } from '@/lib/admin-types'
 import { toast } from 'sonner'
 
 export default function CotizacionDetailPage() {
@@ -82,14 +84,7 @@ export default function CotizacionDetailPage() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  useEffect(() => {
-    if (id) {
-      loadCotizacion()
-      loadEventos()
-    }
-  }, [id])
-
-  async function loadCotizacion() {
+  const loadCotizacion = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getCotizacion(id)
@@ -105,16 +100,23 @@ export default function CotizacionDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, router])
 
-  async function loadEventos() {
+  const loadEventos = useCallback(async () => {
     try {
       const data = await getEventosCotizacion(id)
       setEventos(data)
     } catch (error) {
       console.error('Error al cargar eventos:', error)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    if (id) {
+      void loadCotizacion()
+      void loadEventos()
+    }
+  }, [id, loadCotizacion, loadEventos])
 
   async function handleCambiarEstado(nuevoEstado: EstadoCotizacion) {
     if (!cotizacion) return
@@ -122,7 +124,22 @@ export default function CotizacionDetailPage() {
     try {
       setLoadingAction(true)
       await cambiarEstadoCotizacion(id, nuevoEstado)
-      toast.success(`Estado cambiado a ${nuevoEstado}`)
+      const estadoLabel = ESTADO_LABELS[nuevoEstado] || nuevoEstado
+      toast.success(`Estado cambiado a ${estadoLabel}`)
+
+      if (nuevoEstado !== 'enviada') {
+        try {
+          const leadEmail = await getLeadEmail(id)
+          if (leadEmail) {
+            await sendQuoteStatusEmail(id, nuevoEstado, leadEmail, {
+              quoteToken: cotizacion?.access_token,
+            })
+          }
+        } catch (error) {
+          console.warn('No se pudo enviar email de cambio de estado:', error)
+        }
+      }
+
       await loadCotizacion()
       await loadEventos()
     } catch (error) {
@@ -196,12 +213,10 @@ export default function CotizacionDetailPage() {
         return 'bg-green-100 text-green-800 hover:bg-green-100'
       case 'enviada':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+      case 'en_revision':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-100'
       case 'rechazada':
         return 'bg-red-100 text-red-800 hover:bg-red-100'
-      case 'borrador':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
       default:
         return ''
     }
@@ -244,7 +259,7 @@ export default function CotizacionDetailPage() {
             </p>
           </div>
           <Badge className={getEstadoColor(cotizacion.estado)}>
-            {cotizacion.estado}
+            {ESTADO_LABELS[cotizacion.estado] || cotizacion.estado}
           </Badge>
         </div>
       </div>
@@ -494,11 +509,10 @@ export default function CotizacionDetailPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="borrador">Borrador</SelectItem>
                     <SelectItem value="enviada">Enviada</SelectItem>
+                    <SelectItem value="en_revision">En revisión</SelectItem>
                     <SelectItem value="aprobada">Aprobada</SelectItem>
                     <SelectItem value="rechazada">Rechazada</SelectItem>
-                    <SelectItem value="pendiente">Pendiente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -579,3 +593,5 @@ export default function CotizacionDetailPage() {
     </div>
   )
 }
+
+

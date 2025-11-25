@@ -55,7 +55,6 @@ export function HomeHero() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [announcement, setAnnouncement] = useState(`${slides[0].title}. ${slides[0].subtitle}`)
   const [isDesktop, setIsDesktop] = useState(false)
-  const [desktopProgress, setDesktopProgress] = useState(0)
   const totalSlides = slides.length
   const trackRef = useRef<HTMLDivElement>(null)
   const virtualIndexRef = useRef(totalSlides * MOBILE_LOOP_CENTER_INDEX)
@@ -98,12 +97,11 @@ export function HomeHero() {
     return () => mediaQuery.removeEventListener("change", updateMatches)
   }, [])
 
-  const goToSlide = useCallback(
+    const goToSlide = useCallback(
     (index: number) => {
       if (totalSlides === 0) return
       const normalized = ((index % totalSlides) + totalSlides) % totalSlides
       setActiveIndex(normalized)
-      setDesktopProgress(0)
     },
     [totalSlides]
   )
@@ -133,7 +131,7 @@ export function HomeHero() {
     return () => {
       window.removeEventListener("resize", handleResize)
     }
-  }, [setTrackScrollQuietly])
+  }, [setTrackScrollQuietly, totalSlides])
 
   useEffect(() => {
     const track = trackRef.current
@@ -177,44 +175,18 @@ export function HomeHero() {
       track.removeEventListener("scroll", handleScroll)
       if (frameId) cancelAnimationFrame(frameId)
     }
-  }, [setTrackScrollQuietly])
+  }, [setTrackScrollQuietly, totalSlides])
 
   useEffect(() => {
     if (typeof window === "undefined" || !isDesktop || totalSlides <= 1) {
-      setDesktopProgress(0)
       return
     }
 
-    let frameId: number | null = null
-    let startTime: number | null = null
+    const timer = setInterval(() => {
+      goToSlide(activeIndex + 1)
+    }, DESKTOP_AUTOPLAY_INTERVAL)
 
-    const animateProgress = (timestamp: number) => {
-      if (startTime === null) {
-        startTime = timestamp
-      }
-
-      const elapsed = timestamp - startTime
-      const nextProgress = Math.min(elapsed / DESKTOP_AUTOPLAY_INTERVAL, 1)
-      setDesktopProgress((previous) => {
-        const shouldUpdate = Math.abs(previous - nextProgress) > 0.01
-        return shouldUpdate ? nextProgress : previous
-      })
-
-      if (elapsed >= DESKTOP_AUTOPLAY_INTERVAL) {
-        goToSlide(activeIndex + 1)
-        return
-      }
-
-      frameId = requestAnimationFrame(animateProgress)
-    }
-
-    frameId = requestAnimationFrame(animateProgress)
-
-    return () => {
-      if (frameId !== null) {
-        cancelAnimationFrame(frameId)
-      }
-    }
+    return () => clearInterval(timer)
   }, [activeIndex, goToSlide, isDesktop, totalSlides])
 
   const handleArrowKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -229,17 +201,11 @@ export function HomeHero() {
 
   const renderProgressBars = (className?: string, options?: { animate?: boolean }) => {
     const shouldAnimate = Boolean(options?.animate)
-    const clampedProgress = Math.min(Math.max(desktopProgress, 0), 1)
 
     return (
       <div className={cn("flex justify-center gap-2", className)}>
         {slides.map((slide, index) => {
           const isActive = index === activeIndex
-          const widthPercent = isActive
-            ? shouldAnimate
-              ? `${clampedProgress * 100}%`
-              : "100%"
-            : "0%"
 
           return (
             <div
@@ -252,11 +218,11 @@ export function HomeHero() {
             >
               <span
                 className={cn(
-                  "absolute inset-y-0 left-0 rounded-full bg-[#F5C700] transition-opacity duration-200",
-                  isActive ? "opacity-100" : "opacity-0"
+                  "absolute inset-y-0 left-0 rounded-full bg-[#F5C700]",
+                  isActive && shouldAnimate ? "animate-progress-loading" : "w-0 opacity-0"
                 )}
                 style={{
-                  width: widthPercent,
+                  animationDuration: `${DESKTOP_AUTOPLAY_INTERVAL}ms`,
                 }}
               />
             </div>
@@ -277,12 +243,13 @@ export function HomeHero() {
           {mobileSlides.map(({ slide, originalIndex, isReplica, loopKey }) => {
             const isPrimarySlide = !isReplica
             const shouldPrioritize = isPrimarySlide && originalIndex === 0
+            const isActive = originalIndex === activeIndex
 
             return (
               <article
                 key={loopKey}
-                className="relative flex min-w-full snap-center flex-col"
-                aria-hidden={isReplica ? true : undefined}
+                className={cn("relative flex min-w-full snap-center flex-col", !isActive ? "pointer-events-none" : "")}
+                aria-hidden={isReplica || !isActive ? true : undefined}
                 aria-label={isPrimarySlide ? `Slide ${originalIndex + 1} de ${slides.length}` : undefined}
                 role={isReplica ? "presentation" : undefined}
               >
@@ -310,7 +277,7 @@ export function HomeHero() {
                 </div>
                 <div className="flex min-h-[340px] flex-col justify-between rounded-t-3xl bg-[#0068A5] px-6 py-10 text-white">
                   <div className="space-y-5">
-                  <h1 className="text-3xl font-bold leading-tight text-center">{slide.title}</h1>
+                  <h2 className="text-3xl font-bold leading-tight text-center">{slide.title}</h2>
                   <p className="text-base leading-relaxed text-white/90 text-center">
                     {slide.subtitle}
                   </p>
@@ -320,10 +287,12 @@ export function HomeHero() {
                     asChild
                     size="lg"
                     className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000] shadow-lg"
-                    tabIndex={isReplica ? -1 : undefined}
-                    aria-hidden={isReplica ? true : undefined}
+                    tabIndex={isActive ? 0 : -1}
+                    aria-hidden={isReplica || !isActive ? true : undefined}
                   >
-                    <Link href={slide.primaryCta.href}>{slide.primaryCta.label}</Link>
+                    <Link href={slide.primaryCta.href} tabIndex={isActive ? 0 : -1}>
+                      {slide.primaryCta.label}
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -380,8 +349,12 @@ export function HomeHero() {
                       asChild
                       size="lg"
                       className="rounded-full bg-[#F5C700] px-9 py-6 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
+                      tabIndex={index === activeIndex ? 0 : -1}
+                      aria-hidden={index !== activeIndex}
                     >
-                      <Link href={slide.primaryCta.href}>{slide.primaryCta.label}</Link>
+                      <Link href={slide.primaryCta.href} tabIndex={index === activeIndex ? 0 : -1}>
+                        {slide.primaryCta.label}
+                      </Link>
                     </Button>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { Menu, ShoppingCart, UserRound, X } from "lucide-react"
+import { Menu, ShoppingCart, UserRound, X, Home, Package, Phone, LogOut, LayoutDashboard, ChevronRight, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -250,91 +250,122 @@ export function Header() {
       </div>
 
       <div
-        className={`fixed inset-0 z-[60] flex bg-white md:hidden transition-opacity duration-300 ${
-          isMenuOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${
+          isMenuOpen ? "visible" : "invisible delay-300"
         }`}
-        role="presentation"
-        onClick={closeMenu}
       >
+        <div 
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+            isMenuOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={closeMenu}
+          aria-hidden="true"
+        />
+        
         <aside
           id="fullcolor-mobile-menu"
           role="dialog"
           aria-modal="true"
-          className={`ml-auto flex h-full w-[85%] max-w-sm flex-col bg-white text-[#1F2937] shadow-2xl transition-transform duration-300 ease-out will-change-transform ${
+          className={`absolute right-0 top-0 h-full w-[85%] max-w-xs flex flex-col bg-background shadow-2xl transition-transform duration-300 ease-out ${
             isMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
-            <Link href="/" onClick={closeMenu} className="flex items-center space-x-2">
-              <Image
-                src="/logo-fullcolor.png"
-                alt="FullColor"
-                width={140}
-                height={36}
-                className="h-9 w-auto"
-              />
-            </Link>
-            <button
-              type="button"
+          <div className="flex items-center justify-between border-b px-6 py-4">
+            <span className="text-sm font-semibold text-muted-foreground">Menu</span>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={closeMenu}
-              aria-label="Cerrar menu de navegacion"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#0066CC]/20 bg-[#0066CC]/5 text-[#1F2937] transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className="h-9 w-9 rounded-full hover:bg-muted"
             >
-              <X className="h-5 w-5" strokeWidth={2.25} />
-            </button>
+              <X className="h-5 w-5" />
+              <span className="sr-only">Cerrar menu</span>
+            </Button>
           </div>
 
-          <nav className="flex flex-1 flex-col justify-start gap-2 px-6 pt-8 pb-12">
-            {[
-              { href: "/", label: "Inicio" },
-              { href: "/catalogo", label: "Catalogo" },
-              { href: "/contacto", label: "Contacto" },
-              { href: "/cotizador", label: "Cotizar Ahora" }
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                className="rounded-lg px-4 py-3 text-lg font-semibold text-[#1F2937] transition-colors duration-200 hover:bg-[#0066CC]/10 hover:text-[#0066CC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex-1 overflow-y-auto py-6 px-4">
+            <nav className="space-y-1">
+              {[
+                { href: "/", label: "Inicio", icon: Home },
+                { href: "/catalogo", label: "Catalogo", icon: Package },
+                { href: "/contacto", label: "Contacto", icon: Phone },
+                { href: "/cotizador", label: "Cotizar Ahora", icon: ShoppingCart, highlight: true }
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className={`group flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors ${
+                    item.highlight 
+                      ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                      : "text-foreground hover:bg-muted hover:text-primary"
+                  }`}
+                >
+                  <item.icon className={`h-5 w-5 ${item.highlight ? "text-primary" : "text-muted-foreground group-hover:text-primary"}`} />
+                  {item.label}
+                  {item.highlight && <ChevronRight className="ml-auto h-4 w-4 opacity-50" />}
+                </Link>
+              ))}
+            </nav>
+          </div>
 
-            <div className="mt-6 space-y-3 border-t border-slate-200 pt-6">
-              {isAuthenticated ? (
-                <>
+          <div className="border-t bg-muted/30 p-4">
+            {isAuthenticated ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 px-2 py-2">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {authUser?.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isAdmin ? "Administrador" : "Cliente"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid gap-2">
                   <Link
                     href={isAdmin ? "/admin" : "/mi-cuenta"}
                     onClick={closeMenu}
-                    className="block rounded-lg bg-[#0066CC]/10 px-4 py-3 text-lg font-semibold text-[#1F2937] transition-colors duration-200 hover:bg-[#0066CC]/15 hover:text-[#0066CC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                    className="flex w-full items-center gap-2 rounded-md border bg-background px-4 py-2.5 text-sm font-medium shadow-sm transition-colors hover:bg-muted"
                   >
-                    {isAdmin ? "Ir al panel admin" : "Mi cuenta"}
+                    {isAdmin ? <LayoutDashboard className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
+                    {isAdmin ? "Panel Admin" : "Mi Cuenta"}
                   </Link>
+                  
                   <button
-                    type="button"
                     onClick={() => {
                       closeMenu()
                       handleSignOut()
                     }}
-                    className="block w-full rounded-lg px-4 py-3 text-left text-lg font-semibold text-[#B91C1C] transition-colors duration-200 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                     disabled={signingOut}
+                    className="flex w-full items-center gap-2 rounded-md border border-transparent px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                   >
+                    <LogOut className="h-4 w-4" />
                     {signingOut ? "Cerrando..." : "Cerrar sesion"}
                   </button>
-                </>
-              ) : (
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="px-2 text-sm text-muted-foreground">
+                  Inicia sesion para ver tus cotizaciones y pedidos.
+                </p>
                 <Link
                   href="/auth/login"
                   onClick={closeMenu}
-                  className="block w-full rounded-lg bg-[#0066CC]/10 px-4 py-3 text-left text-lg font-semibold text-[#1F2937] transition-colors duration-200 hover:bg-[#0066CC]/15 hover:text-[#0066CC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066CC] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
                 >
-                  Mi cuenta
+                  <UserRound className="h-4 w-4" />
+                  Iniciar Sesion
                 </Link>
-              )}
-            </div>
-          </nav>
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </header>

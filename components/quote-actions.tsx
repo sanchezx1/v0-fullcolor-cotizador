@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -29,11 +29,7 @@ export function QuoteActions({ quoteId, quoteNumber, quoteToken, autoSendEmail =
   const [showManualEmail, setShowManualEmail] = useState(false)
 
   // Verificar si ya existe PDF al cargar
-  useEffect(() => {
-    checkExistingPDF()
-  }, [quoteId])
-
-  const checkExistingPDF = async () => {
+  const checkExistingPDF = useCallback(async () => {
     try {
       const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId, { quoteToken })
       if (existingUrl) {
@@ -43,7 +39,11 @@ export function QuoteActions({ quoteId, quoteNumber, quoteToken, autoSendEmail =
     } catch (err) {
       console.error('Error checking existing PDF:', err)
     }
-  }
+  }, [quoteId, quoteToken])
+
+  useEffect(() => {
+    void checkExistingPDF()
+  }, [checkExistingPDF])
 
   const handleGeneratePDFAndSendEmail = async () => {
     try {
@@ -80,7 +80,7 @@ export function QuoteActions({ quoteId, quoteNumber, quoteToken, autoSendEmail =
             setEmailSent(true)
             setEmailRecipient(emailResult.recipient || leadEmail)
             setEmailStatus('success')
-            console.log('✅ Email enviado exitosamente a:', leadEmail)
+            console.log('? Email enviado exitosamente')
           } else {
             setEmailError(emailResult.error || 'Error enviando email')
             setEmailStatus('error')

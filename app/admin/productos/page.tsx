@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { AdminHeader } from '@/components/admin/AdminHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,11 +54,7 @@ export default function ProductosPage() {
     totalPages: 0
   })
 
-  useEffect(() => {
-    loadProductos()
-  }, [search, categoria, activo, pagination.page])
-
-  const loadProductos = async () => {
+  const loadProductos = useCallback(async () => {
     try {
       setLoading(true)
       const result = await getProductos({
@@ -85,7 +81,11 @@ export default function ProductosPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activo, categoria, pagination.page, pagination.perPage, search])
+
+  useEffect(() => {
+    void loadProductos()
+  }, [loadProductos])
 
   const handleEliminar = async () => {
     if (!productoAEliminar) return
@@ -95,7 +95,7 @@ export default function ProductosPage() {
       await deleteProducto(productoAEliminar)
       toast.success('Producto eliminado exitosamente')
       setProductoAEliminar(null)
-      loadProductos()
+      void loadProductos()
     } catch (error) {
       console.error('Error eliminando producto:', error)
       toast.error('Error al eliminar producto')

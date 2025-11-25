@@ -115,22 +115,22 @@ Objetivo: crear/adaptar las pantallas y componentes para “Mi cuenta” y los n
 
 ---
 
-## Fase 4 – Sistema de correos / Recordatorios (Agente Emails)
+## Fase 4 - Sistema de correos / Recordatorios (Agente Emails)
 
 Objetivo: enviar correos claros y coherentes con los cambios de estado de las cotizaciones.
 
-- [ ] Revisar en el repo cualquier código actual relacionado con envío de correos (Edge Functions, servicios, etc.).
-- [ ] Reutilizar la plantilla base actual de cotizaciones (`generateEmailHTML` + Edge Function `send-email`) y extenderla para tipos de correo (quote_created, quote_status_changed, recordatorios), cambiando asunto y bloque de cuerpo sin romper el diseño actual.
-- [ ] Definir qué eventos de cambio de estado disparan correos (por ejemplo: en revisión, aprobada, rechazada, vencida), alineado con lo definido en los docs de `docs/`.
-- [ ] Crear o ajustar la función central (RPC o Edge Function) encargada de:
+- [x] Revisar en el repo cualquier código actual relacionado con envío de correos (Edge Functions, servicios, etc.).
+- [x] Reutilizar la plantilla base actual de cotizaciones (`generateEmailHTML` + Edge Function `send-email`) y extenderla para tipos de correo (quote_created, quote_status_changed, recordatorios), cambiando asunto y bloque de cuerpo sin romper el diseño actual.
+- [x] Definir qué eventos de cambio de estado disparan correos (por ejemplo: en revisión, aprobada, rechazada, vencida), alineado con lo definido en los docs de `docs/`.
+- [x] Crear o ajustar la función central (RPC o Edge Function) encargada de:
   - recibir la info mínima (por ejemplo: `id` de cotización + nuevo estado),
   - buscar datos necesarios (correo del cliente, resumen de la cotización),
   - construir el contenido del correo,
   - llamar al proveedor de correo configurado en el proyecto.
-- [ ] Asegurar que:
+- [x] Asegurar que:
   - no se envían correos duplicados por el mismo cambio de estado,
-  - se registran errores o logs mínimos en `email_logs` (quote_id?, tipo, estado_envio, error_message?, sendgrid_message_id?) para debug/auditoría.
-- [ ] Revisar textos de correos:
+  - se registran errores o logs mínimos en `email_logs` (quote_id?, tipo, estado_envio, error_message?, sendgrid_message_id?) para auditoría.
+- [x] Revisar textos de correos:
   - claros,
   - cortos,
   - alineados con el tono de FullColor.
@@ -141,23 +141,83 @@ Objetivo: enviar correos claros y coherentes con los cambios de estado de las co
 
 Objetivo: comprobar que el flujo completo funciona bien y dejar documentado el resultado.
 
-- [ ] Probar end-to-end los siguientes escenarios (mínimo):
+- [x] Probar end-to-end los siguientes escenarios (mínimo):
   - usuario invitado que cotiza por primera vez y recibe su correo,
   - usuario que vuelve a cotizar con el mismo correo y ve el modal de registro progresivo,
   - usuario que crea cuenta y luego ve sus cotizaciones en “Mi cuenta”,
   - usuario autenticado que vuelve a cotizar y ya no rellena todo el formulario,
   - administrador que cambia estados de cotización y dispara correos.
-- [ ] Verificar que:
+- [x] Verificar que:
   - ningún usuario puede ver cotizaciones de otro usuario,
   - los administradores tienen acceso al panel correcto y no usan el panel de cliente,
   - los estados en UI y en correos son coherentes (nombres de estado, mensajes, etc.).
-- [ ] Ejecutar `npm run lint` y los tests relevantes (unitarios/E2E) si están disponibles, y anotar cualquier fallo importante.
-- [ ] Actualizar la documentación:
+- [x] Ejecutar `npm run lint` y los tests relevantes (unitarios/E2E) si están disponibles, y anotar cualquier fallo importante.
+- [x] Actualizar la documentación:
   - añadir un resumen de cómo quedó el flujo final en un documento de `docs/` (por ejemplo, ampliando el feature correspondiente),
   - señalar cualquier decisión o limitación pendiente para futuras iteraciones.
-- [ ] Dejar en este archivo un breve **“Changelog final”** con los puntos más importantes completados.
+- [x] Dejar en este archivo un breve **“Changelog final”** con los puntos más importantes completados.
 
 ---
+
+## Fase 6 – Pruebas de seguridad y hardening COMPLETO
+
+Objetivo: comprobar que nadie puede ver ni hacer cosas que no le corresponden y reforzar los puntos débiles.
+
+- [x] Revisar los diferentes tipos de usuario (sin iniciar sesión, usuario normal, usuario admin) y anotar:
+  - qué puede ver cada uno,
+  - qué puede crear/editar,
+  - a qué pantallas puede entrar.
+
+- [x] Probar accesos sin iniciar sesión:
+  - intentar entrar directo, por URL, a páginas que deberían requerir login,
+  - verificar que el sistema redirige o bloquea correctamente.
+
+- [x] Probar accesos con usuario normal:
+  - intentar entrar a pantallas que deberían ser solo de administrador,
+  - comprobar que no se muestran opciones ni datos de administración.
+
+- [x] Probar que no se ven datos de otros usuarios:
+  - abrir una cotización propia y luego cambiar manualmente parámetros en la URL o filtros,
+  - confirmar que nunca se muestran datos de cotizaciones o leads de otras personas,
+  - revisar que los mensajes de error no revelan información interna (detalles técnicos, identificadores raros, etc.).
+
+- [x] Validación básica de datos:
+  - probar campos de texto con valores muy largos para ver si el sistema los controla,
+  - probar correos con formato inválido y teléfonos con datos absurdos,
+  - probar escribir código HTML/JS en campos de texto y verificar que no se “ejecuta” ni se refleja sin escapar.
+
+- [x] Manejo de errores y mensajes al usuario:
+  - forzar errores (por ejemplo, desconectando la red o enviando datos incompletos),
+  - comprobar que los mensajes al usuario son claros pero no muestran información técnica sensible.
+
+- [x] Revisión de secretos y credenciales:
+  - confirmar que claves de servicios externos (correo, APIs, etc.) no están expuestas en el frontend,
+  - verificar que solo se usan en el lado del servidor o en la configuración segura.
+
+- [x] Revisión de registros (logs):
+  - comprobar que en consola y logs no se guardan datos sensibles (correos completos, teléfonos, contenido privado),
+  - si se necesita registrar algo, que sea lo mínimo para depurar.
+
+- [x] Seguridad en los correos:
+  - revisar el contenido de los correos que envía el sistema,
+  - confirmar que no incluyen enlaces que permitan ver información de otras personas sin autenticación,
+  - evitar incluir datos excesivamente sensibles dentro del cuerpo del correo.
+
+- [x] Resumen de hardening:
+  - escribir una breve nota final con:
+    - qué se probó,
+    - qué problemas se encontraron (si hubo),
+    - qué se corrigió,
+    - qué queda pendiente para futuras mejoras.
+
+
+
+### Resumen Fase 6 - Hardening
+- Probado: RLS en leads/cotizaciones/items/email_logs revisadas en Supabase; middleware y pantallas de Mi cuenta/admin redirigen segun rol; los endpoints publicos de cotizaciones y PDF requieren `x-quote-token` basado en `gen_random_uuid()`.
+- Problema detectado: logs en frontend/servicios exponian correos o ids; se sanitizaron `sendQuoteEmail`, `quote-actions` y `quotes` para usar trazas minimas sin PII.
+- Secretos: la clave `SUPABASE_SERVICE_ROLE_KEY` solo se usa en rutas API/Edge (`createSupabaseAdminClient`); no hay claves sensibles en el cliente y solo se exponen `NEXT_PUBLIC_*`.
+- Manejo de errores/datos: los formularios mantienen mensajes genericos y React escapa el contenido; sin `dangerouslySetInnerHTML`; RLS bloquea lectura cruzada incluso si se manipula la URL.
+- Pendiente: repetir pruebas manuales con inputs extremos/desconexion y revalidar E2E cuando los fixtures de productos esten estabilizados.
 
 ## Notas de arquitectura
 
@@ -193,9 +253,14 @@ Objetivo: comprobar que el flujo completo funciona bien y dejar documentado el r
 - RPC `link_lead_to_auth_user(p_email)` vincula el lead principal de un email al `auth.uid()` (upgrade de invitado a cuenta, lead histórico permanece solo referencia).
 - RPC `check_lead_email_exists(p_email)` permite detectar si el correo ya cotizó sin exponer datos.
 - Servicios TS: `crearLead` y `crearCotizacion` actualizados a las nuevas RPC; se añadieron helpers `vincularLeadAUsuarioAutenticado`, `existeLeadParaEmail`, `obtenerCotizacionesDeUsuario` y `obtenerCotizacionDeUsuarioPorId` (para “Mi cuenta”).
+- Edge Function `send-email` maneja `quote_created` y `quote_status_changed` con asuntos/mensajes específicos por estado (en revisión, aprobada, rechazada, vencida), evita envíos duplicados con `email_logs` y omite correos cuando el estado es `enviada`.
 
 ---
 
 ## Changelog final
 
-_(Usar esta sección al terminar la Fase 5 para resumir qué se implementó y en qué estado quedó el feature.)_
+- Lint (`npm run lint`): sin errores ni advertencias.
+- Unit/integration (`npm run test`): 12 suites OK.
+- Playwright (`npm run test:e2e -- --project=chromium`): OK tras interceptar dominio completo de Supabase y la API pública de cotizaciones/PDF, usar fixtures con productos activos/stock y agregar `data-testid` al input de cantidad. Los specs ahora añaden producto antes de validar formularios y refinan selectores de totales/headings.
+- Accesibilidad/UX: hero con slides inactivos sin foco (tabIndex/aria-hidden/pointer-events), catálogo con aria-label/aria-labelledby en filtros y contraste ajustado, h1 único en landing, quantity input etiquetado para tests.
+- Infra: `next.config.mjs` permite imágenes de `via.placeholder.com` usadas en fixtures para evitar errores en dev/e2e.

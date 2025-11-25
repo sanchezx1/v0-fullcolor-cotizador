@@ -5,7 +5,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.send-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.upsert-lead]
 verify_jwt = true

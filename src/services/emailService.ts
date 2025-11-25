@@ -19,6 +19,8 @@ export interface SendEmailResult {
  */
 type EmailSecurityOptions = {
   quoteToken?: string
+  emailType?: "quote_created" | "quote_status_changed"
+  newStatus?: string
 }
 
 export async function sendQuoteEmail(
@@ -27,18 +29,29 @@ export async function sendQuoteEmail(
   options: EmailSecurityOptions = {}
 ): Promise<SendEmailResult> {
   try {
-    console.log('📧 Enviando email de cotización:', { quoteId, recipientEmail })
+    console.debug("Enviando email de cotizacion", { quoteId, emailType: options.emailType || "quote_created" })
+
+    const payload = {
+      quoteId,
+      recipientEmail,
+      quoteToken: options.quoteToken,
+      emailType: options.emailType || 'quote_created',
+      newStatus: options.newStatus,
+    }
+
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     const { data, error } = await supabase.functions.invoke('send-email', {
-      body: {
-        quoteId,
-        recipientEmail,
-        quoteToken: options.quoteToken
-      }
+      body: payload,
+      headers: anonKey
+        ? {
+            Authorization: `Bearer ${serviceKey || anonKey}`
+          }
+        : undefined
     })
-
     if (error) {
-      console.error('❌ Error invocando función send-email:', error)
+      console.error('? Error invocando funci¢n send-email:', error)
       return {
         success: false,
         error: error.message || 'Error al enviar el email'
@@ -53,7 +66,7 @@ export async function sendQuoteEmail(
       }
     }
 
-    console.log('✅ Email enviado exitosamente:', data)
+    console.debug("Email enviado exitosamente", { quoteId, emailType: payload.emailType })
     return {
       success: true,
       recipient: data.recipient,
@@ -67,6 +80,26 @@ export async function sendQuoteEmail(
     }
   }
 }
+
+export async function sendQuoteStatusEmail(
+  quoteId: number,
+  newStatus: string,
+  recipientEmail?: string,
+  options: EmailSecurityOptions = {}
+ ): Promise<SendEmailResult> {
+  if (newStatus === "enviada") {
+    return {
+      success: true,
+      recipient: recipientEmail,
+    }
+  }
+  return sendQuoteEmail(quoteId, recipientEmail, {
+    ...options,
+    emailType: "quote_status_changed",
+    newStatus,
+  })
+}
+
 
 /**
  * Verifica si ya se envió un email para una cotización

@@ -90,11 +90,7 @@ export default function CatalogoPage() {
   )
 
 
-  useEffect(() => {
-    void loadProducts()
-  }, [])
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -108,7 +104,11 @@ export default function CatalogoPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadPricingForProducts])
+
+  useEffect(() => {
+    void loadProducts()
+  }, [loadProducts])
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
@@ -265,7 +265,7 @@ export default function CatalogoPage() {
             <div className="rounded-[28px] border border-white/60 bg-white/90 p-6 shadow-[0_40px_110px_-65px_rgba(0,102,204,0.55)] backdrop-blur">
               <div className="space-y-6">
                 <div className="flex flex-col gap-2 text-left">
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#0066CC]/80">Buscar</span>
+                  <span id="catalogo-buscar-label" className="text-xs font-semibold uppercase tracking-[0.28em] text-[#005a99]">Buscar</span>
                   <div className="relative">
                     <Search
                       className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0066CC]"
@@ -276,6 +276,7 @@ export default function CatalogoPage() {
                       value={searchQuery}
                       onChange={(event) => void handleSearch(event.target.value)}
                       placeholder="Buscar productos..."
+                      aria-labelledby="catalogo-buscar-label"
                       className="h-12 rounded-full border border-slate-200 bg-slate-50/80 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus-visible:border-[#0066CC] focus-visible:ring-0"
                     />
                   </div>
@@ -283,9 +284,9 @@ export default function CatalogoPage() {
 
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Categoría</span>
+                    <span id="catalogo-categoria-label" className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Categoría</span>
                     <Select value={selectedCategory} onValueChange={(value) => void handleCategoryChange(value)}>
-                      <SelectTrigger className="h-12 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-left text-sm font-medium text-slate-700 focus:ring-0 focus:ring-offset-0">
+                      <SelectTrigger aria-labelledby="catalogo-categoria-label" aria-label="Filtrar por categoría" className="h-12 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-left text-sm font-medium text-slate-700 focus:ring-0 focus:ring-offset-0">
                         <SelectValue placeholder="Todas las categorías" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl border border-slate-100 bg-white shadow-xl">
@@ -300,9 +301,9 @@ export default function CatalogoPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Ordenar por</span>
+                    <span id="catalogo-orden-label" className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Ordenar por</span>
                     <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
-                      <SelectTrigger className="h-12 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-left text-sm font-medium text-slate-700 focus:ring-0 focus:ring-offset-0">
+                      <SelectTrigger aria-labelledby="catalogo-orden-label" aria-label="Ordenar resultados" className="h-12 rounded-full border border-slate-200 bg-slate-50/80 px-4 text-left text-sm font-medium text-slate-700 focus:ring-0 focus:ring-offset-0">
                         <SelectValue placeholder="Ordenar por" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl border border-slate-100 bg-white shadow-xl">

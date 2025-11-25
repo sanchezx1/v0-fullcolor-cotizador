@@ -106,8 +106,21 @@ function AuthScreen() {
       })
     } catch (error: any) {
       console.error('Error registro:', error)
-      const message = error?.message || 'No se pudo crear la cuenta'
-      toast.error(message)
+
+      // Manejar error de email duplicado específicamente
+      if (error?.name === 'UserAlreadyExists') {
+        toast.error('Este correo ya está registrado', {
+          description: 'Si ya tienes una cuenta, inicia sesión. Si olvidaste tu contraseña, recupérala desde el login.',
+        })
+        // Cambiar a la pestaña de login automáticamente
+        setTimeout(() => {
+          setActiveTab('login')
+          setEmail(email.trim().toLowerCase())
+        }, 2000)
+      } else {
+        const message = error?.message || 'No se pudo crear la cuenta'
+        toast.error(message)
+      }
     } finally {
       setLoading(false)
     }

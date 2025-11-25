@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { FileText, Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
@@ -19,11 +19,7 @@ export function PDFGenerator({ quoteId, quoteNumber, quoteToken, className }: PD
   const [error, setError] = useState<string | null>(null)
 
   // Verificar si ya existe PDF al cargar
-  useEffect(() => {
-    checkExistingPDF()
-  }, [quoteId])
-
-  const checkExistingPDF = async () => {
+  const checkExistingPDF = useCallback(async () => {
     try {
       const existingUrl = await pdfGenerationService.getExistingPDFUrl(quoteId, {
         quoteToken
@@ -35,7 +31,11 @@ export function PDFGenerator({ quoteId, quoteNumber, quoteToken, className }: PD
     } catch (err) {
       console.error('Error checking existing PDF:', err)
     }
-  }
+  }, [quoteId, quoteToken])
+
+  useEffect(() => {
+    void checkExistingPDF()
+  }, [checkExistingPDF])
 
   const handleGeneratePDF = async () => {
     try {

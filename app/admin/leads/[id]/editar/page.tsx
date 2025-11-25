@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ArrowLeft } from 'lucide-react'
@@ -17,11 +17,7 @@ export default function EditarLeadPage() {
   const [lead, setLead] = useState<Lead | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadLead()
-  }, [leadId])
-
-  const loadLead = async () => {
+  const loadLead = useCallback(async () => {
     try {
       setLoading(true)
       const data = await getLead(leadId)
@@ -33,7 +29,11 @@ export default function EditarLeadPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [leadId, router])
+
+  useEffect(() => {
+    void loadLead()
+  }, [loadLead])
 
   const handleSubmit = async (data: any) => {
     try {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Search, Filter, Mail, Phone, Building, MapPin, Eye, Pencil, Trash2, User } from 'lucide-react'
@@ -45,7 +45,7 @@ export default function LeadsPage() {
   const [ciudad, setCiudad] = useState<string>('all')
 
   // Cargar leads
-  const loadLeads = async () => {
+  const loadLeads = useCallback(async () => {
     try {
       setLoading(true)
       const filtros: FiltrosLeads = {
@@ -65,24 +65,24 @@ export default function LeadsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [ciudad, page, search])
 
   useEffect(() => {
-    loadLeads()
-  }, [page])
+    void loadLeads()
+  }, [loadLeads])
 
   // Búsqueda con debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (page === 1) {
-        loadLeads()
+        void loadLeads()
       } else {
         setPage(1)
       }
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [search, ciudad])
+  }, [ciudad, loadLeads, page, search])
 
   // Limpiar filtros
   const clearFilters = () => {
@@ -105,7 +105,7 @@ export default function LeadsPage() {
       toast.success('Lead eliminado correctamente')
       setShowDeleteDialog(false)
       setLeadToDelete(null)
-      loadLeads()
+      void loadLeads()
     } catch (error: any) {
       console.error('Error eliminando lead:', error)
       toast.error(error.message || 'Error al eliminar el lead')

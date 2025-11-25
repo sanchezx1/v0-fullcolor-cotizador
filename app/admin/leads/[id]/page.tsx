@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Mail, Phone, Building, MapPin, FileText, Edit, Trash2, TrendingUp, DollarSign, Target, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
@@ -38,11 +38,7 @@ export default function LeadDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [leadId])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       const [leadData, cotizacionesData] = await Promise.all([
@@ -58,7 +54,11 @@ export default function LeadDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [leadId])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const handleDelete = async () => {
     try {

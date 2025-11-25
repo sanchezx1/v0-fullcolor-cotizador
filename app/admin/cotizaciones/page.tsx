@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -72,12 +72,7 @@ export default function CotizacionesListPage() {
     return () => clearTimeout(timer)
   }, [search])
 
-  // Load cotizaciones
-  useEffect(() => {
-    loadCotizaciones()
-  }, [page, debouncedSearch, estado])
-
-  async function loadCotizaciones() {
+  const loadCotizaciones = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -102,7 +97,12 @@ export default function CotizacionesListPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [debouncedSearch, estado, fechaFin, fechaInicio, montoMax, montoMin, page])
+
+  // Load cotizaciones
+  useEffect(() => {
+    void loadCotizaciones()
+  }, [loadCotizaciones])
 
   async function handleOpenPdf(cotizacionId: number, token?: string) {
     if (!token) {
@@ -129,7 +129,7 @@ export default function CotizacionesListPage() {
 
   function handleApplyAdvancedFilters() {
     setPage(1)
-    loadCotizaciones()
+    void loadCotizaciones()
   }
 
   function handleClearFilters() {
@@ -141,7 +141,7 @@ export default function CotizacionesListPage() {
     setFechaFin('')
     setPage(1)
     setShowAdvancedFilters(false)
-    loadCotizaciones()
+    void loadCotizaciones()
   }
 
   function getEstadoColor(estado: EstadoCotizacion): string {
@@ -150,12 +150,10 @@ export default function CotizacionesListPage() {
         return 'bg-green-100 text-green-800 hover:bg-green-100'
       case 'enviada':
         return 'bg-blue-100 text-blue-800 hover:bg-blue-100'
+      case 'en_revision':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-100'
       case 'rechazada':
         return 'bg-red-100 text-red-800 hover:bg-red-100'
-      case 'borrador':
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
-      case 'pendiente':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
       default:
         return ''
     }
@@ -194,11 +192,10 @@ export default function CotizacionesListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="borrador">Borrador</SelectItem>
               <SelectItem value="enviada">Enviada</SelectItem>
+              <SelectItem value="en_revision">En revisión</SelectItem>
               <SelectItem value="aprobada">Aprobada</SelectItem>
               <SelectItem value="rechazada">Rechazada</SelectItem>
-              <SelectItem value="pendiente">Pendiente</SelectItem>
             </SelectContent>
           </Select>
 
@@ -340,7 +337,7 @@ export default function CotizacionesListPage() {
                   </TableCell>
                   <TableCell>
                     <Badge className={getEstadoColor(cotizacion.estado)}>
-                      {cotizacion.estado}
+                      {cotizacion.estado === 'en_revision' ? 'En revisión' : cotizacion.estado}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-medium">

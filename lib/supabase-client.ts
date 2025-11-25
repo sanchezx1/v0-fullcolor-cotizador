@@ -33,7 +33,17 @@ export async function signUp(email: string, password: string, fullName?: string,
       data: fullName ? { full_name: fullName } : undefined,
     },
   })
+
   if (error) throw error
+
+  // Detectar si el email ya existe
+  // Cuando un email ya está registrado, Supabase retorna user pero identities está vacío
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    const duplicateError = new Error('Este correo ya está registrado. Por favor inicia sesión o usa otro correo.')
+    duplicateError.name = 'UserAlreadyExists'
+    throw duplicateError
+  }
+
   return data
 }
 
