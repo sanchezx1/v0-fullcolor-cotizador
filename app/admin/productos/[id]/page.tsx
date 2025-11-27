@@ -65,83 +65,6 @@ export default function EditarProductoPage() {
   })
   const [galleryItems, setGalleryItems] = useState<GalleryItemState[]>([])
 
-  const loadProducto = useCallback(async () => {
-    try {
-      setLoading(true)
-      const data = await getProducto(productoId)
-      
-      if (!data) {
-        toast.error('Producto no encontrado')
-        router.push('/admin/productos')
-        return
-      }
-      
-      setProducto(data)
-      setFormData({
-        nombre: data.nombre,
-        sku: data.sku,
-        descripcion: data.descripcion || '',
-        categoria: data.categoria,
-        color: data.color || '',
-        lados: data.lados || '',
-        impresion: data.impresion || '',
-        activo: data.activo,
-        agotado: Boolean(data.agotado),
-        mas_vendido: Boolean(data.mas_vendido),
-        imagen_url: data.imagen_url || ''
-      })
-
-      await loadGalleryForProduct(data)
-    } catch (error) {
-      console.error('Error cargando producto:', error)
-      toast.error('Error al cargar producto')
-      router.push('/admin/productos')
-    } finally {
-      setLoading(false)
-    }
-  }, [loadGalleryForProduct, productoId, router])
-
-  useEffect(() => {
-    void loadProducto()
-  }, [loadProducto])
-
-  const validateForm = async (): Promise<boolean> => {
-    const newErrors: Record<string, string> = {}
-
-    // Nombre
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = 'El nombre es requerido'
-    } else if (formData.nombre.length < 3) {
-      newErrors.nombre = 'El nombre debe tener al menos 3 caracteres'
-    }
-
-    // SKU
-    if (!formData.sku.trim()) {
-      newErrors.sku = 'El SKU es requerido'
-    } else if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
-      newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
-    } else if (formData.sku !== producto?.sku) {
-      // Solo validar unicidad si cambió el SKU
-      const esUnico = await verificarSkuUnico(formData.sku)
-      if (!esUnico) {
-        newErrors.sku = 'Este SKU ya existe'
-      }
-    }
-
-    // Categoría
-    if (!formData.categoria) {
-      newErrors.categoria = 'La categoría es requerida'
-    }
-
-    // Descripción
-    if (formData.descripcion && formData.descripcion.length > 500) {
-      newErrors.descripcion = 'La descripción no puede exceder 500 caracteres'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
   const extractStoragePath = useCallback((url?: string | null): string | null => {
     if (!url) return null
     const parts = url.split('/productos/')
@@ -210,6 +133,83 @@ export default function EditarProductoPage() {
       }
     }
   }, [extractStoragePath])
+
+  const loadProducto = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await getProducto(productoId)
+
+      if (!data) {
+        toast.error('Producto no encontrado')
+        router.push('/admin/productos')
+        return
+      }
+
+      setProducto(data)
+      setFormData({
+        nombre: data.nombre,
+        sku: data.sku,
+        descripcion: data.descripcion || '',
+        categoria: data.categoria,
+        color: data.color || '',
+        lados: data.lados || '',
+        impresion: data.impresion || '',
+        activo: data.activo,
+        agotado: Boolean(data.agotado),
+        mas_vendido: Boolean(data.mas_vendido),
+        imagen_url: data.imagen_url || ''
+      })
+
+      await loadGalleryForProduct(data)
+    } catch (error) {
+      console.error('Error cargando producto:', error)
+      toast.error('Error al cargar producto')
+      router.push('/admin/productos')
+    } finally {
+      setLoading(false)
+    }
+  }, [loadGalleryForProduct, productoId, router])
+
+  useEffect(() => {
+    void loadProducto()
+  }, [loadProducto])
+
+  const validateForm = async (): Promise<boolean> => {
+    const newErrors: Record<string, string> = {}
+
+    // Nombre
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido'
+    } else if (formData.nombre.length < 3) {
+      newErrors.nombre = 'El nombre debe tener al menos 3 caracteres'
+    }
+
+    // SKU
+    if (!formData.sku.trim()) {
+      newErrors.sku = 'El SKU es requerido'
+    } else if (!/^[A-Za-z0-9-]+$/.test(formData.sku)) {
+      newErrors.sku = 'El SKU solo puede contener letras, números y guiones'
+    } else if (formData.sku !== producto?.sku) {
+      // Solo validar unicidad si cambió el SKU
+      const esUnico = await verificarSkuUnico(formData.sku)
+      if (!esUnico) {
+        newErrors.sku = 'Este SKU ya existe'
+      }
+    }
+
+    // Categoría
+    if (!formData.categoria) {
+      newErrors.categoria = 'La categoría es requerida'
+    }
+
+    // Descripción
+    if (formData.descripcion && formData.descripcion.length > 500) {
+      newErrors.descripcion = 'La descripción no puede exceder 500 caracteres'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const createGalleryId = () => {
     if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {

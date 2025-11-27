@@ -98,10 +98,10 @@ export async function getProductoById(id: number): Promise<ProductoConPrecios | 
 
     // Calcular precio base (el más bajo)
     const precio_base = precios && precios.length > 0
-      ? Math.min(...precios.map(p => Number(p.precio_unitario)))
+      ? Math.min(...precios.map((p: any) => Number(p.precio_unitario)))
       : undefined
 
-    const normalized = normalizeProductFromSource(producto)
+    const normalized = normalizeProductFromSource(producto) as any
 
     return {
       ...normalized,
@@ -155,7 +155,7 @@ export async function generarSkuAutomatico(categoria: string): Promise<string> {
     
     if (data && data.length > 0) {
       // Extraer el número del último SKU
-      const ultimoSku = data[0].sku
+      const ultimoSku = (data[0] as any).sku
       const match = ultimoSku.match(/-(\d+)$/)
       if (match) {
         contador = parseInt(match[1], 10) + 1
@@ -231,15 +231,16 @@ export async function createProducto(
     }
 
     const persistPayload = prepareProductForPersist(producto)
+    const insertData: any = { ...persistPayload, sku }
 
     const { data, error } = await supabase
       .from('productos')
-      .insert({ ...persistPayload, sku })
+      .insert(insertData)
       .select()
       .single()
 
     if (error) throw error
-    return normalizeProductFromSource(data)
+    return normalizeProductFromSource(data) as any
   } catch (error) {
     console.error('Error en createProducto:', error)
     throw error
@@ -262,9 +263,10 @@ export async function updateProducto(
       }
     }
 
-    const persistPayload = prepareProductForPersist(producto)
+    const persistPayload: any = prepareProductForPersist(producto)
 
-    const { data, error } = await supabase
+    const supabaseClient: any = supabase
+    const { data, error } = await supabaseClient
       .from('productos')
       .update(persistPayload)
       .eq('id', id)
@@ -272,7 +274,7 @@ export async function updateProducto(
       .single()
 
     if (error) throw error
-    return normalizeProductFromSource(data)
+    return normalizeProductFromSource(data) as any
   } catch (error) {
     console.error('Error en updateProducto:', error)
     throw error
@@ -336,12 +338,14 @@ export async function addPrecioEscalonado(
       throw new Error(`Ya existe un precio para cantidad mínima ${precio.cantidad_min}`)
     }
 
+    const insertData: any = {
+      producto_id: productoId,
+      ...precio
+    }
+
     const { data, error } = await supabase
       .from('precios_escalonados')
-      .insert({
-        producto_id: productoId,
-        ...precio
-      })
+      .insert(insertData)
       .select()
       .single()
 
@@ -361,9 +365,12 @@ export async function updatePrecioEscalonado(
   precio: Partial<Omit<PrecioEscalonado, 'id' | 'producto_id' | 'created_at'>>
 ): Promise<PrecioEscalonado> {
   try {
-    const { data, error } = await supabase
+    const updateData: any = precio
+    const supabaseClient: any = supabase
+
+    const { data, error } = await supabaseClient
       .from('precios_escalonados')
-      .update(precio)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()

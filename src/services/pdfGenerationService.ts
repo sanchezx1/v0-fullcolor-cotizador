@@ -217,13 +217,13 @@ export class PDFGenerationService {
         .eq('id', quoteId)
         .single()
 
-      if (error || !data || !data.pdf_url) {
+      if (error || !data || !(data as any).pdf_url) {
         return null
       }
 
       const { data: signedUrlData, error: signedError } = await supabase.storage
         .from('cotizaciones')
-        .createSignedUrl(data.pdf_url, 3600)
+        .createSignedUrl((data as any).pdf_url, 3600)
 
       if (signedError || !signedUrlData) {
         console.error('Error firmando URL del PDF:', signedError)

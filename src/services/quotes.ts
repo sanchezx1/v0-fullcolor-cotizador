@@ -17,7 +17,7 @@ export async function crearLead(leadData: {
   try {
     console.debug("[Lead] Creando/reutilizando lead mediante RPC seguro")
 
-    const { data, error } = await supabase.rpc("create_public_lead", {
+    const params: any = {
       p_nombre: leadData.nombre,
       p_email: leadData.email,
       p_telefono: leadData.telefono,
@@ -25,7 +25,10 @@ export async function crearLead(leadData: {
       p_notas: leadData.notas ?? null,
       p_ruc_cedula: leadData.ruc_cedula ?? null,
       p_ciudad: leadData.ciudad ?? null,
-    })
+    }
+
+    const supabaseClient: any = supabase
+    const { data, error } = await supabaseClient.rpc("create_public_lead", params)
 
     if (error) {
       console.error("[Lead] Error ejecutando create_public_lead:", error)
@@ -80,12 +83,15 @@ export async function crearCotizacion(cotizacionData: {
       subtotal: item.subtotal,
     }))
 
-    const { data, error } = await supabase.rpc("create_public_quote", {
+    const quoteParams: any = {
       p_lead_id: cotizacionData.leadId,
       p_items: itemsPayload,
       p_canal: cotizacionData.canal,
       p_notas: cotizacionData.notas ?? null,
-    })
+    }
+
+    const supabaseClient: any = supabase
+    const { data, error } = await supabaseClient.rpc("create_public_quote", quoteParams)
 
     if (error) {
       console.error("❌ Error ejecutando create_public_quote:", error)

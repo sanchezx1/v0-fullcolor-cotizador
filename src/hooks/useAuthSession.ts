@@ -18,7 +18,7 @@ async function getProfileRole(userId: string): Promise<string | null> {
     .from("profiles")
     .select("role")
     .eq("id", userId)
-    .maybeSingle()
+    .maybeSingle<{ role: string | null }>()
 
   if (error) {
     console.warn("Error obteniendo rol de perfil:", error)

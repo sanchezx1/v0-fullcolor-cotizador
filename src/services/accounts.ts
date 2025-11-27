@@ -76,18 +76,20 @@ export async function actualizarLeadDeUsuario(payload: LeadUpdatePayload): Promi
       user.email.split("@")[0] ||
       "Cliente"
 
+    const leadData: any = {
+      nombre: nombreFallback,
+      email: user.email,
+      telefono: payload.telefono ?? null,
+      empresa: payload.empresa ?? null,
+      ciudad: payload.ciudad ?? null,
+      ruc_cedula: payload.ruc_cedula ?? null,
+      user_id: user.id,
+      origen: "cotizador_web",
+    }
+
     const { data: nuevoLead, error: createError } = await supabase
       .from("leads")
-      .insert({
-        nombre: nombreFallback,
-        email: user.email,
-        telefono: payload.telefono ?? null,
-        empresa: payload.empresa ?? null,
-        ciudad: payload.ciudad ?? null,
-        ruc_cedula: payload.ruc_cedula ?? null,
-        user_id: user.id,
-        origen: "cotizador_web",
-      })
+      .insert(leadData)
       .select()
       .single()
 
@@ -99,12 +101,15 @@ export async function actualizarLeadDeUsuario(payload: LeadUpdatePayload): Promi
     return nuevoLead as Lead
   }
 
-  const { data, error } = await supabase
+  const updateData: any = {
+    ...payload,
+    updated_at: new Date().toISOString(),
+  }
+
+  const supabaseClient: any = supabase
+  const { data, error } = await supabaseClient
     .from("leads")
-    .update({
-      ...payload,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("id", lead.id)
     .select()
     .single()

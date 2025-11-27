@@ -172,7 +172,7 @@ export async function getLeadEmail(quoteId: number): Promise<string | null> {
       return null
     }
 
-    return (data.leads as any)?.email || null
+    return ((data as any).leads as any)?.email || null
   } catch (error) {
     console.error('Error en getLeadEmail:', error)
     return null

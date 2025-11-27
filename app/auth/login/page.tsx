@@ -32,12 +32,14 @@ function AuthScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.id) {
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', user.id)
-          .maybeSingle()
-        role = profile?.role ?? null
+          .maybeSingle<{ role: string | null }>()
+        if (!profileError && profile) {
+          role = profile.role ?? null
+        }
       }
     } catch (error) {
       console.warn('No se pudo leer el rol tras auth:', error)

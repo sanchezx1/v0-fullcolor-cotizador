@@ -83,7 +83,7 @@ export async function getCotizacionesPorDia(): Promise<DatosGrafica[]> {
     }
 
     // Contar cotizaciones por día
-    data?.forEach(item => {
+    data?.forEach((item: any) => {
       const date = new Date(item.created_at).toISOString().split('T')[0]
       if (groupedByDay.hasOwnProperty(date)) {
         groupedByDay[date]++

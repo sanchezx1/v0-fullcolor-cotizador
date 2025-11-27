@@ -102,7 +102,7 @@ export function useQuoteBuilder() {
             .from('profiles')
             .select('role')
             .eq('id', session.user.id)
-            .maybeSingle()
+            .maybeSingle<{ role: string | null }>()
 
           if (profileError) {
             console.warn('Error obteniendo perfil para ver permisos de lead:', profileError)

@@ -72,7 +72,7 @@ export class PDFQuoteService {
       }
 
       // Obtener escalas de precios para cada producto
-      const productIds = items.map(item => item.producto_id)
+      const productIds = items.map((item: any) => item.producto_id)
       const { data: escalas, error: escalasError } = await supabase
         .from('precios_escalonados')
         .select('*')
@@ -84,7 +84,7 @@ export class PDFQuoteService {
       }
 
       // Agrupar escalas por producto
-      const escalasPorProducto = escalas.reduce((acc, escala) => {
+      const escalasPorProducto = escalas.reduce((acc: any, escala: any) => {
         if (!acc[escala.producto_id]) {
           acc[escala.producto_id] = []
         }
@@ -94,8 +94,8 @@ export class PDFQuoteService {
 
       return {
         cotizacion,
-        lead: cotizacion.leads,
-        items: items.map(item => ({
+        lead: (cotizacion as any).leads,
+        items: items.map((item: any) => ({
           ...item,
           producto: item.productos,
           escalas: escalasPorProducto[item.producto_id] || []

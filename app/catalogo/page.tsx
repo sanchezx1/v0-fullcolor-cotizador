@@ -54,6 +54,7 @@ export default function CatalogoPage() {
           .select("producto_id, cantidad_min, precio_unitario")
           .in("producto_id", productIds)
           .order("cantidad_min", { ascending: true })
+          .returns<Array<{ producto_id: number; cantidad_min: number; precio_unitario: number }>>()
 
         if (error) {
           console.error("Error loading pricing tiers:", error)
