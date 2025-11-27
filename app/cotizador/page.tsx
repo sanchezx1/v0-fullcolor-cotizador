@@ -257,24 +257,6 @@ export default function CotizadorPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {isAuthenticated && useAccountContact && !editingContact && (
-                      <div className="flex items-start justify-between rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary">
-                        <p>Usaremos los datos guardados en tu cuenta.</p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingContact(true)
-                            setUseAccountContact(false)
-                          }}
-                          className="border-primary/40 text-primary hover:bg-primary/10"
-                        >
-                          Modificar datos
-                        </Button>
-                      </div>
-                    )}
-
                     {contactPrefillLoading && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -372,6 +354,29 @@ export default function CotizadorPage() {
                     </p>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {isAuthenticated && useAccountContact && !editingContact && (
+                      <div className="flex items-start justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <p className="text-primary font-medium">
+                            Usaremos los datos guardados en tu cuenta
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingContact(true)
+                            setUseAccountContact(false)
+                          }}
+                          className="border-primary/40 text-primary hover:bg-primary/10 ml-3"
+                        >
+                          Modificar datos
+                        </Button>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <Label htmlFor="nombreRazonSocial">
                         Nombre o razón social <span className="text-destructive">*</span>

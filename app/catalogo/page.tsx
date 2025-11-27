@@ -198,9 +198,6 @@ export default function CatalogoPage() {
         <div className="relative z-10">
           <div className="container mx-auto px-5 pb-20 pt-16 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-xl text-center">
-              <div className="inline-flex animate-pulse items-center justify-center rounded-full border border-white/70 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-[#0066CC]">
-                Colección FullColor
-              </div>
               <div className="mt-6 space-y-3 animate-pulse">
                 <div className="mx-auto h-9 w-3/4 rounded-full bg-slate-200/70" />
                 <div className="mx-auto h-4 w-2/3 rounded-full bg-slate-200/70" />
@@ -252,10 +249,7 @@ export default function CatalogoPage() {
       <div className="relative z-10">
         <div className="container mx-auto px-5 pb-20 pt-16 sm:px-6 lg:px-8">
           <section className="mx-auto max-w-xl text-center">
-            <span className="inline-flex items-center justify-center rounded-full border border-[#0066CC]/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-[#0066CC] shadow-sm">
-              Colección FullColor
-            </span>
-            <h1 className="mt-5 text-3xl font-bold text-slate-900 sm:text-4xl">Catálogo de productos</h1>
+            <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Catálogo de productos</h1>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
               Descubre líneas de impresión, merchandising y acabados pensados para marcas que buscan impacto.
             </p>
