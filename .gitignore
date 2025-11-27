@@ -26,9 +26,34 @@ yarn-error.log*
 # MCP configuration (may contain project-specific references)
 .mcp.json
 
+# Claude Code settings (may contain project-specific references)
+.claude/
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE settings
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage and reports
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Logs and backups
+*.log
+*.bak
+*backup*
+*dump*
