@@ -1,24 +1,41 @@
 /**
  * Tipos TypeScript para el Panel Admin
- * Basados en el schema real de Supabase
+ * Basados en el schema real de Supabase (database.types.ts)
+ * NOTA: Usamos `| null` en lugar de `?` para coincidir con los tipos generados de Supabase
  */
 
 // ============= PRODUCTOS =============
+// Tipo base que coincide con la tabla productos de Supabase (Row)
 export interface Producto {
   id: number
   nombre: string
   sku: string
-  descripcion?: string
+  descripcion: string | null
   categoria: string
-  imagen_url?: string
-  color?: string
-  lados?: string
-  impresion?: string
+  imagen_url: string | null
+  activo: boolean
+  created_at: string | null
+  updated_at: string | null
+  unidad: string
+  minimo_pedido: number
+  // Campos virtuales extraídos de descripcion (no están en BD)
   agotado?: boolean
   mas_vendido?: boolean
-  activo: boolean
-  created_at: string
-  updated_at: string
+}
+
+// Tipo para crear productos (coincide con Insert de Supabase)
+export interface ProductoInput {
+  nombre: string
+  sku: string
+  categoria: string
+  descripcion?: string | null
+  imagen_url?: string | null
+  activo?: boolean
+  unidad?: string
+  minimo_pedido?: number
+  // Campos virtuales
+  agotado?: boolean
+  mas_vendido?: boolean
 }
 
 export interface PrecioEscalonado {
@@ -26,7 +43,7 @@ export interface PrecioEscalonado {
   producto_id: number
   cantidad_min: number
   precio_unitario: number
-  created_at: string
+  created_at: string | null
 }
 
 export interface ProductoConPrecios extends Producto {
@@ -39,14 +56,24 @@ export interface ProductoConPrecios extends Producto {
 export interface Lead {
   id: number
   nombre: string
-  empresa?: string
-  ruc_cedula?: string
   email: string
-  telefono: string
-  ciudad?: string
-  direccion?: string
-  notas?: string
-  created_at: string
+  telefono: string | null
+  empresa: string | null
+  ruc_cedula: string | null
+  ciudad: string | null
+  notas: string | null
+  estado: string | null
+  origen: string | null
+  presupuesto_estimado: number | null
+  prioridad: string | null
+  proximo_seguimiento: string | null
+  score: number | null
+  temperatura: string | null
+  ultimo_contacto: string | null
+  user_id: string | null
+  updated_by: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface LeadConEstadisticas extends Lead {
@@ -58,20 +85,25 @@ export interface LeadConEstadisticas extends Lead {
 }
 
 // ============= COTIZACIONES =============
-export type EstadoCotizacion = 'enviada' | 'en_revision' | 'aprobada' | 'rechazada'
+// Estados posibles de cotización (referencia, no enforced por BD)
+export type EstadoCotizacion = 'borrador' | 'pendiente' | 'enviada' | 'en_revision' | 'aprobada' | 'rechazada' | 'vencida'
 
 export interface Cotizacion {
   id: number
   numero: string
   lead_id: number
-  estado: EstadoCotizacion
-  subtotal: number
-  iva: number
+  user_id: string | null
+  estado: string  // La BD no usa enum, almacena como string
+  canal: string
+  subtotal: number | null
+  iva: number | null
   total: number
-  pdf_url?: string
+  pdf_url: string | null
+  notas: string | null
   access_token: string
-  created_at: string
-  updated_at: string
+  validez_dias: number
+  created_at: string | null
+  updated_at: string | null
 }
 
 export interface ItemCotizacion {
@@ -107,24 +139,39 @@ export type TipoEvento =
   | 'producto_editado'
   | 'producto_eliminado'
 
+// Tipo Json de Supabase para compatibilidad
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+// Tipo que coincide con la tabla eventos de Supabase
 export interface Evento {
   id: number
-  tipo: TipoEvento
-  cotizacion_id?: number
-  descripcion?: string
-  metadata?: Record<string, any>
-  created_at: string
+  tipo: string  // La BD no usa enum, almacena como string
+  cotizacion_id: number
+  descripcion: string | null
+  metadata: Json
+  created_at: string | null
 }
 
 // ============= VISTAS Y ESTADÍSTICAS =============
+// Tipo que coincide con la vista estadisticas_dashboard de Supabase
 export interface EstadisticasDashboard {
-  total_cotizaciones: number
-  cotizaciones_mes_actual: number
-  cotizaciones_mes_anterior: number
-  porcentaje_cambio: number
-  ingresos_estimados: number
-  productos_activos: number
-  total_leads: number
+  cotizaciones_aprobadas: number | null
+  cotizaciones_borrador: number | null
+  cotizaciones_enviadas: number | null
+  cotizaciones_mes: number | null
+  cotizaciones_pendiente: number | null
+  cotizaciones_rechazadas: number | null
+  ingresos_estimados: number | null
+  productos_activos: number | null
+  total_cotizaciones: number | null
+  total_leads: number | null
+  // Campos calculados en el servicio
   cotizaciones_por_estado: {
     borrador: number
     enviada: number
@@ -134,12 +181,16 @@ export interface EstadisticasDashboard {
   }
 }
 
+// Tipo que coincide con la vista productos_top_cotizados
 export interface ProductoTopCotizado {
-  producto_id: number
-  nombre: string
-  categoria: string
-  imagen_url?: string
-  veces_cotizado: number
+  id: number | null
+  nombre: string | null
+  categoria: string | null
+  imagen_url: string | null
+  sku: string | null
+  veces_cotizado: number | null
+  unidades_totales: number | null
+  ingresos_generados: number | null
 }
 
 export interface CotizacionPorDia {
@@ -277,16 +328,22 @@ export const CATEGORIAS_PRODUCTO = [
 export type CategoriaProducto = typeof CATEGORIAS_PRODUCTO[number]
 
 // ============= BADGES DE ESTADO =============
-export const ESTADO_COLORS: Record<EstadoCotizacion, string> = {
+export const ESTADO_COLORS: Record<string, string> = {
+  borrador: 'bg-gray-100 text-gray-800 border-gray-300',
+  pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
   enviada: 'bg-blue-100 text-blue-800 border-blue-300',
   en_revision: 'bg-amber-100 text-amber-800 border-amber-300',
   aprobada: 'bg-green-100 text-green-800 border-green-300',
   rechazada: 'bg-red-100 text-red-800 border-red-300',
+  vencida: 'bg-slate-100 text-slate-800 border-slate-300',
 }
 
-export const ESTADO_LABELS: Record<EstadoCotizacion, string> = {
+export const ESTADO_LABELS: Record<string, string> = {
+  borrador: 'Borrador',
+  pendiente: 'Pendiente',
   enviada: 'Enviada',
   en_revision: 'En revisión',
   aprobada: 'Aprobada',
-  rechazada: 'Rechazada'
+  rechazada: 'Rechazada',
+  vencida: 'Vencida'
 }

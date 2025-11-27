@@ -238,7 +238,7 @@ export default function NuevoProductoPage() {
       const producto = await createProducto({
         nombre: formData.nombre,
         sku: skuManual ? formData.sku : '',
-        descripcion: formData.descripcion || undefined,
+        descripcion: formData.descripcion || null,
         categoria: formData.categoria,
         activo: formData.activo,
         agotado: formData.agotado,
@@ -277,7 +277,7 @@ export default function NuevoProductoPage() {
       const producto = await createProducto({
         nombre: formData.nombre,
         sku: skuManual ? formData.sku : '',
-        descripcion: formData.descripcion || undefined,
+        descripcion: formData.descripcion || null,
         categoria: formData.categoria,
         activo: formData.activo,
         agotado: formData.agotado,

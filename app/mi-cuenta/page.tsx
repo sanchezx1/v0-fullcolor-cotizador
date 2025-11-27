@@ -263,7 +263,7 @@ export default function MiCuentaPage() {
                       <div className="flex items-center justify-between gap-2">
                         <div className="space-y-1">
                           <CardTitle className="text-lg font-semibold">Cotizacion {quote.numero || `#${quote.id}`}</CardTitle>
-                          <p className="text-sm text-muted-foreground">Creada el {formatDate(quote.created_at)}</p>
+                          <p className="text-sm text-muted-foreground">Creada el {quote.created_at ? formatDate(quote.created_at) : 'N/A'}</p>
                         </div>
                         <Badge className={status.badgeClass}>{status.label}</Badge>
                       </div>

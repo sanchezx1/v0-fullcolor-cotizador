@@ -110,7 +110,7 @@ export function ProductosTopTable() {
                   <div className="relative h-12 w-12 rounded-lg overflow-hidden border">
                     <Image
                       src={producto.imagen_url}
-                      alt={producto.nombre}
+                      alt={producto.nombre || 'Producto'}
                       fill
                       className="object-cover"
                     />
@@ -125,14 +125,14 @@ export function ProductosTopTable() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">
-                  {producto.nombre}
+                  {producto.nombre || 'Sin nombre'}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs text-muted-foreground">
-                    {producto.sku}
+                    {producto.sku || ''}
                   </span>
                   <Badge variant="secondary" className="text-xs">
-                    {producto.categoria}
+                    {producto.categoria || 'Sin categoría'}
                   </Badge>
                 </div>
               </div>

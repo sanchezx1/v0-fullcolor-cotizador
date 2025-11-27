@@ -79,12 +79,12 @@ export function QuoteTimeline({ eventos }: QuoteTimelineProps) {
               <div>
                 <p className="font-medium">{evento.descripcion || evento.tipo}</p>
                 <p className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(evento.created_at), {
+                  {evento.created_at ? formatDistanceToNow(new Date(evento.created_at), {
                     locale: es,
                     addSuffix: true
-                  })}
+                  }) : ''}
                   {' '}
-                  ({format(new Date(evento.created_at), 'dd MMM yyyy HH:mm', { locale: es })})
+                  {evento.created_at ? `(${format(new Date(evento.created_at), 'dd MMM yyyy HH:mm', { locale: es })})` : ''}
                 </p>
               </div>
             </div>

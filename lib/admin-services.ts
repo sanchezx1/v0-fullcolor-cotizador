@@ -5,11 +5,7 @@
 
 'use client'
 
-import { supabase as supabaseTyped } from './supabase-client'
-import type { Database } from '@/src/services/supabaseClient'
-
-// Wrapper to bypass strict TypeScript types during migration
-const supabase: any = supabaseTyped
+import { supabase } from './supabase-client'
 import {
   buildProductGalleryPath,
   createGalleryFileName,
@@ -23,6 +19,7 @@ import {
 } from './product-status'
 import type {
   Producto,
+  ProductoInput,
   ProductoConPrecios,
   PrecioEscalonado,
   Lead,
@@ -129,7 +126,7 @@ export async function getProducto(id: number): Promise<ProductoConPrecios | null
   } as ProductoConPrecios & { precio_base: number }
 }
 
-export async function createProducto(producto: Omit<Producto, 'id' | 'created_at' | 'updated_at'>): Promise<Producto> {
+export async function createProducto(producto: ProductoInput): Promise<Producto> {
   try {
     let sku = producto.sku
     
@@ -589,7 +586,8 @@ export async function createCotizacion(cotizacion: {
   const total = subtotal + iva
 
   // Generar número
-  const { data: numero } = await supabase.rpc('generar_numero_cotizacion')
+  const { data: numeroData } = await supabase.rpc('generar_numero_cotizacion')
+  const numero = numeroData || `COT-${Date.now()}`
 
   // Crear cotización
   const { data: nuevaCotizacion, error: cotError } = await supabase
@@ -597,7 +595,7 @@ export async function createCotizacion(cotizacion: {
     .insert({
       numero,
       lead_id: cotizacion.lead_id,
-      estado: 'borrador' as EstadoCotizacion,
+      estado: 'borrador',
       subtotal,
       iva,
       total

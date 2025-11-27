@@ -151,9 +151,9 @@ export default function EditarProductoPage() {
         sku: data.sku,
         descripcion: data.descripcion || '',
         categoria: data.categoria,
-        color: data.color || '',
-        lados: data.lados || '',
-        impresion: data.impresion || '',
+        color: '',
+        lados: '',
+        impresion: '',
         activo: data.activo,
         agotado: Boolean(data.agotado),
         mas_vendido: Boolean(data.mas_vendido),
@@ -400,15 +400,12 @@ export default function EditarProductoPage() {
       await updateProducto(productoId, {
         nombre: formData.nombre,
         sku: formData.sku,
-        descripcion: formData.descripcion || undefined,
+        descripcion: formData.descripcion || null,
         categoria: formData.categoria,
-        color: formData.color || undefined,
-        lados: formData.lados || undefined,
-        impresion: formData.impresion || undefined,
         activo: formData.activo,
         agotado: formData.agotado,
         mas_vendido: formData.mas_vendido,
-        imagen_url: primaryImageUrl ?? undefined
+        imagen_url: primaryImageUrl ?? null
       })
 
       toast.success('Producto actualizado exitosamente')

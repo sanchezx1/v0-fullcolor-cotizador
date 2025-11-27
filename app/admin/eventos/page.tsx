@@ -83,7 +83,7 @@ export default function EventosPage() {
   }
 
   // Obtener icono según tipo de evento
-  const getEventIcon = (tipo: TipoEvento) => {
+  const getEventIcon = (tipo: string) => {
     switch (tipo) {
       case 'cotizacion_creada':
         return <FileText className="h-5 w-5 text-blue-500" />
@@ -105,7 +105,7 @@ export default function EventosPage() {
   }
 
   // Obtener color de badge según tipo
-  const getTipoBadgeColor = (tipo: TipoEvento) => {
+  const getTipoBadgeColor = (tipo: string) => {
     switch (tipo) {
       case 'cotizacion_creada':
         return 'bg-blue-500'
@@ -273,10 +273,10 @@ export default function EventosPage() {
                           <TableCell>
                             <div>
                               <p className="text-sm">
-                                {format(new Date(evento.created_at), 'dd MMM yyyy, HH:mm', { locale: es })}
+                                {evento.created_at ? format(new Date(evento.created_at), 'dd MMM yyyy, HH:mm', { locale: es }) : '-'}
                               </p>
                               <p className="text-xs text-gray-500">
-                                {formatDistanceToNow(new Date(evento.created_at), { addSuffix: true, locale: es })}
+                                {evento.created_at ? formatDistanceToNow(new Date(evento.created_at), { addSuffix: true, locale: es }) : ''}
                               </p>
                             </div>
                           </TableCell>

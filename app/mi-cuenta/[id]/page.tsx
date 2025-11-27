@@ -203,7 +203,7 @@ export default function QuoteDetailPage() {
         <CardContent className="grid gap-4 md:grid-cols-3">
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-4">
             <span className="text-sm text-muted-foreground">Creada el</span>
-            <span className="font-semibold">{formatDateTime(quote.created_at)}</span>
+            <span className="font-semibold">{quote.created_at ? formatDateTime(quote.created_at) : 'N/A'}</span>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarClock className="h-4 w-4" />
               Validez: {quote.validez_dias} dias
@@ -213,7 +213,7 @@ export default function QuoteDetailPage() {
             <span className="text-sm text-muted-foreground">Total</span>
             <span className="text-2xl font-bold">{formatCurrency(quote.total)}</span>
             <div className="text-sm text-muted-foreground">
-              Subtotal {formatCurrency(quote.subtotal)} • IVA {formatCurrency(quote.iva)}
+              Subtotal {formatCurrency(quote.subtotal ?? 0)} • IVA {formatCurrency(quote.iva ?? 0)}
             </div>
           </div>
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-4">

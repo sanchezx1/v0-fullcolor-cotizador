@@ -11,16 +11,16 @@ export interface Producto {
   id: number
   sku: string
   nombre: string
-  descripcion?: string
-  categoria: ProductoCategoria
+  descripcion: string | null
+  categoria: string
   unidad: string
   minimo_pedido: number
   agotado?: boolean
   mas_vendido?: boolean
   activo: boolean
-  imagen_url?: string
-  created_at: string
-  updated_at: string
+  imagen_url: string | null
+  created_at: string | null
+  updated_at: string | null
 }
 
 export type ProductoCategoria = 
@@ -36,7 +36,7 @@ export interface PrecioEscalonado {
   producto_id: number
   cantidad_min: number
   precio_unitario: number
-  created_at: string
+  created_at: string | null
 }
 
 export interface ProductoConPrecios extends Producto {
@@ -126,10 +126,10 @@ export type TipoEvento =
 export interface Evento {
   id: number
   cotizacion_id: number
-  tipo: TipoEvento
-  descripcion?: string
-  metadata?: Record<string, any>
-  created_at: string
+  tipo: string
+  descripcion: string | null
+  metadata: Json | null
+  created_at: string | null
 }
 
 export interface EventoConCotizacion extends Evento {
@@ -141,6 +141,15 @@ export interface EventoConCotizacion extends Evento {
     }
   }
 }
+
+// Type alias para Json desde database.types
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 // ============================================================================
 // DASHBOARD
@@ -159,14 +168,14 @@ export interface EstadisticasDashboard {
 }
 
 export interface ProductoTopCotizado {
-  id: number
-  nombre: string
-  sku: string
-  categoria: string
-  imagen_url?: string
-  veces_cotizado: number
-  cantidad_total_cotizada: number
-  ingresos_totales: number
+  id: number | null
+  nombre: string | null
+  sku: string | null
+  categoria: string | null
+  imagen_url: string | null
+  veces_cotizado: number | null
+  unidades_totales: number | null
+  ingresos_generados: number | null
 }
 
 export interface DatosGrafica {

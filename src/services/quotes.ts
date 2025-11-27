@@ -258,7 +258,9 @@ export async function vincularLeadAUsuarioAutenticado(email: string): Promise<{ 
       throw error
     }
 
-    return { linked: !!data?.linked, leadId: data?.lead_id ?? null }
+    // Cast del resultado JSON a un objeto con las propiedades esperadas
+    const result = data as { linked?: boolean; lead_id?: number | null } | null
+    return { linked: !!result?.linked, leadId: result?.lead_id ?? null }
   } catch (error) {
     console.warn("No se pudo vincular lead a usuario autenticado:", error)
     return { linked: false, leadId: null }

@@ -207,7 +207,7 @@ export default function CotizacionDetailPage() {
     }
   }
 
-  function getEstadoColor(estado: EstadoCotizacion): string {
+  function getEstadoColor(estado: string): string {
     switch (estado) {
       case 'aprobada':
         return 'bg-green-100 text-green-800 hover:bg-green-100'
@@ -217,8 +217,14 @@ export default function CotizacionDetailPage() {
         return 'bg-amber-100 text-amber-800 hover:bg-amber-100'
       case 'rechazada':
         return 'bg-red-100 text-red-800 hover:bg-red-100'
+      case 'borrador':
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+      case 'pendiente':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+      case 'vencida':
+        return 'bg-slate-100 text-slate-800 hover:bg-slate-100'
       default:
-        return ''
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
     }
   }
 
@@ -255,7 +261,7 @@ export default function CotizacionDetailPage() {
           <div>
             <h1 className="text-3xl font-bold">{cotizacion.numero}</h1>
             <p className="text-muted-foreground">
-              Creada el {format(new Date(cotizacion.created_at), 'dd MMMM yyyy', { locale: es })}
+              Creada el {cotizacion.created_at ? format(new Date(cotizacion.created_at), 'dd MMMM yyyy', { locale: es }) : 'Fecha no disponible'}
             </p>
           </div>
           <Badge className={getEstadoColor(cotizacion.estado)}>
@@ -338,16 +344,6 @@ export default function CotizacionDetailPage() {
                       <div>
                         <p className="text-sm text-muted-foreground">RUC/Cédula</p>
                         <p className="font-medium">{cotizacion.lead.ruc_cedula}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {cotizacion.lead.direccion && (
-                    <div className="flex items-start gap-3 md:col-span-2">
-                      <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Dirección</p>
-                        <p className="font-medium">{cotizacion.lead.direccion}</p>
                       </div>
                     </div>
                   )}
@@ -456,7 +452,7 @@ export default function CotizacionDetailPage() {
                   <div className="flex-1">
                     <p className="font-medium">Cotización PDF</p>
                     <p className="text-sm text-muted-foreground">
-                      Generado el {format(new Date(cotizacion.updated_at), 'dd MMM yyyy', { locale: es })}
+                      Generado el {cotizacion.updated_at ? format(new Date(cotizacion.updated_at), 'dd MMM yyyy', { locale: es }) : 'Fecha no disponible'}
                     </p>
                   </div>
                   <div className="flex gap-2">

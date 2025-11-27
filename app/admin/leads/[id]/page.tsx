@@ -254,16 +254,6 @@ export default function LeadDetailPage() {
                   </div>
                 </div>
               )}
-
-              {lead.direccion && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-5 w-5 text-gray-400" />
-                  <div>
-                    <p className="text-sm text-gray-600">Dirección</p>
-                    <p>{lead.direccion}</p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -307,7 +297,7 @@ export default function LeadDetailPage() {
                             #{cotizacion.id}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(cotizacion.created_at), 'dd MMM yyyy', { locale: es })}
+                            {cotizacion.created_at ? format(new Date(cotizacion.created_at), 'dd MMM yyyy', { locale: es }) : '-'}
                           </TableCell>
                           <TableCell>
                             <Badge className={getEstadoBadge(cotizacion.estado)}>

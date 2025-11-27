@@ -21,7 +21,6 @@ const leadSchema = z.object({
   empresa: z.string().optional(),
   ruc_cedula: z.string().optional(),
   ciudad: z.string().optional(),
-  direccion: z.string().optional(),
   notas: z.string().max(500, 'Las notas no pueden exceder 500 caracteres').optional(),
 })
 
@@ -52,7 +51,6 @@ export default function LeadForm({ initialData, onSubmit, onCancel, isEditing = 
       empresa: initialData.empresa || '',
       ruc_cedula: initialData.ruc_cedula || '',
       ciudad: initialData.ciudad || '',
-      direccion: initialData.direccion || '',
       notas: initialData.notas || '',
     } : {
       nombre: '',
@@ -61,7 +59,6 @@ export default function LeadForm({ initialData, onSubmit, onCancel, isEditing = 
       empresa: '',
       ruc_cedula: '',
       ciudad: '',
-      direccion: '',
       notas: '',
     }
   })
@@ -198,21 +195,6 @@ export default function LeadForm({ initialData, onSubmit, onCancel, isEditing = 
             </Select>
             {errors.ciudad && (
               <p className="text-sm text-red-500">{errors.ciudad.message}</p>
-            )}
-          </div>
-
-          {/* Dirección */}
-          <div className="space-y-2">
-            <Label htmlFor="direccion">Dirección</Label>
-            <Textarea
-              id="direccion"
-              {...register('direccion')}
-              placeholder="Calle, número, barrio..."
-              rows={2}
-              className={errors.direccion ? 'border-red-500' : ''}
-            />
-            {errors.direccion && (
-              <p className="text-sm text-red-500">{errors.direccion.message}</p>
             )}
           </div>
         </CardContent>

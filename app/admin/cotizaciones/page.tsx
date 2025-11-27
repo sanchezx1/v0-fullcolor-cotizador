@@ -144,7 +144,7 @@ export default function CotizacionesListPage() {
     void loadCotizaciones()
   }
 
-  function getEstadoColor(estado: EstadoCotizacion): string {
+  function getEstadoColor(estado: string): string {
     switch (estado) {
       case 'aprobada':
         return 'bg-green-100 text-green-800 hover:bg-green-100'
@@ -154,8 +154,14 @@ export default function CotizacionesListPage() {
         return 'bg-amber-100 text-amber-800 hover:bg-amber-100'
       case 'rechazada':
         return 'bg-red-100 text-red-800 hover:bg-red-100'
+      case 'borrador':
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+      case 'pendiente':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'
+      case 'vencida':
+        return 'bg-slate-100 text-slate-800 hover:bg-slate-100'
       default:
-        return ''
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100'
     }
   }
 
@@ -333,7 +339,7 @@ export default function CotizacionesListPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(cotizacion.created_at), 'dd MMM yyyy', { locale: es })}
+                    {cotizacion.created_at ? format(new Date(cotizacion.created_at), 'dd MMM yyyy', { locale: es }) : '-'}
                   </TableCell>
                   <TableCell>
                     <Badge className={getEstadoColor(cotizacion.estado)}>
