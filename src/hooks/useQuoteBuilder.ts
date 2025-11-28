@@ -5,6 +5,7 @@ import { calculatePriceForProduct } from '../lib/data'
 import { pdfGenerationService } from '../services/pdfGenerationService'
 import { sendQuoteEmail } from '../services/emailService'
 import { supabase } from '../services/supabaseClient'
+import type { Lead, ProductoAgotadoError } from '../types/quotes'
 
 export interface QuoteItem {
   productId: number
@@ -42,8 +43,8 @@ export function useQuoteBuilder() {
   // Estado para manejo de conflicto de leads
   const [leadConflict, setLeadConflict] = useState<{
     show: boolean
-    existingLead: any
-    newData: any
+    existingLead: Lead
+    newData: Partial<Lead>
   } | null>(null)
   const [canUpdateLead, setCanUpdateLead] = useState(false)
   const [sessionInfo, setSessionInfo] = useState<{ email: string | null; role: string | null }>({
@@ -212,8 +213,9 @@ export function useQuoteBuilder() {
       const product = priceResult.product
 
       if (product.agotado) {
-        const outOfStockError: any = new Error('PRODUCTO_AGOTADO')
+        const outOfStockError = new Error('Lo sentimos, este producto está agotado.') as ProductoAgotadoError
         outOfStockError.code = 'PRODUCTO_AGOTADO'
+        outOfStockError.producto = product.nombre
         setError('Lo sentimos, este producto está agotado.')
         throw outOfStockError
       }
@@ -243,10 +245,11 @@ export function useQuoteBuilder() {
       }
     } catch (err) {
       console.error('Error adding item to quote:', err)
-      if (err instanceof Error && (err as any).code === 'PRODUCTO_AGOTADO') {
+      const error = err as ProductoAgotadoError | Error
+      if ('code' in error && error.code === 'PRODUCTO_AGOTADO') {
         setError('Lo sentimos, este producto está agotado.')
       } else {
-        setError(err instanceof Error ? err.message : 'Error al agregar producto')
+        setError(error instanceof Error ? error.message : 'Error al agregar producto')
       }
     } finally {
       setLoading(false)
@@ -370,13 +373,14 @@ export function useQuoteBuilder() {
           ruc_cedula: contactInfo.rucCedula,
           ciudad: contactInfo.ciudad
         })
-      } catch (leadError: any) {
+      } catch (leadError) {
         // Detectar conflicto de email
-        if (leadError.code === 'LEAD_EMAIL_EXISTS') {
+        const error = leadError as Error & { code?: string; existingLead?: Lead; newData?: Partial<Lead> }
+        if (error.code === 'LEAD_EMAIL_EXISTS') {
           setLeadConflict({
             show: true,
-            existingLead: leadError.existingLead,
-            newData: leadError.newData
+            existingLead: error.existingLead!,
+            newData: error.newData!
           })
           setLoading(false)
           return { success: false, error: 'LEAD_CONFLICT' }
@@ -438,14 +442,15 @@ export function useQuoteBuilder() {
       clearQuote()
 
       return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
-    } catch (err: any) {
-      console.error('❌ Error submitting quote:', err)
+    } catch (err) {
+      const error = err as Error
+      console.error('❌ Error submitting quote:', error)
       console.error('❌ Error detallado:', {
-        message: err?.message,
-        stack: err?.stack,
-        name: err?.name
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
       })
-      const errorMessage = err instanceof Error ? err.message : 'Error al enviar la cotización'
+      const errorMessage = error instanceof Error ? error.message : 'Error al enviar la cotización'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
@@ -584,9 +589,10 @@ export function useQuoteBuilder() {
 
       clearQuote()
       return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
-    } catch (err: any) {
-      console.error('❌ Error en upsertLeadAndContinue:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar lead'
+    } catch (err) {
+      const error = err as Error
+      console.error('❌ Error en upsertLeadAndContinue:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar lead'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
@@ -658,9 +664,10 @@ export function useQuoteBuilder() {
 
       clearQuote()
       return { success: true, quoteId: cotizacion.id, quoteToken: cotizacion.access_token }
-    } catch (err: any) {
-      console.error('❌ Error en useExistingLeadAndContinue:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Error al crear cotización'
+    } catch (err) {
+      const error = err as Error
+      console.error('❌ Error en useExistingLeadAndContinue:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear cotización'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {

@@ -1,10 +1,18 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
+import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
+import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Schema de validación para generación de PDF
+const GeneratePdfSchema = z.object({
+  quoteId: z.number().int().positive('ID de cotización inválido'),
+  quoteToken: z.string().optional(),
+});
 
 async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: string) {
   if (!supabaseUrl || !supabaseServiceKey) {
@@ -39,20 +47,12 @@ async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: 
  * Edge Function para generar PDF de cotizaciÃ³n
  * Genera PDFs profesionales usando jsPDF (sin plantillas HTML)
  */ Deno.serve(async (req)=>{
-  // Headers CORS para permitir llamadas desde el navegador
-  const corsHeaders1 = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
-  };
+  // Headers CORS restrictivos usando módulo compartido
+  const corsHeaders1 = getCorsHeaders(req);
   try {
     // Manejar preflight OPTIONS request
     if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 200,
-        headers: corsHeaders1
-      });
+      return handleCorsPreflight(req);
     }
     // Verificar mÃ©todo HTTP
     if (req.method !== 'POST') {
@@ -63,16 +63,24 @@ async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: 
         headers: corsHeaders1
       });
     }
-    // Obtener datos del request
-    const { quoteId, quoteToken } = await req.json();
-    if (!quoteId) {
+    // Obtener y validar datos del request
+    const body = await req.json();
+
+    // Validar con Zod
+    const validationResult = GeneratePdfSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      console.error('❌ Validación de datos falló:', validationResult.error.flatten());
       return new Response(JSON.stringify({
-        error: 'ID de cotización requerido'
+        error: 'Datos inválidos',
+        details: validationResult.error.flatten().fieldErrors
       }), {
         status: 400,
         headers: corsHeaders1
       });
     }
+
+    const { quoteId, quoteToken } = validationResult.data;
     await ensureQuoteAccess(req, quoteId, quoteToken);
     console.log('🔍 Generando PDF profesional para cotización:', quoteId);
     // Generar PDF profesional directamente

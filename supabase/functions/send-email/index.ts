@@ -1,17 +1,21 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
-// Headers CORS globales
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
-};
+import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
+import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Schema de validación para envío de email
+const SendEmailSchema = z.object({
+  quoteId: z.number().int().positive('ID de cotización inválido'),
+  recipientEmail: z.string().email('Email inválido').optional(),
+  quoteToken: z.string().optional(),
+  emailType: z.enum(['quote_created', 'quote_updated', 'status_change']).default('quote_created'),
+  newStatus: z.enum(['en_revision', 'aprobada', 'rechazada', 'vencida']).optional(),
+});
 
 const STATUS_LABELS: Record<string, string> = {
   enviada: 'Enviada',
@@ -507,12 +511,10 @@ function generateStatusEmailHTML(data) {
 /**
  * Edge Function para enviar emails de cotizaciones usando SendGrid
  */ Deno.serve(async (req)=>{
+  const corsHeaders = getCorsHeaders(req);
   // Manejar preflight OPTIONS
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders
-    });
+    return handleCorsPreflight(req);
   }
   try {
     console.log('📧 send-email function invoked');
@@ -560,16 +562,24 @@ function generateStatusEmailHTML(data) {
         headers: corsHeaders
       });
     }
-    // Obtener datos del request
-    const { quoteId, recipientEmail, quoteToken, emailType = 'quote_created', newStatus } = await req.json();
-    if (!quoteId) {
+    // Obtener y validar datos del request
+    const body = await req.json();
+
+    // Validar con Zod
+    const validationResult = SendEmailSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      console.error('❌ Validación de datos falló:', validationResult.error.flatten());
       return new Response(JSON.stringify({
-        error: 'ID de cotización requerido'
+        error: 'Datos inválidos',
+        details: validationResult.error.flatten().fieldErrors
       }), {
         status: 400,
         headers: corsHeaders
       });
     }
+
+    const { quoteId, recipientEmail, quoteToken, emailType, newStatus } = validationResult.data;
     await ensureQuoteAccess(req, quoteId, quoteToken);
     console.log('📧 Iniciando envío de email para cotización:', quoteId);
     // 1. Obtener datos de la cotización desde la BD

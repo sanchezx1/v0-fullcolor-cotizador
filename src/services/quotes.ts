@@ -1,4 +1,6 @@
 import { supabase, Lead, LeadReference, Cotizacion, ItemCotizacion, Evento } from "./supabaseClient"
+import type { Producto } from '../types/quotes'
+import { LeadSchema, CreateQuoteSchema } from '../schemas'
 
 /**
  * Crea o reutiliza un lead (contacto) basado en el email.
@@ -17,34 +19,39 @@ export async function crearLead(leadData: {
   try {
     console.debug("[Lead] Creando/reutilizando lead mediante RPC seguro")
 
-    const params: any = {
-      p_nombre: leadData.nombre,
-      p_email: leadData.email,
-      p_telefono: leadData.telefono,
-      p_empresa: leadData.empresa,
-      p_notas: leadData.notas ?? null,
-      p_ruc_cedula: leadData.ruc_cedula ?? null,
-      p_ciudad: leadData.ciudad ?? null,
+    // Validar datos de entrada con Zod
+    const validatedData = LeadSchema.parse(leadData)
+
+    const params = {
+      p_nombre: validatedData.nombre,
+      p_email: validatedData.email,
+      p_telefono: validatedData.telefono ?? "",
+      p_empresa: validatedData.empresa ?? "",
+      p_notas: validatedData.notas,
+      p_ruc_cedula: validatedData.ruc_cedula,
+      p_ciudad: validatedData.ciudad,
     }
 
-    const supabaseClient: any = supabase
-    const { data, error } = await supabaseClient.rpc("create_public_lead", params)
+    const { data, error } = await supabase.rpc("create_public_lead", params)
 
     if (error) {
       console.error("[Lead] Error ejecutando create_public_lead:", error)
       throw new Error(`Error creando lead: ${error.message}`)
     }
 
-    if (!data || !data.success || !data.lead) {
+    // Cast del resultado del RPC
+    const result = data as unknown as { success: boolean; lead: LeadReference; reused?: boolean; upgraded_to_user?: boolean }
+
+    if (!result || !result.success || !result.lead) {
       throw new Error("Error creando lead: respuesta inválida del servidor")
     }
 
-    const lead = data.lead as LeadReference
+    const lead = result.lead
 
     console.debug("[Lead] Lead asegurado (nuevo o reutilizado):", {
       id: lead.id,
-      reused: !!data.reused,
-      upgraded: !!data.upgraded_to_user,
+      reused: !!result.reused,
+      upgraded: !!result.upgraded_to_user,
     })
 
     return lead
@@ -76,34 +83,54 @@ export async function crearCotizacion(cotizacionData: {
   try {
     console.debug("Creando cotizacion via RPC")
 
-    const itemsPayload = cotizacionData.items.map((item) => ({
-      producto_id: item.productoId,
+    // Validar datos de entrada con Zod
+    const validatedData = CreateQuoteSchema.parse({
+      leadId: cotizacionData.leadId,
+      items: cotizacionData.items.map((item) => ({
+        producto_id: item.productoId,
+        cantidad: item.cantidad,
+        precio_unitario: item.precioUnitario,
+        subtotal: item.subtotal,
+      })),
+      canal: cotizacionData.canal,
+      notas: cotizacionData.notas,
+    })
+
+    const itemsPayload = validatedData.items.map((item) => ({
+      producto_id: item.producto_id,
       cantidad: item.cantidad,
-      precio_unitario: item.precioUnitario,
+      precio_unitario: item.precio_unitario,
       subtotal: item.subtotal,
     }))
 
-    const quoteParams: any = {
-      p_lead_id: cotizacionData.leadId,
-      p_items: itemsPayload,
-      p_canal: cotizacionData.canal,
-      p_notas: cotizacionData.notas ?? null,
+    // leadId es requerido para crear una cotización
+    if (!validatedData.leadId) {
+      throw new Error("leadId es requerido para crear una cotización")
     }
 
-    const supabaseClient: any = supabase
-    const { data, error } = await supabaseClient.rpc("create_public_quote", quoteParams)
+    const quoteParams = {
+      p_lead_id: validatedData.leadId,
+      p_items: itemsPayload as unknown as any, // Cast para compatibilidad con Json type
+      p_canal: validatedData.canal,
+      p_notas: validatedData.notas,
+    }
+
+    const { data, error } = await supabase.rpc("create_public_quote", quoteParams as any)
 
     if (error) {
       console.error("❌ Error ejecutando create_public_quote:", error)
       throw new Error(`Error creando cotización: ${error.message}`)
     }
 
-    if (!data || !data.cotizacion) {
+    // Cast del resultado del RPC
+    const result = data as unknown as { cotizacion: Cotizacion; items: ItemCotizacion[] }
+
+    if (!result || !result.cotizacion) {
       throw new Error("Error creando cotización: el servidor no devolvió la cotización")
     }
 
-    const cotizacion = data.cotizacion as Cotizacion
-    const items = (data.items as ItemCotizacion[]) || []
+    const cotizacion = result.cotizacion
+    const items = result.items || []
 
     console.debug("Cotizacion creada via RPC", { id: cotizacion.id })
 
@@ -124,7 +151,7 @@ export async function crearCotizacion(cotizacionData: {
 export async function registrarEvento(eventoData: {
   cotizacionId: number
   tipo: "pdf_generado" | "email_enviado" | "whatsapp_share" | "cotizacion_creada" | "cotizacion_actualizada"
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }): Promise<Evento> {
   try {
     const { data, error } = await supabase
@@ -132,7 +159,7 @@ export async function registrarEvento(eventoData: {
       .insert({
         cotizacion_id: eventoData.cotizacionId,
         tipo: eventoData.tipo,
-        metadata: eventoData.metadata,
+        metadata: eventoData.metadata as any, // Cast para compatibilidad con tipo Json de Supabase
       })
       .select()
       .single()
@@ -158,7 +185,7 @@ export async function actualizarEstadoCotizacion(
   pdfUrl?: string
 ): Promise<Cotizacion> {
   try {
-    const updateData: any = { estado: nuevoEstado }
+    const updateData: { estado: Cotizacion["estado"]; pdf_url?: string } = { estado: nuevoEstado }
     if (pdfUrl) {
       updateData.pdf_url = pdfUrl
     }
@@ -198,7 +225,7 @@ export async function actualizarEstadoCotizacion(
 export async function obtenerCotizacionCompleta(cotizacionId: number): Promise<{
   cotizacion: Cotizacion
   lead: Lead
-  items: Array<ItemCotizacion & { producto: any }>
+  items: Array<ItemCotizacion & { producto: Producto }>
   eventos: Evento[]
 }> {
   try {
@@ -231,10 +258,18 @@ export async function obtenerCotizacionCompleta(cotizacionId: number): Promise<{
       throw eventosError
     }
 
+    type CotizacionWithRelations = Cotizacion & {
+      leads: Lead
+      items_cotizacion: Array<ItemCotizacion & { productos: Producto }>
+    }
+
     return {
       cotizacion,
-      lead: (cotizacion as any).leads,
-      items: (cotizacion as any).items_cotizacion,
+      lead: (cotizacion as CotizacionWithRelations).leads,
+      items: (cotizacion as CotizacionWithRelations).items_cotizacion.map(item => ({
+        ...item,
+        producto: item.productos
+      })),
       eventos: eventos || [],
     }
   } catch (error) {
@@ -303,7 +338,7 @@ export async function obtenerCotizacionesDeUsuario(): Promise<Array<Cotizacion &
  */
 export async function obtenerCotizacionDeUsuarioPorId(
   cotizacionId: number
-): Promise<(Cotizacion & { leads: Lead; items_cotizacion: (ItemCotizacion & { productos: any })[] }) | null> {
+): Promise<(Cotizacion & { leads: Lead; items_cotizacion: (ItemCotizacion & { productos: Producto })[] }) | null> {
   const { data, error } = await supabase
     .from("cotizaciones")
     .select(
@@ -321,5 +356,6 @@ export async function obtenerCotizacionDeUsuarioPorId(
     throw error
   }
 
+  // Cast para compatibilidad de tipos null/undefined de Supabase
   return data as any
 }

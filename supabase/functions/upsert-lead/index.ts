@@ -1,11 +1,24 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
+import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
+import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts';
 // Configuración de Supabase
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 // Cliente con permisos de servicio para actualizar leads
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Schema de validación para Lead
+const LeadSchema = z.object({
+  nombre: z.string().min(1, 'Nombre requerido').max(255),
+  email: z.string().email('Email inválido').max(255),
+  telefono: z.string().max(20).optional(),
+  empresa: z.string().max(255).optional(),
+  ruc_cedula: z.string().max(13).optional(),
+  ciudad: z.string().max(100).optional(),
+  notas: z.string().max(1000).optional(),
+});
 
 async function ensureAdminLeadAccess(req: Request) {
   if (!supabaseUrl || !supabaseServiceKey) {
@@ -24,19 +37,11 @@ async function ensureAdminLeadAccess(req: Request) {
  * Edge Function para crear o actualizar leads con Service Role
  * Evita problemas de RLS al actualizar datos de contacto
  */ Deno.serve(async (req)=>{
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Content-Type': 'application/json'
-  };
+  const corsHeaders = getCorsHeaders(req);
   try {
     // Manejar preflight OPTIONS
     if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 200,
-        headers: corsHeaders
-      });
+      return handleCorsPreflight(req);
     }
     // Verificar método HTTP
     if (req.method !== 'POST') {
@@ -48,24 +53,25 @@ async function ensureAdminLeadAccess(req: Request) {
       });
     }
     await ensureAdminLeadAccess(req);
-    // Obtener datos del request
-    const { nombre, email, telefono, empresa, ruc_cedula, ciudad, notas } = await req.json();
-    if (!email) {
+
+    // Obtener y validar datos del request
+    const body = await req.json();
+
+    // Validar con Zod
+    const validationResult = LeadSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      console.error('❌ Validación de datos falló:', validationResult.error.flatten());
       return new Response(JSON.stringify({
-        error: 'Email es requerido'
+        error: 'Datos inválidos',
+        details: validationResult.error.flatten().fieldErrors
       }), {
         status: 400,
         headers: corsHeaders
       });
     }
-    if (!nombre) {
-      return new Response(JSON.stringify({
-        error: 'Nombre es requerido'
-      }), {
-        status: 400,
-        headers: corsHeaders
-      });
-    }
+
+    const { nombre, email, telefono, empresa, ruc_cedula, ciudad, notas } = validationResult.data;
     console.log('🔍 Upsert lead para email:', email);
     // Buscar lead existente por email
     const { data: existingLeads, error: searchError } = await supabase.from('leads').select('*').eq('email', email).limit(1);

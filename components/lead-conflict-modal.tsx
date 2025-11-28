@@ -7,18 +7,18 @@ interface LeadConflictModalProps {
   existingLead: {
     nombre: string
     email: string
-    telefono?: string
-    empresa?: string
-    ciudad?: string
-    ruc_cedula?: string
+    telefono?: string | null
+    empresa?: string | null
+    ciudad?: string | null
+    ruc_cedula?: string | null
   }
   newData: {
-    nombre: string
-    email: string
-    telefono: string
-    empresa: string
-    ciudad?: string
-    ruc_cedula?: string
+    nombre?: string
+    email?: string
+    telefono?: string | null
+    empresa?: string | null
+    ciudad?: string | null
+    ruc_cedula?: string | null
   }
   onUseExisting: () => void
   onUpdateAndContinue: () => void
@@ -244,10 +244,10 @@ function DataField({
   label, 
   value, 
   highlight = false 
-}: { 
+}: {
   icon: React.ReactNode
   label: string
-  value: string
+  value?: string | null
   highlight?: boolean
 }) {
   return (
@@ -258,7 +258,7 @@ function DataField({
       <div className="flex-1 min-w-0">
         <div className="text-xs text-gray-500 mb-0.5">{label}</div>
         <div className={`font-medium truncate ${highlight ? 'text-gray-900' : 'text-gray-700'}`}>
-          {value}
+          {value || 'No especificado'}
         </div>
       </div>
     </div>
