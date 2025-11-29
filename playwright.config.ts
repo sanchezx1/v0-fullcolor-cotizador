@@ -1,82 +1,84 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig, devices } from "@playwright/test"
 
 /**
- * Configuración de Playwright para E2E tests
- * 
- * Tests disponibles:
- * - npm run test:e2e          → Ejecuta todos los tests E2E
- * - npm run test:e2e:ui       → Ejecuta con interfaz gráfica
- * - npm run test:e2e:headed   → Ejecuta con navegador visible
- * - npm run test:accessibility → Solo tests de accesibilidad
+ * Configuración de Playwright para tests E2E y de accesibilidad
+ *
+ * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './e2e/specs',
-  
-  // Configuración de timeout
+  testDir: "./e2e/specs",
+
+  /* Configuración de timeout */
   timeout: 30 * 1000,
   expect: {
-    timeout: 5000,
-  },
-  
-  // Configuración de ejecución
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  
-  // Reporter configuration
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['list'],
-  ],
-  
-  // Configuración global
-  use: {
-    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    timeout: 5000
   },
 
-  // Proyectos de navegadores
+  /* Ejecutar tests en paralelo */
+  fullyParallel: true,
+
+  /* Fallar el build si se dejan test.only en CI */
+  forbidOnly: !!process.env.CI,
+
+  /* Reintentar en CI */
+  retries: process.env.CI ? 2 : 0,
+
+  /* Workers paralelos */
+  workers: process.env.CI ? 1 : undefined,
+
+  /* Reporter: usar "html" para reportes visuales */
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "playwright-report" }]
+  ],
+
+  /* Configuración compartida para todos los proyectos */
+  use: {
+    /* URL base para el servidor de desarrollo */
+    baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || "http://localhost:3000",
+
+    /* Capturar screenshot en fallos */
+    screenshot: "only-on-failure",
+
+    /* Capturar video en retry */
+    video: "retain-on-failure",
+
+    /* Capturar trace en fallos */
+    trace: "on-first-retry",
+  },
+
+  /* Configuración de proyectos multi-browser */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
 
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
 
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
     },
 
-    // Mobile viewports
+    /* Tests en mobile viewport */
     {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
     },
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-
-    // Tablet
-    {
-      name: 'iPad',
-      use: { ...devices['iPad Pro'] },
+      name: "mobile-safari",
+      use: { ...devices["iPhone 12"] },
     },
   ],
 
-  // Web server local (opcional)
+  /* Ejecutar servidor de desarrollo antes de los tests */
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
+    command: "npm run dev",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

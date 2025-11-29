@@ -2,6 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
 import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts';
+import { formatDateLong } from '../_shared/formatters.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -716,11 +717,7 @@ function generateStatusEmailHTML(data) {
     // 6. Preparar datos para la plantilla
     const emailData = {
       cotizacionNumero: `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
-      fecha: new Date(cotizacion.created_at).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }),
+      fecha: formatDateLong(cotizacion.created_at),
       clienteNombre: cotizacion.leads?.nombre || 'Cliente',
       clienteEmail: toEmail,
       items: items.map((item)=>({

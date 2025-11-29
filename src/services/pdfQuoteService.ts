@@ -1,6 +1,7 @@
 import { supabase } from '../services/supabaseClient'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { formatDateLong } from '../lib/formatters'
 
 /**
  * Servicio para generar PDFs de cotización usando plantilla HTML
@@ -195,7 +196,7 @@ export class PDFQuoteService {
 
       // Cotización
       '{{COTIZACION_NUMERO}}': `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
-      '{{COTIZACION_FECHA}}': new Date(cotizacion.created_at).toLocaleDateString('es-ES'),
+      '{{COTIZACION_FECHA}}': formatDateLong(cotizacion.created_at),
       '{{COTIZACION_VALIDEZ_DIAS}}': cotizacion.validez_dias.toString(),
 
       // Cliente

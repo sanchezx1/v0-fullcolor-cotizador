@@ -32,14 +32,9 @@ import {
 import { obtenerCotizacionesDeUsuario } from "@/src/services/quotes"
 import type { Cotizacion, Lead } from "@/src/services/supabaseClient"
 import { toast } from "sonner"
+import { formatCurrency, formatDate } from "@/src/lib/formatters"
 
 type QuoteWithLead = Cotizacion & { leads: Lead }
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("es-EC", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
-
-const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" })
 
 export default function MiCuentaPage() {
   const router = useRouter()

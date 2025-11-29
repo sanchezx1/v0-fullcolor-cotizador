@@ -42,7 +42,8 @@
   --color-accent-hover: oklch(0.985 0 0);
 }
 
-@theme inline {
+@theme {
+  /* Colors */
   --color-background: var(--color-background);
   --color-foreground: var(--color-foreground);
   --color-card: var(--color-card);
@@ -50,31 +51,37 @@
   --color-popover: var(--color-background);
   --color-popover-foreground: var(--color-foreground);
   --color-primary: var(--color-primary);
-  --color-primary-foreground: #ffffff;
-  --color-secondary: var(--color-muted);
-  --color-secondary-foreground: var(--color-foreground);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
   --color-muted: var(--color-muted);
   --color-muted-foreground: var(--color-muted-foreground);
   --color-accent: var(--color-accent);
-  --color-accent-foreground: var(--color-foreground);
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
   --color-border: var(--color-border);
   --color-input: var(--color-input);
-  --color-ring: var(--color-primary);
+  --color-ring: var(--color-ring);
+
+  /* Charts */
   --color-chart-1: var(--color-primary);
   --color-chart-2: var(--color-accent);
   --color-chart-3: #22c55e;
   --color-chart-4: #f59e0b;
   --color-chart-5: #8b5cf6;
+
+  /* Radius */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Sidebar */
   --color-sidebar: var(--color-background);
   --color-sidebar-foreground: var(--color-foreground);
   --color-sidebar-primary: var(--color-primary);
-  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-primary-foreground: var(--color-primary-foreground);
   --color-sidebar-accent: var(--color-muted);
   --color-sidebar-accent-foreground: var(--color-foreground);
   --color-sidebar-border: var(--color-border);

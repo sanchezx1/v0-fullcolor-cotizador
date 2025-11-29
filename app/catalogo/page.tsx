@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { listProducts, searchProducts, getProductsByCategory } from "@/src/lib/data"
 import { supabase, Producto } from "@/src/services/supabaseClient"
+import { formatCurrency, formatQuantity } from "@/src/lib/formatters"
 
 const LOAD_ERROR_MESSAGE = "Error al cargar los productos"
 
@@ -21,20 +22,6 @@ export default function CatalogoPage() {
   const [sortBy, setSortBy] = useState("name")
   const [pricingByProduct, setPricingByProduct] = useState<Record<number, { fromPrice: number; fromQuantity: number }>>({})
   const pricingRequestRef = useRef(0)
-
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat("es-EC", {
-        style: "currency",
-        currency: "USD",
-        currencyDisplay: "narrowSymbol",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }),
-    []
-  )
-
-  const quantityFormatter = useMemo(() => new Intl.NumberFormat("es-EC"), [])
 
   const loadPricingForProducts = useCallback(
     async (productList: Producto[]) => {
@@ -429,8 +416,8 @@ export default function CatalogoPage() {
                         {(() => {
                           const pricingInfo = pricingByProduct[product.id]
                           if (pricingInfo && pricingInfo.fromPrice > 0) {
-                            const formattedPrice = currencyFormatter.format(pricingInfo.fromPrice)
-                            const formattedQuantity = quantityFormatter.format(pricingInfo.fromQuantity)
+                            const formattedPrice = formatCurrency(pricingInfo.fromPrice)
+                            const formattedQuantity = formatQuantity(pricingInfo.fromQuantity)
                             return (
                               <p className="leading-relaxed text-slate-600">
                                 <span className="font-semibold text-[#0066CC]">Desde {formattedPrice}</span> por artículo{" "}
@@ -442,7 +429,7 @@ export default function CatalogoPage() {
                           }
 
                           if (product.minimo_pedido) {
-                            const formattedQuantity = quantityFormatter.format(product.minimo_pedido)
+                            const formattedQuantity = formatQuantity(product.minimo_pedido)
                             return (
                               <p className="leading-relaxed text-slate-600">
                                 Tarifas disponibles al cotizar{" "}

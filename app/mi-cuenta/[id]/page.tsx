@@ -23,20 +23,9 @@ import { asegurarLeadVinculado } from "@/src/services/accounts"
 import { obtenerCotizacionDeUsuarioPorId } from "@/src/services/quotes"
 import type { Cotizacion, ItemCotizacion, Lead } from "@/src/services/supabaseClient"
 import { toast } from "sonner"
+import { formatCurrency, formatDateTime } from "@/src/lib/formatters"
 
 type QuoteDetail = Cotizacion & { leads: Lead; items_cotizacion: (ItemCotizacion & { productos: any })[] }
-
-const formatCurrency = (value: number) =>
-  value.toLocaleString("es-EC", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
-
-const formatDateTime = (value: string) =>
-  new Date(value).toLocaleString("es-EC", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
 
 export default function QuoteDetailPage() {
   const params = useParams<{ id: string }>()

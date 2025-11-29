@@ -2,6 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { HttpError, requirePrivilegedAccess } from '../_shared/security.ts';
 import { getCorsHeaders, handleCorsPreflight } from '../_shared/cors.ts';
 import { z } from 'https://deno.land/x/zod@v3.24.1/mod.ts';
+import { formatDateShort } from '../_shared/formatters.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -331,7 +332,7 @@ function formatCurrency(n) {
     const totals = cotizacionData.totals;
     const lead = cotizacion.leads || {};
     const cotizacionNumero = cotizacion.id.toString().padStart(6, '0');
-    const fechaCreacion = new Date(cotizacion.created_at).toLocaleDateString('es-EC');
+    const fechaCreacion = formatDateShort(cotizacion.created_at);
     console.log('â Datos preparados:', {
       items: items.length,
       cliente: lead.nombre
@@ -401,7 +402,7 @@ function formatCurrency(n) {
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
     const invoiceCode = cotizacion.codigo || `PF-${new Date(cotizacion.created_at).getFullYear()}-${cotizacionNumero}`;
     const validUntilDate = cotizacion.fecha_validez || cotizacion.validez_hasta || cotizacion.valido_hasta || cotizacion.fecha_expiracion || null;
-    const validUntil = validUntilDate ? new Date(validUntilDate).toLocaleDateString('es-EC') : new Date(new Date(cotizacion.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('es-EC');
+    const validUntil = validUntilDate ? formatDateShort(validUntilDate) : formatDateShort(new Date(new Date(cotizacion.created_at).getTime() + 30 * 24 * 60 * 60 * 1000));
     const companyInfo = {
       name: 'FullColor Cotizador',
       tagline: 'Soluciones grÃ¡ficas profesionales',

@@ -1,15 +1,22 @@
 'use server'
 
 import { revalidateCache } from '@/src/lib/data'
+import { requireAdmin } from '@/src/lib/server-auth'
 
-function ensureServerAccess(): void {
-  if (!process.env.REVALIDATE_SECRET) {
-    throw new Error('Missing REVALIDATE_SECRET environment variable')
-  }
-}
-
+/**
+ * Server action que revalida el cache del dashboard de productos.
+ *
+ * IMPORTANTE: Esta acción requiere permisos de administrador.
+ * Solo usuarios con rol 'admin' pueden ejecutar esta función.
+ *
+ * @throws {AuthError} Si el usuario no está autenticado
+ * @throws {AuthorizationError} Si el usuario no tiene rol de admin
+ */
 export async function triggerDashboardRevalidation() {
-  ensureServerAccess()
+  // Validar que el usuario es admin antes de permitir la operación
+  await requireAdmin()
+
+  // Ejecutar la revalidación del cache
   await revalidateCache()
 
   return {

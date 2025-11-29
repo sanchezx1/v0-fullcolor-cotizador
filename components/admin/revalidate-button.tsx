@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RefreshCw, CheckCircle, XCircle } from 'lucide-react'
 import { triggerDashboardRevalidation } from '@/app/admin/actions/revalidate'
+import { formatDateTime } from '@/src/lib/formatters'
 
 interface RevalidateButtonProps {
   className?: string
@@ -62,7 +63,7 @@ export function RevalidateButton({ className }: RevalidateButtonProps) {
         {lastUpdate && (
           <div className="flex items-center gap-2 text-sm text-green-600">
             <CheckCircle className="w-4 h-4" />
-            <span>Última actualización: {new Date(lastUpdate).toLocaleString()}</span>
+            <span>Última actualización: {formatDateTime(lastUpdate)}</span>
           </div>
         )}
 

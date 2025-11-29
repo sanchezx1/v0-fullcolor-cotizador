@@ -1,12 +1,12 @@
 /**
  * E2E Test: Accesibilidad (a11y)
- * 
- * Utiliza axe-core para detectar violaciones de accesibilidad
+ *
+ * Utiliza @axe-core/playwright para detectar violaciones de accesibilidad
  * Nivel objetivo: WCAG 2.1 AA
  */
 
 import { test, expect } from '@playwright/test'
-import { injectAxe, checkA11y, getViolations } from 'axe-playwright'
+import AxeBuilder from '@axe-core/playwright'
 import fs from 'fs'
 import path from 'path'
 
@@ -129,53 +129,49 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
   test.beforeEach(async ({ page }) => {
     await mockSupabase(page)
     await page.goto('/')
-    await injectAxe(page)
   })
 
   test('pagina de inicio debe cumplir estandares de accesibilidad', async ({ page }) => {
     await page.goto('/')
-    await injectAxe(page)
-    const violations = await getViolations(page, undefined, {
-      rules: {
-        'color-contrast': { enabled: true },
-        'heading-order': { enabled: true },
-        'label': { enabled: true },
-        'link-name': { enabled: true },
-      },
-    })
-    const criticalViolations = violations.filter((v) => v.impact === 'critical' || v.impact === 'serious')
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+
+    const criticalViolations = results.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious')
     expect(criticalViolations).toHaveLength(0)
   })
 
   test('pagina de catalogo debe ser accesible', async ({ page }) => {
     await page.goto('/catalogo')
-    await injectAxe(page)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 10000 })
     await page.waitForSelector(productCardSelector, { timeout: 10000 })
 
-    await checkA11y(page, undefined, {
-      detailedReport: true,
-      detailedReportOptions: {
-        html: true,
-      },
-    })
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze()
+
+    expect(results.violations).toHaveLength(0)
   })
 
   test('pagina de producto debe tener etiquetas accesibles', async ({ page }) => {
     await openAvailableProduct(page)
-    await injectAxe(page)
 
     const quantityInput = page.getByTestId('quantity-input').or(page.getByLabel(/cantidad/i)).or(page.locator('input[type="number"]')).first()
     await expect(quantityInput).toBeVisible()
 
     const addButton = page.getByRole('button', { name: /agregar/i })
     await expect(addButton).toBeVisible()
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze()
+
+    expect(results.violations).toHaveLength(0)
   })
 
   test('formulario de cotizacion debe ser accesible con teclado', async ({ page }) => {
     await addAvailableProduct(page, '450')
     await page.goto('/cotizador')
-    await injectAxe(page)
 
     await page.keyboard.press('Tab')
     await page.keyboard.press('Tab')
@@ -187,19 +183,22 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
     await expect(nombreField).toBeVisible()
     await expect(emailField).toBeVisible()
     await expect(telefonoField).toBeVisible()
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze()
+
+    expect(results.violations).toHaveLength(0)
   })
 
   test('contraste de colores debe ser suficiente', async ({ page }) => {
     await page.goto('/')
-    await injectAxe(page)
 
-    const violations = await getViolations(page, undefined, {
-      rules: {
-        'color-contrast': { enabled: true },
-      },
-    })
+    const results = await new AxeBuilder({ page })
+      .withTags(['color-contrast'])
+      .analyze()
 
-    const contrastViolations = violations.filter((v) => v.id === 'color-contrast')
+    const contrastViolations = results.violations.filter((v) => v.id === 'color-contrast')
     expect(contrastViolations).toHaveLength(0)
   })
 
@@ -219,29 +218,23 @@ test.describe('Pruebas de accesibilidad @a11y', () => {
 
   test('encabezados deben tener jerarquia correcta (h1, h2, h3...)', async ({ page }) => {
     await page.goto('/')
-    await injectAxe(page)
 
-    const violations = await getViolations(page, undefined, {
-      rules: {
-        'heading-order': { enabled: true },
-      },
-    })
+    const results = await new AxeBuilder({ page })
+      .withRules(['heading-order'])
+      .analyze()
 
-    const headingViolations = violations.filter((v) => v.id === 'heading-order')
+    const headingViolations = results.violations.filter((v) => v.id === 'heading-order')
     expect(headingViolations).toHaveLength(0)
   })
 
   test('enlaces deben tener nombres descriptivos', async ({ page }) => {
     await page.goto('/')
-    await injectAxe(page)
 
-    const violations = await getViolations(page, undefined, {
-      rules: {
-        'link-name': { enabled: true },
-      },
-    })
+    const results = await new AxeBuilder({ page })
+      .withRules(['link-name'])
+      .analyze()
 
-    const linkViolations = violations.filter((v) => v.id === 'link-name')
+    const linkViolations = results.violations.filter((v) => v.id === 'link-name')
     expect(linkViolations).toHaveLength(0)
   })
 
