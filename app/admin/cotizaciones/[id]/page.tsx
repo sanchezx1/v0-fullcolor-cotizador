@@ -10,8 +10,6 @@ import {
   Download,
   FileText,
   Mail,
-  Edit,
-  Copy,
   Trash2,
   ExternalLink,
   User,
@@ -63,7 +61,6 @@ import {
   getCotizacion,
   getEventosCotizacion,
   cambiarEstadoCotizacion,
-  clonarCotizacion,
   deleteCotizacion
 } from '@/lib/admin-services'
 import { pdfGenerationService } from '@/src/services/pdfGenerationService'
@@ -171,22 +168,6 @@ export default function CotizacionDetailPage() {
       toast.error('Error al abrir el PDF')
     } finally {
       setPdfLoading(false)
-    }
-  }
-
-  async function handleClonar() {
-    if (!cotizacion) return
-
-    try {
-      setLoadingAction(true)
-      const nuevaCotizacion = await clonarCotizacion(id)
-      toast.success(`Cotización clonada: ${nuevaCotizacion.numero}`)
-      router.push(`/admin/cotizaciones/${nuevaCotizacion.id}`)
-    } catch (error) {
-      console.error('Error al clonar cotización:', error)
-      toast.error('Error al clonar cotización')
-    } finally {
-      setLoadingAction(false)
     }
   }
 
@@ -487,56 +468,58 @@ export default function CotizacionDetailPage() {
 
         {/* Columna derecha (30%) */}
         <div className="space-y-6">
-          {/* Acciones */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones</CardTitle>
+          {/* Gestión de Estado */}
+          <Card className="border-primary/20">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="flex items-center gap-2">
+                <Badge className={getEstadoColor(cotizacion.estado)}>
+                  {ESTADO_LABELS[cotizacion.estado] || cotizacion.estado}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                Cambia el estado de la cotización
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Cambiar Estado */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Estado</label>
-                <Select
-                  value={cotizacion.estado}
-                  onValueChange={(value) => handleCambiarEstado(value as EstadoCotizacion)}
-                  disabled={loadingAction}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="enviada">Enviada</SelectItem>
-                    <SelectItem value="en_revision">En revisión</SelectItem>
-                    <SelectItem value="aprobada">Aprobada</SelectItem>
-                    <SelectItem value="rechazada">Rechazada</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block text-muted-foreground">
+                    Seleccionar nuevo estado
+                  </label>
+                  <Select
+                    value={cotizacion.estado}
+                    onValueChange={(value) => handleCambiarEstado(value as EstadoCotizacion)}
+                    disabled={loadingAction}
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="enviada">Enviada</SelectItem>
+                      <SelectItem value="en_revision">En revisión</SelectItem>
+                      <SelectItem value="aprobada">Aprobada</SelectItem>
+                      <SelectItem value="rechazada">Rechazada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                  <p className="font-medium mb-1">Nota:</p>
+                  <p>Al cambiar el estado, se notificará automáticamente al cliente por correo electrónico.</p>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="border-t pt-3" />
-
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => router.push(`/admin/cotizaciones/${id}/editar`)}
-                disabled={loadingAction}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Cotización
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleClonar}
-                disabled={loadingAction}
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Clonar Cotización
-              </Button>
-
-              <div className="border-t pt-3" />
-
+          {/* Acciones Peligrosas */}
+          <Card className="border-destructive/20">
+            <CardHeader>
+              <CardTitle className="text-sm text-destructive">Zona de peligro</CardTitle>
+              <CardDescription className="text-xs">
+                Esta acción es irreversible
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <Button
                 variant="destructive"
                 className="w-full"
@@ -544,7 +527,7 @@ export default function CotizacionDetailPage() {
                 disabled={loadingAction}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Eliminar
+                Eliminar cotización
               </Button>
             </CardContent>
           </Card>

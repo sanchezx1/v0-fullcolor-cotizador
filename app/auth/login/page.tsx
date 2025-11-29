@@ -45,13 +45,15 @@ function AuthScreen() {
       console.warn('No se pudo leer el rol tras auth:', error)
     }
 
-    const cameFromAdmin = redirectToParam?.startsWith('/admin')
-    if (role === 'admin' && cameFromAdmin) {
+    // Si es admin, SIEMPRE redirigir al panel de admin
+    if (role === 'admin') {
       router.push('/admin')
       router.refresh()
       return
     }
 
+    // Si no es admin, redirigir según el parámetro redirectTo o a Mi cuenta
+    const cameFromAdmin = redirectToParam?.startsWith('/admin')
     const destination = cameFromAdmin ? '/mi-cuenta' : (redirectToParam || '/mi-cuenta')
     router.push(destination)
     router.refresh()

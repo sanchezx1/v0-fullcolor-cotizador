@@ -22,8 +22,8 @@ export interface ContactInfo {
   nombreRazonSocial: string
   rucCedula: string
   email: string
+  telefono: string
   ciudad?: string
-  telefono?: string
   mensaje?: string
 }
 
@@ -342,6 +342,10 @@ export function useQuoteBuilder() {
       errors.push('El correo electrónico es requerido')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactInfo.email)) {
       errors.push('El correo electrónico no tiene un formato válido')
+    }
+
+    if (!contactInfo.telefono.trim()) {
+      errors.push('El teléfono es requerido')
     }
 
     return {

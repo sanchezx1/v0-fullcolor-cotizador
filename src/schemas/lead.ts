@@ -19,11 +19,9 @@ export const LeadSchema = z.object({
     .max(255, "Email demasiado largo"),
 
   telefono: z
-    .string()
-    .max(20, "Teléfono demasiado largo")
-    .nullable()
-    .optional()
-    .transform(val => val ?? undefined),
+    .string({ required_error: "Teléfono es requerido" })
+    .min(1, "Teléfono no puede estar vacío")
+    .max(20, "Teléfono demasiado largo"),
 
   empresa: z
     .string()
@@ -71,7 +69,7 @@ export type LeadUpdateInput = z.infer<typeof LeadUpdateSchema>
 export const LeadMinimalSchema = z.object({
   nombre: z.string().min(1).max(255),
   email: z.string().email().max(255),
-  telefono: z.string().max(20).nullable().optional().transform(val => val ?? ""),
+  telefono: z.string().min(1, "Teléfono es requerido").max(20),
   empresa: z.string().max(255).nullable().optional().transform(val => val ?? ""),
 })
 

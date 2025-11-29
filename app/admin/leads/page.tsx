@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, Filter, Mail, Phone, Building, MapPin, Eye, Pencil, Trash2, User } from 'lucide-react'
+import { Plus, Search, Filter, Mail, Phone, Building, MapPin, Eye, Trash2, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -317,14 +317,6 @@ export default function LeadsPage() {
                               title="Ver detalle"
                             >
                               <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => router.push(`/admin/leads/${lead.id}/editar`)}
-                              title="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"

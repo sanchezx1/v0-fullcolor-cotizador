@@ -316,6 +316,28 @@ export async function existeLeadParaEmail(email: string): Promise<boolean> {
 }
 
 /**
+ * Detecta el estado de un email: si no existe, si es invitado, o si tiene cuenta creada.
+ */
+export async function verificarEstadoEmail(email: string): Promise<{ exists: boolean; hasAccount: boolean }> {
+  if (!email) return { exists: false, hasAccount: false }
+
+  const { data, error } = await supabase.rpc("check_lead_email_status", { p_email: email })
+
+  if (error) {
+    console.error("Error verificando estado de email:", error)
+    return { exists: false, hasAccount: false }
+  }
+
+  // Cast del resultado del RPC
+  const result = data as { exists: boolean; has_account: boolean } | null
+
+  return {
+    exists: result?.exists ?? false,
+    hasAccount: result?.has_account ?? false
+  }
+}
+
+/**
  * Obtiene cotizaciones visibles para el usuario autenticado (panel "Mi cuenta").
  */
 export async function obtenerCotizacionesDeUsuario(): Promise<Array<Cotizacion & { leads: Lead }>> {

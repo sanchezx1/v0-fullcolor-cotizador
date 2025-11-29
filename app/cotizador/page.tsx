@@ -13,9 +13,10 @@ import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, AlertCircle, Ch
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
 import { useAuthSession } from "@/src/hooks/useAuthSession"
 import { asegurarLeadVinculado, obtenerLeadDeUsuario } from "@/src/services/accounts"
-import { existeLeadParaEmail } from "@/src/services/quotes"
+import { verificarEstadoEmail } from "@/src/services/quotes"
 import LeadConflictModal from "@/components/lead-conflict-modal"
 import { ExistingEmailDialog } from "@/components/existing-email-dialog"
+import { RegisteredUserDialog } from "@/components/registered-user-dialog"
 
 export default function CotizadorPage() {
   const router = useRouter()
@@ -46,8 +47,10 @@ export default function CotizadorPage() {
   const [useAccountContact, setUseAccountContact] = useState(false)
   const [editingContact, setEditingContact] = useState(false)
   const [existingEmailDialogOpen, setExistingEmailDialogOpen] = useState(false)
+  const [registeredUserDialogOpen, setRegisteredUserDialogOpen] = useState(false)
   const [emailPrompted, setEmailPrompted] = useState<string | null>(null)
   const [checkingExistingEmail, setCheckingExistingEmail] = useState(false)
+  const [emailHasAccount, setEmailHasAccount] = useState(false)
 
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -98,33 +101,49 @@ export default function CotizadorPage() {
   }, [authUser, isAdmin, isAuthenticated, setContactInfo])
 
   useEffect(() => {
-    if (isAuthenticated) return
+    if (isAuthenticated) {
+      setEmailHasAccount(false)
+      return
+    }
 
     const normalizedEmail = contactInfo.email.trim().toLowerCase()
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
 
     if (!emailValid) {
       setEmailPrompted(null)
+      setEmailHasAccount(false)
       return
     }
 
-    if (emailPrompted === normalizedEmail && !existingEmailDialogOpen) return
+    if (emailPrompted === normalizedEmail && !existingEmailDialogOpen && !registeredUserDialogOpen) return
 
     const timer = window.setTimeout(async () => {
       setCheckingExistingEmail(true)
-      const exists = await existeLeadParaEmail(normalizedEmail)
+      const status = await verificarEstadoEmail(normalizedEmail)
       setCheckingExistingEmail(false)
 
-      if (exists) {
-        setExistingEmailDialogOpen(true)
+      if (status.exists) {
+        // Diferenciar entre invitado y usuario registrado
+        if (status.hasAccount) {
+          // Tiene cuenta creada -> mostrar modal de usuario registrado y bloquear formulario
+          setRegisteredUserDialogOpen(true)
+          setExistingEmailDialogOpen(false)
+          setEmailHasAccount(true)
+        } else {
+          // Es invitado -> mostrar modal de invitado
+          setExistingEmailDialogOpen(true)
+          setRegisteredUserDialogOpen(false)
+          setEmailHasAccount(false)
+        }
         setEmailPrompted(normalizedEmail)
       } else {
         setEmailPrompted(null)
+        setEmailHasAccount(false)
       }
     }, 800)
 
     return () => window.clearTimeout(timer)
-  }, [contactInfo.email, emailPrompted, existingEmailDialogOpen, isAuthenticated])
+  }, [contactInfo.email, emailPrompted, existingEmailDialogOpen, registeredUserDialogOpen, isAuthenticated])
 
   const handleSubmitQuote = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -206,11 +225,22 @@ export default function CotizadorPage() {
         />
       )}
 
-      <ExistingEmailDialog 
-        open={existingEmailDialogOpen} 
+      <ExistingEmailDialog
+        open={existingEmailDialogOpen}
         onOpenChange={setExistingEmailDialogOpen}
         onLogin={() => window.location.assign(`/auth/login?redirectTo=/cotizador&tab=register`)}
         onContinueAsGuest={() => setExistingEmailDialogOpen(false)}
+      />
+
+      <RegisteredUserDialog
+        open={registeredUserDialogOpen}
+        onOpenChange={setRegisteredUserDialogOpen}
+        onLogin={() => window.location.assign(`/auth/login?redirectTo=/cotizador`)}
+        onClose={() => {
+          setRegisteredUserDialogOpen(false)
+          setEmailHasAccount(false)
+          setContactInfo({ ...contactInfo, email: "" })
+        }}
       />
 
       <div className="py-12">
@@ -421,6 +451,14 @@ export default function CotizadorPage() {
                       {!isAuthenticated && checkingExistingEmail && (
                         <p className="text-xs text-muted-foreground">Revisando si ya cotizaste con este correo...</p>
                       )}
+                      {!isAuthenticated && emailHasAccount && (
+                        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg">
+                          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-amber-800 dark:text-amber-200">
+                            Este correo tiene una cuenta asociada. Debes iniciar sesión para continuar con la cotización.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
@@ -435,10 +473,13 @@ export default function CotizadorPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telefono">Teléfono</Label>
+                        <Label htmlFor="telefono">
+                          Teléfono <span className="text-destructive">*</span>
+                        </Label>
                         <Input
                           id="telefono"
                           type="tel"
+                          required
                           value={contactInfo.telefono || ''}
                           onChange={(e) => setContactInfo({ ...contactInfo, telefono: e.target.value })}
                           placeholder="+593 99 123 4567"
@@ -533,11 +574,20 @@ export default function CotizadorPage() {
                       </p>
                     </div>
 
-                    <Button 
-                      type="submit" 
-                      size="lg" 
+                    {!isAuthenticated && emailHasAccount && (
+                      <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                          <strong>Inicio de sesión requerido:</strong> Este correo tiene una cuenta asociada. Por seguridad, debes iniciar sesión antes de solicitar una cotización.
+                        </p>
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      size="lg"
                       className="w-full bg-primary hover:bg-primary-hover text-white"
-                      disabled={!validation.isValid || loading || isSubmitting}
+                      disabled={!validation.isValid || loading || isSubmitting || (!isAuthenticated && emailHasAccount)}
                     >
                       {isSubmitting ? (
                         <>
