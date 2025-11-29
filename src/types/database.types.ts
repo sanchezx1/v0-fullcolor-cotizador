@@ -489,6 +489,7 @@ export type Database = {
     Functions: {
       calcular_score_lead: { Args: { lead_id_param: number }; Returns: number }
       check_lead_email_exists: { Args: { p_email: string }; Returns: boolean }
+      check_lead_email_status: { Args: { p_email: string }; Returns: Json }
       create_public_lead: {
         Args: {
           p_ciudad?: string
@@ -510,7 +511,7 @@ export type Database = {
         }
         Returns: Json
       }
-      generar_numero_cotizacion: { Args: Record<string, never>; Returns: string }
+      generar_numero_cotizacion: { Args: never; Returns: string }
       increment_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_seconds: number }
         Returns: {
@@ -519,7 +520,7 @@ export type Database = {
           retry_after_seconds: number
         }[]
       }
-      is_admin: { Args: Record<string, never>; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
       link_lead_to_auth_user: { Args: { p_email: string }; Returns: Json }
       sugerir_origen_lead: {
         Args: { referer?: string; url_params?: Json }
