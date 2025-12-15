@@ -286,7 +286,7 @@ export function HomeHero() {
                   <Button
                     asChild
                     size="lg"
-                    className="rounded-full bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000] shadow-lg"
+                    className="rounded-md bg-[#F5C700] px-7 py-5 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000] shadow-lg"
                     tabIndex={isActive ? 0 : -1}
                     aria-hidden={isReplica || !isActive ? true : undefined}
                   >
@@ -348,7 +348,7 @@ export function HomeHero() {
                     <Button
                       asChild
                       size="lg"
-                      className="rounded-full bg-[#F5C700] px-9 py-6 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
+                      className="rounded-md bg-[#F5C700] px-9 py-6 text-base font-semibold text-slate-900 transition hover:bg-[#f2c000]"
                       tabIndex={index === activeIndex ? 0 : -1}
                       aria-hidden={index !== activeIndex}
                     >
@@ -366,7 +366,7 @@ export function HomeHero() {
         <button
           type="button"
           onClick={() => goToSlide(activeIndex - 1)}
-          className="group absolute left-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
+          className="group absolute left-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-md border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
           aria-label="Slide anterior"
         >
           <ChevronLeft className="h-6 w-6" aria-hidden="true" />
@@ -374,7 +374,7 @@ export function HomeHero() {
         <button
           type="button"
           onClick={() => goToSlide(activeIndex + 1)}
-          className="group absolute right-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
+          className="group absolute right-6 top-1/2 z-30 hidden h-14 w-14 -translate-y-1/2 items-center justify-center rounded-md border border-white/20 bg-slate-900/40 text-white transition hover:border-white/60 hover:bg-slate-900/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700] lg:flex"
           aria-label="Slide siguiente"
         >
           <ChevronRight className="h-6 w-6" aria-hidden="true" />

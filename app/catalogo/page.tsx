@@ -318,7 +318,7 @@ export default function CatalogoPage() {
                     setSelectedCategory("all")
                     void loadProducts()
                   }}
-                  className="inline-flex items-center gap-2 self-start rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-[#0066CC] hover:text-[#0066CC]"
+                  className="inline-flex items-center gap-2 self-start rounded-md border border-slate-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-[#0066CC] hover:text-[#0066CC]"
                 >
                   Limpiar filtros
                 </button>
@@ -333,7 +333,7 @@ export default function CatalogoPage() {
                   Ajusta los filtros o realiza una nueva búsqueda para explorar más opciones.
                 </p>
                 <Button
-                  className="mt-6 rounded-full bg-[#0066CC] px-6 py-2 text-sm font-semibold text-white hover:bg-[#005bb5]"
+                  className="mt-6 rounded-md bg-[#0066CC] px-6 py-2 text-sm font-semibold text-white hover:bg-[#005bb5]"
                   onClick={() => {
                     setSearchQuery("")
                     setSelectedCategory("all")

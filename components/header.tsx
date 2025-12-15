@@ -194,7 +194,7 @@ export function Header() {
             asChild
             variant="ghost"
             size="icon"
-            className="relative h-11 w-11 rounded-full border border-primary/30 text-primary"
+            className="relative h-11 w-11 rounded-md border border-primary/30 text-primary"
           >
             <Link href="/cotizador" aria-live="polite" className="flex items-center justify-center">
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
@@ -209,7 +209,7 @@ export function Header() {
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-primary/30 bg-primary text-white transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/30 bg-primary text-white transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label="Abrir menu de navegacion"
             aria-haspopup="true"
             aria-expanded={isMenuOpen}
@@ -277,7 +277,7 @@ export function Header() {
               variant="ghost"
               size="icon"
               onClick={closeMenu}
-              className="h-9 w-9 rounded-full hover:bg-muted"
+              className="h-9 w-9 rounded-md hover:bg-muted"
             >
               <X className="h-5 w-5" />
               <span className="sr-only">Cerrar menu</span>
