@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 import { checkRateLimit } from '@/src/lib/rateLimiter'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const clientIp =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     request.headers.get('x-real-ip') ??
