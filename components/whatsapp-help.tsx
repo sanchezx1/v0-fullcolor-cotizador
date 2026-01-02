@@ -16,7 +16,7 @@ export function WhatsAppHelp({ variant = "inline", message: _message }: WhatsApp
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-5 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl shadow-[#25D366]/30 transition hover:scale-105 hover:bg-[#20BA5A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        aria-label="Chatee con FullColor por WhatsApp"
+        aria-label="Chatea con FullColor por WhatsApp"
       >
         <MessageCircle className="h-7 w-7" aria-hidden="true" />
       </Link>
@@ -36,7 +36,7 @@ export function WhatsAppHelp({ variant = "inline", message: _message }: WhatsApp
       </span>
       <span className="leading-relaxed text-left">
         <span className="block text-xs uppercase tracking-wide text-slate-500">Chat en vivo</span>
-        Chatee con nosotros
+        Chatea con nosotros
       </span>
     </Link>
   )

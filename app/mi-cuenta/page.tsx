@@ -107,7 +107,7 @@ export default function MiCuentaPage() {
         }
       } catch (error) {
         console.error("Error cargando datos de Mi cuenta:", error)
-        toast.error("No pudimos cargar tu informacion de cuenta")
+        toast.error("No pudimos cargar tu información de cuenta")
       } finally {
         if (isActive) {
           setQuotesLoading(false)
@@ -180,7 +180,7 @@ export default function MiCuentaPage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex items-center justify-center gap-2 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Inicia sesion para ver Mi cuenta.</span>
+          <span>Inicia sesión para ver Mi cuenta.</span>
         </div>
       </div>
     )
@@ -194,7 +194,7 @@ export default function MiCuentaPage() {
             <CardDescription className="text-white/80">Mi cuenta</CardDescription>
             <CardTitle className="text-3xl font-bold">Hola {authUser?.email?.split("@")[0] ?? "cliente"}</CardTitle>
             <p className="text-sm text-white/80">
-              Revisa tus cotizaciones y mantiene tus datos de contacto al dia.
+              Revisa tus cotizaciones y mantén tus datos de contacto al día.
             </p>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-3 text-sm text-white/90">
@@ -214,7 +214,7 @@ export default function MiCuentaPage() {
         <div className="grid grid-cols-3 gap-3">
           <StatCard label="Cotizaciones" value={quoteStats.total} icon={<FileText className="h-4 w-4" />} />
           <StatCard label="Aprobadas" value={quoteStats.aprobadas} icon={<Notebook className="h-4 w-4" />} />
-          <StatCard label="En revision" value={quoteStats.enRevision} icon={<Loader2 className="h-4 w-4" />} />
+          <StatCard label="En revisión" value={quoteStats.enRevision} icon={<Loader2 className="h-4 w-4" />} />
         </div>
       </div>
 
@@ -234,15 +234,15 @@ export default function MiCuentaPage() {
           ) : quotes.length === 0 ? (
             <Card className="border-dashed">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">Aun no tienes cotizaciones</CardTitle>
+                <CardTitle className="text-lg font-semibold">Aún no tienes cotizaciones</CardTitle>
                 <CardDescription>
-                  Cuando cotices desde tu cuenta, las veras aqui junto a sus estados.
+                  Cuando cotices desde tu cuenta, las verás aquí junto a sus estados.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild className="bg-primary text-white hover:bg-primary-hover">
                   <Link href="/catalogo">
-                    Ir al catalogo
+                    Ir al catálogo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -257,7 +257,7 @@ export default function MiCuentaPage() {
                     <CardHeader className="space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <div className="space-y-1">
-                          <CardTitle className="text-lg font-semibold">Cotizacion {quote.numero || `#${quote.id}`}</CardTitle>
+                          <CardTitle className="text-lg font-semibold">Cotización {quote.numero || `#${quote.id}`}</CardTitle>
                           <p className="text-sm text-muted-foreground">Creada el {quote.created_at ? formatDate(quote.created_at) : 'N/A'}</p>
                         </div>
                         <Badge className={status.badgeClass}>{status.label}</Badge>
@@ -312,7 +312,7 @@ export default function MiCuentaPage() {
               ) : (
                 <form className="grid gap-4 md:grid-cols-2" onSubmit={handleContactSubmit}>
                   <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="nombre">Nombre o razon social</Label>
+                    <Label htmlFor="nombre">Nombre o razón social</Label>
                     <Input
                       id="nombre"
                       value={contactForm.nombre}
@@ -322,7 +322,7 @@ export default function MiCuentaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="telefono">Telefono</Label>
+                    <Label htmlFor="telefono">Teléfono</Label>
                     <Input
                       id="telefono"
                       value={contactForm.telefono}
@@ -352,12 +352,12 @@ export default function MiCuentaPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ruc">RUC / Cedula</Label>
+                    <Label htmlFor="ruc">RUC / Cédula</Label>
                     <Input
                       id="ruc"
                       value={contactForm.ruc_cedula}
                       onChange={(event) => setContactForm((prev) => ({ ...prev, ruc_cedula: event.target.value }))}
-                      placeholder="RUC o cedula"
+                      placeholder="RUC o cédula"
                     />
                   </div>
 
@@ -365,13 +365,13 @@ export default function MiCuentaPage() {
                     <Label>Correo para acceso</Label>
                     <Input value={authUser?.email ?? ""} disabled />
                     <p className="text-xs text-muted-foreground">
-                      Si necesitas actualizar tu correo, contactanos para validar el cambio de forma segura.
+                      Si necesitas actualizar tu correo, contáctanos para validar el cambio de forma segura.
                     </p>
                   </div>
 
                   <div className="md:col-span-2 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      <p>{contact ? "Guardaremos estos datos en tu lead principal." : "Aun no tenemos datos guardados."}</p>
+                      <p>{contact ? "Guardaremos estos datos en tu lead principal." : "Aún no tenemos datos guardados."}</p>
                     </div>
                     <Button type="submit" disabled={savingContact} className="bg-primary text-white hover:bg-primary-hover">
                       {savingContact ? "Guardando..." : "Guardar cambios"}

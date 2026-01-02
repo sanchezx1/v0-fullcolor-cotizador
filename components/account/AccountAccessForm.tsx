@@ -83,7 +83,7 @@ export function AccountAccessForm({
 
       <div className="space-y-2">
         <Label htmlFor="account-email" className="text-sm font-medium">
-          Correo electronico
+          Correo electrónico
         </Label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -106,13 +106,13 @@ export function AccountAccessForm({
       </Button>
 
       <p className="text-xs text-muted-foreground">
-        Recibiras un correo con un enlace de inicio de sesion. No compartimos tus datos ni mostraremos informacion de
+        Recibirás un correo con un enlace de inicio de sesión. No compartimos tus datos ni mostraremos información de
         otras cuentas.
       </p>
 
       {sent && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          Enviamos un enlace a {email}. Abrelo en este navegador para ver tus cotizaciones.
+          Enviamos un enlace a {email}. Ábrelo en este navegador para ver tus cotizaciones.
         </div>
       )}
     </form>

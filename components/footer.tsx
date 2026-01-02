@@ -3,15 +3,15 @@ import { Mail, Phone, MapPin, Instagram, Facebook, MessageCircle } from "lucide-
 
 const quickLinks = [
   { label: "Inicio", href: "/" },
-  { label: "Catalogo", href: "/catalogo" },
+  { label: "Catálogo", href: "/catalogo" },
   { label: "Cotizador", href: "/cotizador" },
 ]
 
 const serviceHighlights = [
-  "Papeleria corporativa",
+  "Papelería corporativa",
   "Material promocional",
   "Merchandising personalizado",
-  "Gran formato y senaletica",
+  "Gran formato y señalética",
 ]
 
 const socialLinks = [
@@ -31,11 +31,11 @@ export function Footer() {
                 FullColor
               </p>
               <h3 className="mt-3 text-2xl font-semibold text-white">
-                Soluciones graficas integrales desde Machala
+                Soluciones gráficas integrales desde Machala
               </h3>
               <p className="mt-4 text-sm leading-relaxed text-white/80">
-                Acompanamos a marcas, agencias y emprendimientos con produccion de alta calidad,
-                tiempos confiables y asesoria experta en cada paso.
+                Acompañamos a marcas, agencias y emprendimientos con producción de alta calidad,
+                tiempos confiables y asesoría experta en cada paso.
               </p>
               <div className="mt-6 inline-flex items-center rounded-full bg-white/15 px-5 py-3 text-sm text-white">
                 <MessageCircle className="mr-3 h-4 w-4 text-[#25D366]" aria-hidden="true" />
@@ -45,7 +45,7 @@ export function Footer() {
 
             <div>
               <h4 className="text-sm font-semibold uppercase tracking-wide text-white/80">
-                Enlaces rapidos
+                Enlaces rápidos
               </h4>
               <ul className="mt-4 space-y-3 text-sm text-white/80">
                 {quickLinks.map((link) => (
@@ -120,7 +120,7 @@ export function Footer() {
           <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/70 sm:flex-row sm:items-center sm:justify-between">
             <p>&copy; {new Date().getFullYear()} FullColor. Todos los derechos reservados.</p>
             <p>
-              Politicas de privacidad y tratamiento de datos disponibles a solicitud en{" "}
+              Políticas de privacidad y tratamiento de datos disponibles a solicitud en{" "}
               <a className="underline hover:text-white" href="mailto:hola@fullcolor.ec">
                 hola@fullcolor.ec
               </a>

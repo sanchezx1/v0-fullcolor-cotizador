@@ -184,7 +184,7 @@ export default function QuoteDetailPage() {
       <Card className="border-border/80 shadow-sm">
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardDescription>Cotizacion {quote.numero || `#${quote.id}`}</CardDescription>
+            <CardDescription>Cotización {quote.numero || `#${quote.id}`}</CardDescription>
             <CardTitle className="text-2xl font-bold">Resumen</CardTitle>
           </div>
           <Badge className={status.badgeClass}>{status.label}</Badge>
@@ -195,7 +195,7 @@ export default function QuoteDetailPage() {
             <span className="font-semibold">{quote.created_at ? formatDateTime(quote.created_at) : 'N/A'}</span>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarClock className="h-4 w-4" />
-              Validez: {quote.validez_dias} dias
+              Validez: {quote.validez_dias} días
             </div>
           </div>
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-4">
@@ -266,11 +266,11 @@ export default function QuoteDetailPage() {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{quote.leads?.telefono || "Sin telefono"}</span>
+              <span>{quote.leads?.telefono || "Sin teléfono"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <FileText className="h-4 w-4 text-muted-foreground" />
-              <span>{quote.leads?.ruc_cedula || "Sin RUC/Cedula"}</span>
+              <span>{quote.leads?.ruc_cedula || "Sin RUC/Cédula"}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <Mail className="h-4 w-4 text-muted-foreground" />

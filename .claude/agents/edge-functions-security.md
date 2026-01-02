@@ -1,7 +1,7 @@
 ---
 name: edge-functions-security
 description: Asegura Edge Functions de Supabase. Implementa CORS restrictivo, valida tokens correctamente, centraliza headers de seguridad. Usa para tarea 2.2 y SEC-003/SEC-004 del PLAN_MEJORAS.md
-tools: Read, Write, Edit, Bash, mcp_supabase
+tools: Read, Write, Edit, Bash, mcp__supabase__list_edge_functions, mcp__supabase__get_edge_function, mcp__supabase__deploy_edge_function
 model: opus
 ---
 
@@ -85,7 +85,7 @@ return new Response(JSON.stringify(data), {
    - Mantener compatibilidad con lógica existente
 
 3. **Desplegar:**
-   - Usar MCP Supabase: `mcp_supabase_deploy_edge_function`
+   - Usar MCP Supabase: `mcp__supabase__deploy_edge_function`
    - Verificar desde frontend que funciona
 
 4. **Documentar:**

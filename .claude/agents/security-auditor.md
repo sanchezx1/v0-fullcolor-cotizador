@@ -1,7 +1,7 @@
 ---
 name: security-auditor
 description: Auditor de seguridad general para el proyecto FullColor. Revisa configuración de Supabase Auth, valida headers HTTP, verifica protección de contraseñas filtradas, analiza vulnerabilidades OWASP. Usa para tarea 1.1 y revisiones generales de seguridad.
-tools: Read, Write, Edit, Bash, mcp_supabase
+tools: Read, Write, Edit, Bash, mcp__supabase__list_tables, mcp__supabase__get_advisors, mcp__supabase__execute_sql
 model: opus
 ---
 

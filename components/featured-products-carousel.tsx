@@ -325,11 +325,11 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
             disabled={!canScrollPrev}
             aria-disabled={!canScrollPrev}
             className={cn(
-              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
+              "pointer-events-auto flex h-14 w-14 items-center justify-center rounded-md border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
               !canScrollPrev && "cursor-default opacity-45 pointer-events-none"
             )}
           >
-            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            <ChevronLeft className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
         <div className="pointer-events-none absolute top-0 -right-6 hidden h-[240px] w-16 items-center justify-center lg:flex">
@@ -340,11 +340,11 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
             disabled={!canScrollNext}
             aria-disabled={!canScrollNext}
             className={cn(
-              "pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
+              "pointer-events-auto flex h-14 w-14 items-center justify-center rounded-md border-2 border-slate-200 bg-white text-[#0068A5] shadow-lg transition hover:border-[#0068A5] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F5C700]",
               !canScrollNext && "cursor-default opacity-45 pointer-events-none"
             )}
           >
-            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            <ChevronRight className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -357,7 +357,7 @@ export function FeaturedProductsCarousel({ products }: FeaturedProductsCarouselP
 
       <div className="mt-8 flex justify-center">
         <Button asChild variant="outline" className="rounded-md border-[#0068A5]/30 px-8 py-5 text-sm font-semibold text-[#0068A5] hover:border-[#0068A5] hover:bg-[#0068A5]/10">
-          <Link href="/catalogo">Ver todo el catalogo</Link>
+          <Link href="/catalogo">Ver todo el catálogo</Link>
         </Button>
       </div>
     </div>

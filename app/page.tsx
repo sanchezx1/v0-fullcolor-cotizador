@@ -24,7 +24,7 @@ const steps = [
   {
     icon: Boxes,
     title: "Elige producto",
-    description: "Explora el catalogo y selecciona la linea ideal para tu marca.",
+    description: "Explora el catálogo y selecciona la línea ideal para tu marca.",
   },
   {
     icon: PenTool,
@@ -34,12 +34,12 @@ const steps = [
   {
     icon: FileText,
     title: "Recibe tu proforma",
-    description: "Validamos especificaciones y enviamos una cotizacion clara y transparente.",
+    description: "Validamos especificaciones y enviamos una cotización clara y transparente.",
   },
   {
     icon: PhoneCall,
     title: "Confirma por WhatsApp o email",
-    description: "Ultimamos detalles y coordinamos produccion y entrega.",
+    description: "Ultimamos detalles y coordinamos producción y entrega.",
   },
 ]
 
@@ -56,27 +56,27 @@ const benefits = [
   },
   {
     icon: PenTool,
-    title: "Personalizacion total",
+    title: "Personalización total",
     description: "Formatos a medida, empaques especiales y asesor creativo.",
   },
   {
     icon: Truck,
-    title: "Envios en Ecuador",
-    description: "Logistica confiable desde Machala hacia todo el pais.",
+    title: "Envíos en Ecuador",
+    description: "Logística confiable desde Machala hacia todo el país.",
   },
 ]
 
 const testimonials = [
   {
     quote:
-      "FullColor nos ayudo a lanzar un kit corporativo en tiempo record. La calidad y la presentacion superaron las expectativas del equipo.",
+      "FullColor nos ayudó a lanzar un kit corporativo en tiempo récord. La calidad y la presentación superaron las expectativas del equipo.",
     author: "Carolina Villacis",
     role: "Marketing Manager",
     company: "Grupo Andino",
   },
   {
     quote:
-      "El equipo entiende perfectamente los requerimientos tecnicos y propone mejoras que optimizan costos sin sacrificar imagen.",
+      "El equipo entiende perfectamente los requerimientos técnicos y propone mejoras que optimizan costos sin sacrificar imagen.",
     author: "Roberto Mora",
     role: "Director Comercial",
     company: "Impulsa Agencia",
@@ -92,34 +92,34 @@ const testimonials = [
 
 const faqs = [
   {
-    question: "Cuales son los plazos de produccion?",
+    question: "¿Cuáles son los plazos de producción?",
     answer:
-      "Depende del volumen y acabados. En promedio manejamos 3 a 7 dias habiles luego de aprobar disenos y pago inicial.",
+      "Depende del volumen y acabados. En promedio manejamos 3 a 7 días hábiles luego de aprobar diseños y pago inicial.",
   },
   {
-    question: "Existe un minimo de unidades?",
+    question: "¿Existe un mínimo de unidades?",
     answer:
-      "Cada producto tiene su minimo tecnicamente viable. Encontraras la referencia en la ficha y podemos evaluar excepciones.",
+      "Cada producto tiene su mínimo técnicamente viable. Encontrarás la referencia en la ficha y podemos evaluar excepciones.",
   },
   {
-    question: "Que archivos necesito enviar?",
+    question: "¿Qué archivos necesito enviar?",
     answer:
       "Trabajamos con PDF, AI o EPS en curvas. Si solo tienes PNG o JPG, nuestro equipo puede vectorizar con costo adicional.",
   },
   {
-    question: "Realizan envios fuera de Machala?",
+    question: "¿Realizan envíos fuera de Machala?",
     answer:
-      "Si, coordinamos envios a nivel nacional mediante aliados logisticos y brindamos seguimiento del despacho.",
+      "Sí, coordinamos envíos a nivel nacional mediante aliados logísticos y brindamos seguimiento del despacho.",
   },
   {
-    question: "Ofrecen muestras o pruebas de color?",
+    question: "¿Ofrecen muestras o pruebas de color?",
     answer:
-      "Podemos producir muestras fisicas o pruebas impresas bajo solicitud para validar materiales y colorimetria.",
+      "Podemos producir muestras físicas o pruebas impresas bajo solicitud para validar materiales y colorimetría.",
   },
   {
-    question: "Aceptan pagos corporativos?",
+    question: "¿Aceptan pagos corporativos?",
     answer:
-      "Si, trabajamos con transferencias, tarjetas y convenios para empresas con orden de compra.",
+      "Sí, trabajamos con transferencias, tarjetas y convenios para empresas con orden de compra.",
   },
 ]
 
@@ -141,7 +141,7 @@ export default function HomePage() {
       setFeaturedProducts(products.slice(0, 5))
     } catch (err) {
       console.error("Error loading featured products:", err)
-      setError("No pudimos cargar el catalogo destacado. Intenta nuevamente.")
+      setError("No pudimos cargar el catálogo destacado. Intenta nuevamente.")
     } finally {
       setLoading(false)
     }
@@ -178,9 +178,9 @@ export default function HomePage() {
       <div className="pointer-events-none absolute inset-x-0 -top-40 h-[420px] bg-gradient-to-b from-primary/15 via-primary/5 to-transparent blur-3xl" />
       <WhatsAppHelp
         variant="floating"
-        message="Hola FullColor, me gustaria cotizar un proyecto."
+        message="Hola FullColor, me gustaría cotizar un proyecto."
       />
-      <h1 className="sr-only">FullColor cotizador de impresion y merchandising</h1>
+      <h1 className="sr-only">FullColor cotizador de impresión y merchandising</h1>
 
       <HomeHero />
 
@@ -191,7 +191,7 @@ export default function HomePage() {
               Cotizar toma solo cuatro pasos claros
             </h2>
             <p className="mt-4 text-base text-slate-600">
-              Organizamos el flujo de trabajo para que puedas iniciar tu produccion sin friccion.
+              Organizamos el flujo de trabajo para que puedas iniciar tu producción sin fricción.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -231,7 +231,7 @@ export default function HomePage() {
           {error ? (
             <div className="rounded-3xl border border-red-200 bg-red-50 p-10 text-center">
               <AlertCircle className="mx-auto mb-3 h-10 w-10 text-red-500" aria-hidden="true" />
-              <h3 className="text-xl font-semibold text-red-700">Ups, algo salio mal</h3>
+              <h3 className="text-xl font-semibold text-red-700">Ups, algo salió mal</h3>
               <p className="mt-2 text-sm text-red-600">{error}</p>
               <Button className="mt-6 rounded-md px-6" onClick={loadFeaturedProducts}>
                 Reintentar carga
@@ -246,9 +246,9 @@ export default function HomePage() {
       <section className="bg-white py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-3xl text-center">
-            <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">Por que FullColor</h2>
+            <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">¿Por qué FullColor?</h2>
             <p className="mt-4 text-base text-slate-600">
-              Somos aliados estrategicos para departamentos de marketing, agencias y emprendedores que necesitan ejecutar sin sorpresas.
+              Somos aliados estratégicos para departamentos de marketing, agencias y emprendedores que necesitan ejecutar sin sorpresas.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -275,10 +275,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-12 max-w-3xl text-center">
             <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">
-              Clientes que confian en FullColor
+              Clientes que confían en FullColor
             </h2>
             <p className="mt-4 text-base text-slate-600">
-              Historias reales de equipos que encontraron un aliado en nuestra planta de produccion.
+              Historias reales de equipos que encontraron un aliado en nuestra planta de producción.
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -309,10 +309,10 @@ export default function HomePage() {
             <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr] lg:items-center">
               <div className="space-y-4">
                 <h2 className="text-3xl font-semibold md:text-4xl">
-                  Listo para cotizar? Nuestro equipo te acompana hoy mismo.
+                  ¿Listo para cotizar? Nuestro equipo te acompaña hoy mismo.
                 </h2>
                 <p className="text-base text-white/80">
-                  Envianos tu brief o agenda una llamada para revisar ideas, materiales y tiempos ideales segun tu presupuesto.
+                  Envíanos tu brief o agenda una llamada para revisar ideas, materiales y tiempos ideales según tu presupuesto.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <Button
@@ -320,7 +320,7 @@ export default function HomePage() {
                     asChild
                     className="rounded-md bg-white px-8 py-6 text-base font-semibold text-primary transition hover:-translate-y-0.5"
                   >
-                    <Link href="/cotizador">Crear cotizacion</Link>
+                    <Link href="/cotizador">Crear cotización</Link>
                   </Button>
                   <Button
                     size="lg"
@@ -332,9 +332,9 @@ export default function HomePage() {
                       href="https://wa.me/message/NMOTUO5GTAI3C1"
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label="Chatee con nosotros por WhatsApp"
+                      aria-label="Chatear con nosotros por WhatsApp"
                     >
-                      Chatee con nosotros
+                      Chatear con nosotros
                     </Link>
                   </Button>
                 </div>
@@ -343,15 +343,15 @@ export default function HomePage() {
                 <div className="flex items-start gap-3">
                   <Clock className="mt-1 h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
                   <div>
-                    <p className="font-semibold">Horarios de atencion</p>
-                    <p>Lunes a viernes 8h00 a 18h00 - Sabados 9h00 a 13h00</p>
+                    <p className="font-semibold">Horarios de atención</p>
+                    <p>Lunes a viernes 8h00 a 18h00 - Sábados 9h00 a 13h00</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <PhoneCall className="mt-1 h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
                   <div>
                     <p className="font-semibold">Soporte especializado</p>
-                    <p>Briefing tecnico, mockups y recomendaciones de empaque.</p>
+                    <p>Briefing técnico, mockups y recomendaciones de empaque.</p>
                   </div>
                 </div>
               </div>
@@ -367,7 +367,7 @@ export default function HomePage() {
               Preguntas frecuentes
             </h2>
             <p className="mt-4 text-base text-slate-600">
-              Resolvemos las dudas mas habituales para que avances sin frenos.
+              Resolvemos las dudas más habituales para que avances sin frenos.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">

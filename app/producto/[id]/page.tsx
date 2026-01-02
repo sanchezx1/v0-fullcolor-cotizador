@@ -48,7 +48,7 @@ export default function ProductPage() {
           <div className="flex-1 space-y-3">
             <div className="space-y-1">
               <p className="text-sm font-semibold text-primary">Producto agregado</p>
-              <p className="text-sm text-slate-600 dark:text-slate-200">Que deseas hacer ahora?</p>
+              <p className="text-sm text-slate-600 dark:text-slate-200">¿Qué deseas hacer ahora?</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
@@ -60,7 +60,7 @@ export default function ProductPage() {
                   router.push("/cotizador")
                 }}
               >
-                Finalizar cotizacion
+                Finalizar cotización
               </Button>
               <Button
                 type="button"

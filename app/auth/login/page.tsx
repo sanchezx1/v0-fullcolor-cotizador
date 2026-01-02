@@ -65,11 +65,11 @@ function AuthScreen() {
 
     try {
       await signIn(email.trim().toLowerCase(), password)
-      toast.success('Inicio de sesion exitoso')
+      toast.success('Inicio de sesión exitoso')
       await navigateAfterAuth()
     } catch (error: any) {
       console.error('Error login:', error)
-      let message = 'No se pudo iniciar sesion'
+      let message = 'No se pudo iniciar sesión'
       if (error?.message?.includes('Invalid login credentials')) {
         message = 'Correo o password incorrecto'
       } else if (error?.message) {
@@ -90,7 +90,7 @@ function AuthScreen() {
     }
 
     if (password !== passwordConfirm) {
-      toast.error('Las contrasenas no coinciden')
+      toast.error('Las contraseñas no coinciden')
       return
     }
 
@@ -135,7 +135,7 @@ function AuthScreen() {
       <div className="relative hidden w-full lg:flex lg:w-1/2">
         <Image
           src="/herofoto1.webp"
-          alt="Produccion FullColor"
+          alt="Producción FullColor"
           fill
           className="object-cover"
           priority
@@ -145,7 +145,7 @@ function AuthScreen() {
           <div className="space-y-4 text-white">
             <p className="text-2xl font-semibold">Cotiza, guarda y retoma tus proyectos cuando quieras.</p>
             <p className="text-sm text-white/80">
-              Ahorra tiempo con tu cuenta FullColor y sigue el estado de cada cotizacion en un solo lugar.
+              Ahorra tiempo con tu cuenta FullColor y sigue el estado de cada cotización en un solo lugar.
             </p>
           </div>
         </div>
@@ -172,7 +172,7 @@ function AuthScreen() {
           <div className="w-full max-w-md space-y-8">
             <div className="space-y-2">
               <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                {activeTab === 'login' ? 'Inicia sesion' : 'Crea tu cuenta'}
+                {activeTab === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}
               </p>
               <h1 className="text-3xl font-bold text-slate-900">
                 {activeTab === 'login' ? 'Bienvenido de nuevo' : 'Tu cuenta FullColor'}
@@ -205,7 +205,7 @@ function AuthScreen() {
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password">Password</Label>
                       <Link href="#" className="text-sm text-primary hover:text-primary-hover hover:underline">
-                        Olvidaste tu password?
+                        ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
                     <Input
@@ -225,7 +225,7 @@ function AuthScreen() {
                     className="w-full bg-primary text-white hover:bg-primary-hover"
                     disabled={loading}
                   >
-                    {loading ? 'Procesando...' : 'Iniciar sesion'}
+                    {loading ? 'Procesando...' : 'Iniciar sesión'}
                   </Button>
                 </form>
               ) : (
@@ -301,22 +301,22 @@ function AuthScreen() {
               <div className="text-center text-sm text-muted-foreground">
                 {activeTab === 'login' ? (
                   <>
-                    No tienes una cuenta?{' '}
+                    ¿No tienes una cuenta?{' '}
                     <button
                       onClick={() => setActiveTab('register')}
                       className="font-medium text-primary hover:text-primary-hover hover:underline focus:outline-none"
                     >
-                      Registrate
+                      Regístrate
                     </button>
                   </>
                 ) : (
                   <>
-                    Ya tienes una cuenta?{' '}
+                    ¿Ya tienes una cuenta?{' '}
                     <button
                       onClick={() => setActiveTab('login')}
                       className="font-medium text-primary hover:text-primary-hover hover:underline focus:outline-none"
                     >
-                      Inicia sesion
+                      Inicia sesión
                     </button>
                   </>
                 )}

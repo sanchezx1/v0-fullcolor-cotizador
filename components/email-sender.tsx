@@ -51,7 +51,7 @@ export function EmailSender({ quoteId, quoteToken, initialEmail, onEmailSent, au
 
     if (!validateEmail(email)) {
       setState('error')
-      setMessage('Por favor ingresa un email valido')
+      setMessage('Por favor ingresa un email válido')
       return
     }
 

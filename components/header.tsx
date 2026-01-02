@@ -31,7 +31,7 @@ const getStoredQuoteItems = (): QuoteItem[] => {
     const parsed = JSON.parse(stored)
     return Array.isArray(parsed) ? parsed : []
   } catch (error) {
-    console.warn("No se pudo leer la cotizacion desde localStorage", error)
+    console.warn("No se pudo leer la cotización desde localStorage", error)
     return []
   }
 }
@@ -69,12 +69,12 @@ export function Header() {
     try {
       setSigningOut(true)
       await supabase.auth.signOut()
-      toast.success("Sesion cerrada correctamente")
+      toast.success("Sesión cerrada correctamente")
       router.push("/")
       router.refresh()
     } catch (error) {
-      console.error("Error cerrando sesion:", error)
-      toast.error("No pudimos cerrar tu sesion")
+      console.error("Error cerrando sesión:", error)
+      toast.error("No pudimos cerrar tu sesión")
     } finally {
       setSigningOut(false)
     }
@@ -150,7 +150,7 @@ export function Header() {
   )
 
   const quoteCountLabel =
-    quoteCount === 1 ? "1 producto en la cotizacion" : `${quoteCount} productos en la cotizacion`
+    quoteCount === 1 ? "1 producto en la cotización" : `${quoteCount} productos en la cotización`
 
   const headerBaseClasses =
     "border-b transition-colors duration-200 md:backdrop-blur md:supports-[backdrop-filter]:bg-background/60"
@@ -182,7 +182,7 @@ export function Header() {
             Inicio
           </Link>
           <Link href="/catalogo" className="text-sm font-medium transition-colors hover:text-primary">
-            Catalogo
+            Catálogo
           </Link>
           <Link href="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
             Contacto
@@ -210,7 +210,7 @@ export function Header() {
             type="button"
             onClick={() => setIsMenuOpen(true)}
             className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/30 bg-primary text-white transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Abrir menu de navegacion"
+            aria-label="Abrir menú de navegación"
             aria-haspopup="true"
             aria-expanded={isMenuOpen}
             aria-controls="fullcolor-mobile-menu"
@@ -272,7 +272,7 @@ export function Header() {
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between border-b px-6 py-4">
-            <span className="text-sm font-semibold text-muted-foreground">Menu</span>
+            <span className="text-sm font-semibold text-muted-foreground">Menú</span>
             <Button
               variant="ghost"
               size="icon"
@@ -280,7 +280,7 @@ export function Header() {
               className="h-9 w-9 rounded-md hover:bg-muted"
             >
               <X className="h-5 w-5" />
-              <span className="sr-only">Cerrar menu</span>
+              <span className="sr-only">Cerrar menú</span>
             </Button>
           </div>
 
@@ -288,7 +288,7 @@ export function Header() {
             <nav className="space-y-1">
               {[
                 { href: "/", label: "Inicio", icon: Home },
-                { href: "/catalogo", label: "Catalogo", icon: Package },
+                { href: "/catalogo", label: "Catálogo", icon: Package },
                 { href: "/contacto", label: "Contacto", icon: Phone },
                 { href: "/cotizador", label: "Cotizar Ahora", icon: ShoppingCart, highlight: true }
               ].map((item) => (
@@ -346,14 +346,14 @@ export function Header() {
                     className="flex w-full items-center gap-2 rounded-md border border-transparent px-4 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <LogOut className="h-4 w-4" />
-                    {signingOut ? "Cerrando..." : "Cerrar sesion"}
+                    {signingOut ? "Cerrando..." : "Cerrar sesión"}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 <p className="px-2 text-sm text-muted-foreground">
-                  Inicia sesion para ver tus cotizaciones y pedidos.
+                  Inicia sesión para ver tus cotizaciones y pedidos.
                 </p>
                 <Link
                   href="/auth/login"
@@ -361,7 +361,7 @@ export function Header() {
                   className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
                 >
                   <UserRound className="h-4 w-4" />
-                  Iniciar Sesion
+                  Iniciar Sesión
                 </Link>
               </div>
             )}
@@ -413,7 +413,7 @@ function AccountButton({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="truncate text-xs text-muted-foreground">
-            {userEmail || "Sesion activa"}
+            {userEmail || "Sesión activa"}
           </DropdownMenuLabel>
           <DropdownMenuItem
             onSelect={(event) => {
@@ -431,7 +431,7 @@ function AccountButton({
             }}
             className="text-destructive"
           >
-            {signingOut ? "Cerrando..." : "Cerrar sesion"}
+            {signingOut ? "Cerrando..." : "Cerrar sesión"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
