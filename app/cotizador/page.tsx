@@ -246,9 +246,9 @@ export default function CotizadorPage() {
       <div className="py-12">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-balance mb-3">Cotizador de Productos</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-balance mb-3">Resumen de Solicitud</h1>
           <p className="text-muted-foreground text-pretty">
-            Revisa tu cotización y completa tus datos para recibir una propuesta personalizada
+            Revisa los detalles y completa tus datos para recibir una propuesta formal.
           </p>
         </div>
 
@@ -261,9 +261,9 @@ export default function CotizadorPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-semibold">Tu cotización está vacía</h2>
+                <h2 className="text-xl font-semibold">Tu carrito está vacío</h2>
                 <p className="text-muted-foreground text-pretty max-w-md mx-auto">
-                  Explora nuestro catálogo y agrega productos para comenzar tu cotización
+                  Explora nuestro catálogo y agrega productos para comenzar.
                 </p>
               </div>
               <Link href="/catalogo">
@@ -283,7 +283,7 @@ export default function CotizadorPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <ShoppingCart className="h-5 w-5" />
-                      Productos en tu Cotización ({quoteItems.length})
+                      Productos seleccionados ({quoteItems.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -523,7 +523,7 @@ export default function CotizadorPage() {
               <div className="lg:col-span-1">
                 <Card className="sticky top-20">
                   <CardHeader>
-                    <CardTitle>Resumen de Cotización</CardTitle>
+                    <CardTitle>Resumen</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
@@ -596,7 +596,7 @@ export default function CotizadorPage() {
                         </>
                       ) : (
                         <>
-                          Solicitar Cotización
+                          Enviar Solicitud
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </>
                       )}
