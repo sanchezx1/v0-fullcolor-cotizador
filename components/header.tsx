@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -46,13 +46,28 @@ const getItemsCount = (items: QuoteItem[]) => {
   return uniqueProducts.size
 }
 
+const navLinks = [
+  { href: "/", label: "Inicio" },
+  { href: "/catalogo", label: "Catálogo" },
+  { href: "/contacto", label: "Contacto" },
+]
+
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [quoteCount, setQuoteCount] = useState(0)
   const [animateBadge, setAnimateBadge] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { isAuthenticated, isAdmin, user: authUser, status: authStatus } = useAuthSession()
   const router = useRouter()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10)
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleAccountNavigate = () => {
     if (isAdmin) {
@@ -143,8 +158,8 @@ export function Header() {
   const badgeClasses = useMemo(
     () =>
       [
-        "absolute -top-2 -right-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-white shadow-lg transition-transform duration-300",
-        animateBadge ? "scale-110" : "scale-100"
+        "absolute -top-1.5 -right-1.5 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#f5c700] px-1.5 text-[11px] font-bold text-slate-900 shadow-md ring-2 ring-white transition-transform duration-300",
+        animateBadge ? "scale-125" : "scale-100"
       ].join(" "),
     [animateBadge]
   )
@@ -152,51 +167,56 @@ export function Header() {
   const quoteCountLabel =
     quoteCount === 1 ? "1 producto en la cotización" : `${quoteCount} productos en la cotización`
 
-  const headerBaseClasses =
-    "border-b transition-colors duration-200 md:backdrop-blur md:supports-[backdrop-filter]:bg-background/60"
-
   return (
     <>
       <header
-        className={`fixed top-0 z-50 w-full bg-white shadow-sm md:sticky md:bg-background/95 ${headerBaseClasses}`}
+        className={`fixed top-0 z-50 w-full transition-all duration-300 md:sticky ${
+          scrolled
+            ? "bg-white/95 shadow-lg shadow-primary/5 backdrop-blur-md"
+            : "bg-white/80 backdrop-blur-sm"
+        }`}
       >
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <div className="container mx-auto flex h-[72px] items-center justify-between px-4 lg:px-6">
+          {/* Logo */}
           <Link
             href="/"
-            className={`flex items-center space-x-2 transition-opacity duration-200 ${
+            className={`group relative flex items-center transition-all duration-300 ${
               isMenuOpen ? "opacity-0 pointer-events-none md:opacity-100 md:pointer-events-auto" : "opacity-100"
             }`}
-        >
-          <Image
-            src="/logo-fullcolor.png"
-            alt="FullColor"
-            width={160}
-            height={40}
-            className="h-10 w-auto"
-            priority
-          />
-        </Link>
-
-        <nav className="absolute left-1/2 hidden -translate-x-1/2 transform items-center space-x-6 md:flex">
-          <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
-            Inicio
-          </Link>
-          <Link href="/catalogo" className="text-sm font-medium transition-colors hover:text-primary">
-            Catálogo
-          </Link>
-          <Link href="/contacto" className="text-sm font-medium transition-colors hover:text-primary">
-            Contacto
-          </Link>
-        </nav>
-
-        <div className="flex items-center gap-3 md:hidden">
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="relative h-11 w-11 rounded-md border border-primary/30 text-primary"
           >
-            <Link href="/cotizador" aria-live="polite" className="flex items-center justify-center">
+            <div className="relative">
+              <Image
+                src="/logo-fullcolor.png"
+                alt="FullColor"
+                width={180}
+                height={45}
+                className="h-11 w-auto transition-transform duration-300 group-hover:scale-[1.02]"
+                priority
+              />
+            </div>
+          </Link>
+
+          {/* Navegación Desktop - Centrada */}
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="group relative px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:text-[#0066a1]"
+              >
+                {link.label}
+                <span className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-[#f5c700] transition-all duration-300 group-hover:w-3/4" />
+              </Link>
+            ))}
+          </nav>
+
+          {/* Acciones Mobile */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Link
+              href="/cotizador"
+              aria-live="polite"
+              className="relative flex h-11 w-11 items-center justify-center rounded-md bg-[#0066a1]/5 text-[#0066a1] transition-all duration-200 hover:bg-[#0066a1]/10 active:scale-95"
+            >
               <ShoppingCart className="h-5 w-5" aria-hidden="true" />
               {quoteCount > 0 && (
                 <span className={badgeClasses} role="status" aria-label={quoteCountLabel}>
@@ -204,64 +224,67 @@ export function Header() {
                 </span>
               )}
             </Link>
-          </Button>
 
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen(true)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-primary/30 bg-primary text-white transition-transform duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label="Abrir menú de navegación"
-            aria-haspopup="true"
-            aria-expanded={isMenuOpen}
-            aria-controls="fullcolor-mobile-menu"
-          >
-            <Menu className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(true)}
+              className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-[#0066a1] to-[#005080] text-white shadow-lg shadow-[#0066a1]/25 transition-all duration-200 hover:shadow-xl hover:shadow-[#0066a1]/30 active:scale-95"
+              aria-label="Abrir menú de navegación"
+              aria-haspopup="true"
+              aria-expanded={isMenuOpen}
+              aria-controls="fullcolor-mobile-menu"
+            >
+              <Menu className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+          </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <AccountButton
-            isAuthenticated={isAuthenticated}
-            isAdmin={isAdmin}
-            userEmail={authUser?.email ?? ""}
-            status={authStatus}
-            signingOut={signingOut}
-            onNavigate={handleAccountNavigate}
-            onSignOut={handleSignOut}
-          />
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="relative bg-transparent px-3 sm:px-4"
-          >
-            <Link href="/cotizador" aria-live="polite" className="flex items-center gap-2">
+          {/* Acciones Desktop */}
+          <div className="hidden items-center gap-3 md:flex">
+            <AccountButton
+              isAuthenticated={isAuthenticated}
+              isAdmin={isAdmin}
+              userEmail={authUser?.email ?? ""}
+              status={authStatus}
+              signingOut={signingOut}
+              onNavigate={handleAccountNavigate}
+              onSignOut={handleSignOut}
+            />
+
+            <Link
+              href="/cotizador"
+              aria-live="polite"
+              className="group relative flex items-center gap-2.5 rounded-md bg-gradient-to-r from-[#0066a1] to-[#0077b8] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#0066a1]/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#0066a1]/30"
+            >
               <ShoppingCart className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Mis cotizaciones</span>
-              <span className="sm:hidden text-sm font-semibold">Mis cotizaciones</span>
+              <span>Cotizar</span>
               {quoteCount > 0 && (
-                <span className={badgeClasses} role="status" aria-label={quoteCountLabel}>
+                <span
+                  className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#f5c700] px-1.5 text-[11px] font-bold text-slate-900 shadow-inner"
+                  role="status"
+                  aria-label={quoteCountLabel}
+                >
                   {quoteCount}
                 </span>
               )}
+              <div className="absolute inset-0 -z-10 rounded-md bg-gradient-to-r from-[#f5c700]/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </Link>
-          </Button>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div
         className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${
           isMenuOpen ? "visible" : "invisible delay-300"
         }`}
       >
-        <div 
+        <div
           className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
             isMenuOpen ? "opacity-100" : "opacity-0"
           }`}
           onClick={closeMenu}
           aria-hidden="true"
         />
-        
+
         <aside
           id="fullcolor-mobile-menu"
           role="dialog"
@@ -297,8 +320,8 @@ export function Header() {
                   href={item.href}
                   onClick={closeMenu}
                   className={`group flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium transition-colors ${
-                    item.highlight 
-                      ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                    item.highlight
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
                       : "text-foreground hover:bg-muted hover:text-primary"
                   }`}
                 >
@@ -326,7 +349,7 @@ export function Header() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="grid gap-2">
                   <Link
                     href={isAdmin ? "/admin" : "/mi-cuenta"}
@@ -336,7 +359,7 @@ export function Header() {
                     {isAdmin ? <LayoutDashboard className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
                     {isAdmin ? "Panel Admin" : "Mi Cuenta"}
                   </Link>
-                  
+
                   <button
                     onClick={() => {
                       closeMenu()
@@ -368,9 +391,10 @@ export function Header() {
           </div>
         </aside>
       </div>
-    </header>
-    <div className="h-16 w-full md:hidden" aria-hidden="true" />
-  </>
+
+      {/* Espaciador para el header fixed en mobile */}
+      <div className="h-[72px] w-full md:hidden" aria-hidden="true" />
+    </>
   )
 }
 
@@ -395,10 +419,10 @@ function AccountButton({
 }: AccountButtonProps) {
   if (status === "loading") {
     return (
-      <Button variant="outline" size="sm" disabled className="bg-transparent px-3 sm:px-4">
-        <span className="h-4 w-4 animate-pulse rounded-full bg-primary/60" aria-hidden="true" />
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100">
+        <span className="h-4 w-4 animate-pulse rounded-full bg-slate-300" aria-hidden="true" />
         <span className="sr-only">Cargando</span>
-      </Button>
+      </div>
     )
   }
 
@@ -406,22 +430,34 @@ function AccountButton({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="relative bg-transparent px-3 sm:px-4">
-            <UserRound className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">{isAdmin ? "Admin" : "Mi cuenta"}</span>
-          </Button>
+          <button className="group flex h-10 w-10 items-center justify-center rounded-md bg-[#0066a1]/5 text-[#0066a1] transition-all hover:bg-[#0066a1]/10">
+            <UserRound className="h-5 w-5" aria-hidden="true" />
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="truncate text-xs text-muted-foreground">
-            {userEmail || "Sesión activa"}
+        <DropdownMenuContent align="end" className="w-64 rounded-md p-2">
+          <DropdownMenuLabel className="px-3 py-2">
+            <p className="text-xs text-slate-500">Sesión activa</p>
+            <p className="truncate text-sm font-medium text-slate-800">{userEmail || "Usuario"}</p>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault()
               onNavigate()
             }}
+            className="cursor-pointer rounded-lg px-3 py-2.5 text-sm"
           >
-            {isAdmin ? "Ir al panel admin" : "Abrir Mi cuenta"}
+            {isAdmin ? (
+              <>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Panel de administración
+              </>
+            ) : (
+              <>
+                <UserRound className="mr-2 h-4 w-4" />
+                Mi cuenta
+              </>
+            )}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -429,8 +465,9 @@ function AccountButton({
               event.preventDefault()
               onSignOut()
             }}
-            className="text-destructive"
+            className="cursor-pointer rounded-lg px-3 py-2.5 text-sm text-red-600 focus:bg-red-50 focus:text-red-600"
           >
+            <LogOut className="mr-2 h-4 w-4" />
             {signingOut ? "Cerrando..." : "Cerrar sesión"}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -439,14 +476,12 @@ function AccountButton({
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className="relative bg-transparent px-3 sm:px-4"
+    <button
+      className="flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-[#0066a1]/30 hover:bg-[#0066a1]/5 hover:text-[#0066a1]"
       onClick={onNavigate}
     >
       <UserRound className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden sm:inline">Mi cuenta</span>
-    </Button>
+      <span>Iniciar sesión</span>
+    </button>
   )
 }

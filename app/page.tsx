@@ -318,15 +318,14 @@ export default function HomePage() {
                   <Button
                     size="lg"
                     asChild
-                    className="rounded-md bg-white px-8 py-6 text-base font-semibold text-primary transition hover:-translate-y-0.5"
+                    className="rounded-md bg-white px-8 py-6 text-base font-semibold text-[#0066a1] shadow-lg transition-all hover:-translate-y-0.5 hover:bg-white hover:shadow-xl"
                   >
                     <Link href="/cotizador">Crear cotización</Link>
                   </Button>
                   <Button
                     size="lg"
-                    variant="outline"
                     asChild
-                    className="rounded-md border-white/60 px-8 py-6 text-base text-white hover:bg-white/10"
+                    className="rounded-md border-2 border-white bg-transparent px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-white hover:text-[#0066a1]"
                   >
                     <Link
                       href="https://wa.me/message/NMOTUO5GTAI3C1"
