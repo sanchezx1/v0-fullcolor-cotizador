@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient'
 
 /**
  * Servicio para gestionar el envío de emails de cotizaciones
- * Usa SendGrid a través de Edge Function de Supabase
+ * Usa Resend a través de Edge Function de Supabase
  */
 
 export interface SendEmailResult {
@@ -13,7 +13,7 @@ export interface SendEmailResult {
 }
 
 /**
- * Envía un email de cotización usando SendGrid
+ * Envía un email de cotización usando Resend
  * @param quoteId - ID de la cotización
  * @param recipientEmail - Email destinatario (opcional, usa el del lead si no se proporciona)
  */

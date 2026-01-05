@@ -101,14 +101,14 @@ describe('emailService.ts - Servicio de envío de emails', () => {
 
     it('debe manejar respuesta sin éxito', async () => {
       ;(supabase.functions.invoke as jest.Mock).mockResolvedValue({
-        data: { success: false, error: 'SendGrid error' },
+        data: { success: false, error: 'Resend error' },
         error: null
       })
 
       const result = await sendQuoteEmail(1)
 
       expect(result.success).toBe(false)
-      expect(result.error).toContain('SendGrid error')
+      expect(result.error).toContain('Resend error')
     })
 
     it('debe manejar excepciones', async () => {

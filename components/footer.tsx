@@ -27,10 +27,7 @@ export function Footer() {
         <div className="container mx-auto px-4 py-12 lg:py-16">
           <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
-                FullColor
-              </p>
-              <h3 className="mt-3 text-2xl font-semibold text-white">
+              <h3 className="text-2xl font-semibold text-white">
                 Soluciones gráficas integrales desde Machala
               </h3>
               <p className="mt-4 text-sm leading-relaxed text-white/80">

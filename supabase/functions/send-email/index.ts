@@ -46,7 +46,7 @@ async function logEmailAttempt(params: {
   tipoCorreo: string;
   estadoEnvio: 'sent' | 'error';
   errorMessage?: string | null;
-  sendgridMessageId?: string | null;
+  providerMessageId?: string | null;
 }) {
   try {
     await supabase.from('email_logs').insert({
@@ -55,7 +55,7 @@ async function logEmailAttempt(params: {
       tipo_correo: params.tipoCorreo,
       estado_envio: params.estadoEnvio,
       error_message: params.errorMessage ?? null,
-      sendgrid_message_id: params.sendgridMessageId ?? null
+      provider_message_id: params.providerMessageId ?? null
     });
   } catch (error) {
     console.warn('⚠️ No se pudo registrar el log de email:', error);
@@ -510,7 +510,7 @@ function generateStatusEmailHTML(data) {
   `.trim();
 }
 /**
- * Edge Function para enviar emails de cotizaciones usando SendGrid
+ * Edge Function para enviar emails de cotizaciones usando Resend
  */ Deno.serve(async (req)=>{
   const corsHeaders = getCorsHeaders(req);
   // Manejar preflight OPTIONS
@@ -520,15 +520,15 @@ function generateStatusEmailHTML(data) {
   try {
     console.log('📧 send-email function invoked');
     console.log('Method:', req.method);
-    // Configuración de SendGrid
-    const sendgridApiKey = Deno.env.get('SENDGRID_API_KEY');
-    const fromEmail = Deno.env.get('FROM_EMAIL') || 'carlosmatiasflor@gmail.com';
+    // Configuración de Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const fromEmail = Deno.env.get('FROM_EMAIL') || 'ventas@fullcolor.com.ec';
     const fromName = Deno.env.get('FROM_NAME') || 'FullColor';
-    const adminEmail = Deno.env.get('ADMIN_EMAIL') || fromEmail;
+    const adminEmail = Deno.env.get('ADMIN_EMAIL') || 'carlosmatiasflor@gmail.com';
     console.log('Environment check:', {
       supabaseUrl: supabaseUrl ? 'Present' : 'Missing',
       supabaseServiceKey: supabaseServiceKey ? 'Present' : 'Missing',
-      sendgridApiKey: sendgridApiKey ? 'Present' : 'Missing',
+      resendApiKey: resendApiKey ? 'Present' : 'Missing',
       fromEmail,
       fromName,
       adminEmail
@@ -544,11 +544,11 @@ function generateStatusEmailHTML(data) {
         headers: corsHeaders
       });
     }
-    if (!sendgridApiKey) {
-      console.error('❌ Missing SendGrid API Key');
+    if (!resendApiKey) {
+      console.error('❌ Missing Resend API Key');
       return new Response(JSON.stringify({
-        error: 'Configuración de SendGrid incompleta',
-        details: 'Falta SENDGRID_API_KEY'
+        error: 'Configuración de Resend incompleta',
+        details: 'Falta RESEND_API_KEY'
       }), {
         status: 500,
         headers: corsHeaders
@@ -751,53 +751,36 @@ function generateStatusEmailHTML(data) {
       ? 'Tu cotizacion ' + emailData.cotizacionNumero + ' - FullColor'
       : statusSubject;
 
-    // 8. Enviar email usando SendGrid
-    console.log('?? Enviando email via SendGrid...');
-    const sendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    // 8. Enviar email usando Resend
+    console.log('📬 Enviando email via Resend...');
+    const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${sendgridApiKey}`,
+        'Authorization': `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        personalizations: [
-          {
-            to: [
-              {
-                email: toEmail
-              }
-            ],
-            subject: emailSubject
-          }
-        ],
-        from: {
-          email: fromEmail,
-          name: fromName
-        },
-        content: [
-          {
-            type: 'text/html',
-            value: htmlContent
-          }
-        ],
-        reply_to: {
-          email: fromEmail,
-          name: fromName
-        }
+        from: `${fromName} <${fromEmail}>`,
+        to: [toEmail],
+        subject: emailSubject,
+        html: htmlContent,
+        reply_to: fromEmail
       })
     });
-    if (!sendgridResponse.ok) {
-      const errorText = await sendgridResponse.text();
-      console.error('? SendGrid error:', errorText);
+
+    const resendData = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      console.error('❌ Resend error:', resendData);
       await logEmailAttempt({
         quoteId,
         toEmail,
         tipoCorreo,
         estadoEnvio: 'error',
-        errorMessage: errorText,
-        sendgridMessageId: sendgridResponse.headers.get('x-message-id'),
+        errorMessage: JSON.stringify(resendData),
+        providerMessageId: resendData?.id || null,
       });
-      throw new Error('Error enviando email: ' + sendgridResponse.status + ' - ' + errorText);
+      throw new Error('Error enviando email: ' + resendResponse.status + ' - ' + JSON.stringify(resendData));
     }
 
     await logEmailAttempt({
@@ -805,9 +788,9 @@ function generateStatusEmailHTML(data) {
       toEmail,
       tipoCorreo,
       estadoEnvio: 'sent',
-      sendgridMessageId: sendgridResponse.headers.get('x-message-id'),
+      providerMessageId: resendData?.id || null,
     });
-    console.log('📧 Email enviado exitosamente via SendGrid al cliente');
+    console.log('📧 Email enviado exitosamente via Resend al cliente, ID:', resendData?.id);
 
     // 8.5. Enviar notificacion al admin solo en cotizacion creada
     if (resolvedEmailType === 'quote_created') {
@@ -816,33 +799,26 @@ function generateStatusEmailHTML(data) {
 
       try {
         const adminHtmlContent = generateAdminNotificationHTML(emailData);
-        const adminSendgridResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        const adminResendResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${sendgridApiKey}`,
+            'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            personalizations: [
-              {
-                to: [
-                  { email: adminEmail },
-                ],
-                subject: `🔔 Nueva Cotizacion ${emailData.cotizacionNumero} - ${emailData.clienteNombre}`,
-              },
-            ],
-            from: { email: fromEmail, name: fromName },
-            content: [
-              { type: 'text/html', value: adminHtmlContent },
-            ],
-            reply_to: { email: toEmail, name: emailData.clienteNombre },
+            from: `${fromName} <${fromEmail}>`,
+            to: [adminEmail],
+            subject: `🔔 Nueva Cotizacion ${emailData.cotizacionNumero} - ${emailData.clienteNombre}`,
+            html: adminHtmlContent,
+            reply_to: toEmail
           }),
         });
 
-        if (!adminSendgridResponse.ok) {
-          const errorText = await adminSendgridResponse.text();
-          console.error('❌ Error enviando notificacion al admin:', errorText);
-          console.error('❌ Status code:', adminSendgridResponse.status);
+        const adminResendData = await adminResendResponse.json();
+
+        if (!adminResendResponse.ok) {
+          console.error('❌ Error enviando notificacion al admin:', adminResendData);
+          console.error('❌ Status code:', adminResendResponse.status);
 
           // Registrar intento fallido de email al admin
           await logEmailAttempt({
@@ -850,11 +826,11 @@ function generateStatusEmailHTML(data) {
             toEmail: adminEmail,
             tipoCorreo: 'admin_notification',
             estadoEnvio: 'error',
-            errorMessage: errorText,
-            sendgridMessageId: adminSendgridResponse.headers.get('x-message-id'),
+            errorMessage: JSON.stringify(adminResendData),
+            providerMessageId: adminResendData?.id || null,
           });
         } else {
-          console.log('✅ Notificacion enviada al admin:', adminEmail);
+          console.log('✅ Notificacion enviada al admin:', adminEmail, 'ID:', adminResendData?.id);
 
           // Registrar envío exitoso al admin
           await logEmailAttempt({
@@ -862,7 +838,7 @@ function generateStatusEmailHTML(data) {
             toEmail: adminEmail,
             tipoCorreo: 'admin_notification',
             estadoEnvio: 'sent',
-            sendgridMessageId: adminSendgridResponse.headers.get('x-message-id'),
+            providerMessageId: adminResendData?.id || null,
           });
         }
       } catch (adminEmailError) {
@@ -889,7 +865,8 @@ function generateStatusEmailHTML(data) {
         recipient: toEmail,
         cotizacion_numero: emailData.cotizacionNumero,
         total: emailData.total,
-        provider: 'sendgrid',
+        provider: 'resend',
+        message_id: resendData?.id,
         storage_path: pdfStoragePath,
         sent_at: new Date().toISOString()
       }

@@ -90,7 +90,7 @@ export type Database = {
           estado_envio: string
           id: number
           quote_id: number | null
-          sendgrid_message_id: string | null
+          provider_message_id: string | null
           tipo_correo: string
           to_email: string
         }
@@ -100,7 +100,7 @@ export type Database = {
           estado_envio: string
           id?: number
           quote_id?: number | null
-          sendgrid_message_id?: string | null
+          provider_message_id?: string | null
           tipo_correo: string
           to_email: string
         }
@@ -110,7 +110,7 @@ export type Database = {
           estado_envio?: string
           id?: number
           quote_id?: number | null
-          sendgrid_message_id?: string | null
+          provider_message_id?: string | null
           tipo_correo?: string
           to_email?: string
         }
