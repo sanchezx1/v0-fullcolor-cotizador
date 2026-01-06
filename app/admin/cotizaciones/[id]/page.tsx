@@ -17,11 +17,14 @@ import {
   MapPin,
   Phone,
   Mail as MailIcon,
-  ChevronDown
+  ChevronDown,
+  Info,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -469,45 +472,73 @@ export default function CotizacionDetailPage() {
         {/* Columna derecha (30%) */}
         <div className="space-y-6">
           {/* Gestión de Estado */}
-          <Card className="border-primary/20">
-            <CardHeader className="bg-primary/5">
-              <CardTitle className="flex items-center gap-2">
-                <Badge className={getEstadoColor(cotizacion.estado)}>
+          <Card className="overflow-hidden shadow-sm border border-gray-200">
+            <CardHeader className="bg-gray-50/50 pb-4 border-b">
+               <div className="flex items-center justify-between">
+                <div>
+                   <CardTitle className="text-base font-semibold text-gray-900">Estado de la cotización</CardTitle>
+                   <CardDescription className="text-xs mt-1">
+                     Gestiona el ciclo de vida de este documento.
+                   </CardDescription>
+                </div>
+                <Badge className={`px-3 py-1 text-xs font-semibold shadow-sm transition-colors ${getEstadoColor(cotizacion.estado)}`}>
                   {ESTADO_LABELS[cotizacion.estado] || cotizacion.estado}
                 </Badge>
-              </CardTitle>
-              <CardDescription>
-                Cambia el estado de la cotización
-              </CardDescription>
+               </div>
             </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block text-muted-foreground">
-                    Seleccionar nuevo estado
-                  </label>
-                  <Select
+            <CardContent className="pt-6 space-y-5">
+              <div className="space-y-3">
+                 <label className="text-xs font-medium uppercase tracking-wider text-gray-500 flex items-center gap-2">
+                   Cambiar Estado
+                 </label>
+                 <Select
                     value={cotizacion.estado}
                     onValueChange={(value) => handleCambiarEstado(value as EstadoCotizacion)}
                     disabled={loadingAction}
                   >
-                    <SelectTrigger className="h-11">
-                      <SelectValue />
+                    <SelectTrigger className="h-10 border-gray-200 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium">
+                      <SelectValue placeholder="Seleccionar estado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="enviada">Enviada</SelectItem>
-                      <SelectItem value="en_revision">En revisión</SelectItem>
-                      <SelectItem value="aprobada">Aprobada</SelectItem>
-                      <SelectItem value="rechazada">Rechazada</SelectItem>
+                      <SelectItem value="en_revision">
+                         <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-amber-500" />
+                            <span>En revisión</span>
+                         </div>
+                      </SelectItem>
+                      <SelectItem value="aprobada">
+                         <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-green-500" />
+                            <span>Aprobada</span>
+                         </div>
+                      </SelectItem>
+                      <SelectItem value="rechazada">
+                         <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 rounded-full bg-red-500" />
+                            <span>Rechazada</span>
+                         </div>
+                      </SelectItem>
+                      <SelectItem value="vencida">
+                         <div className="flex items-center gap-2">
+                           <span className="h-2 w-2 rounded-full bg-slate-500" />
+                           <span>Vencida</span>
+                         </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Nota:</p>
-                  <p>Al cambiar el estado, se notificará automáticamente al cliente por correo electrónico.</p>
-                </div>
               </div>
+
+               <div className="rounded-md bg-blue-50 border border-blue-100 p-3">
+                 <div className="flex gap-3">
+                   <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                   <div className="text-sm text-blue-800">
+                     <p className="font-semibold mb-1">Notificación Automática</p>
+                     <p className="text-blue-700/80 text-xs leading-relaxed">
+                       Al cambiar el estado a <strong>En Revisión, Aprobada, Rechazada o Vencida</strong>, se enviará un correo de notificación al cliente con la plantilla correspondiente.
+                     </p>
+                   </div>
+                 </div>
+               </div>
             </CardContent>
           </Card>
 

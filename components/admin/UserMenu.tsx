@@ -13,10 +13,16 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { LogOut, User, Shield } from 'lucide-react'
+import { LogOut, Shield, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
-export function UserMenu() {
+interface UserMenuProps {
+  collapsed?: boolean
+  sidebarMode?: boolean
+}
+
+export function UserMenu({ collapsed, sidebarMode = false }: UserMenuProps) {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,15 +53,18 @@ export function UserMenu() {
     }
   }
 
+  // Loading state
   if (loading) {
     return (
-      <Button variant="ghost" className="relative h-10 w-10 rounded-md" disabled>
-        <Avatar>
-          <AvatarFallback className="bg-gray-200">
-            <span className="h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-          </AvatarFallback>
-        </Avatar>
-      </Button>
+      <div className={cn("flex items-center gap-3 p-2", collapsed && "justify-center")}>
+        <div className="h-9 w-9 rounded-full bg-white/20 animate-pulse" />
+        {!collapsed && sidebarMode && (
+          <div className="space-y-2">
+            <div className="h-3 w-24 bg-white/20 rounded animate-pulse" />
+            <div className="h-2 w-32 bg-white/10 rounded animate-pulse" />
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -63,23 +72,54 @@ export function UserMenu() {
 
   const initials = userEmail.substring(0, 2).toUpperCase()
 
+  // Styles based on mode
+  const triggerStyles = sidebarMode 
+    ? "w-full hover:bg-white/10 text-white border-0 ring-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0" 
+    : "hover:bg-gray-100 text-gray-900"
+  
+  const avatarFallbackStyles = sidebarMode
+    ? "bg-white text-[#0066a1] font-bold"
+    : "bg-[#0066a1] text-white font-semibold"
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-md hover:ring-2 hover:ring-[#0066a1] transition-all">
-          <Avatar>
-            <AvatarFallback className="bg-[#0066a1] text-white font-semibold">
+        <Button 
+          variant="ghost" 
+          className={cn(
+            "relative h-auto py-2 px-2 flex items-center gap-3 transition-all duration-200", 
+            collapsed ? "justify-center" : "justify-start",
+            triggerStyles
+          )}
+        >
+          <Avatar className={cn("h-9 w-9 transition-transform duration-200", !collapsed && "group-hover:scale-105")}>
+            <AvatarFallback className={avatarFallbackStyles}>
               {initials}
             </AvatarFallback>
           </Avatar>
+          
+          {!collapsed && (
+            <div className="flex flex-col items-start overflow-hidden text-left flex-1 min-w-0">
+               <span className={cn("text-sm font-medium truncate w-full", sidebarMode ? "text-white" : "text-gray-900")}>
+                 Administrador
+               </span>
+               <span className={cn("text-xs truncate w-full", sidebarMode ? "text-white/70" : "text-muted-foreground")}>
+                 {userEmail}
+               </span>
+            </div>
+          )}
+          
+          {!collapsed && sidebarMode && (
+             <ChevronRight className="h-4 w-4 text-white/50 ml-auto shrink-0" />
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align={sidebarMode ? "start" : "end"} className="w-56" sideOffset={8}>
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-[#0066a1]" />
-              <p className="text-sm font-medium">Administrador</p>
+              <p className="text-sm font-medium">Cuenta Activa</p>
             </div>
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </div>

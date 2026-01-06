@@ -15,6 +15,7 @@ import {
   ChevronRight,
   X
 } from 'lucide-react'
+import { UserMenu } from './UserMenu'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -45,18 +46,12 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Adm
         )}
         style={{ background: 'linear-gradient(180deg, #003d6b 0%, #0066a1 100%)' }}
       >
-        {/* Logo */}
-        <div className="flex h-20 shrink-0 items-center border-b border-white/10 px-4">
-          <Link href="/admin" className="flex items-center gap-3 min-w-0 group">
-            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-lg transition-transform group-hover:scale-105">
-              <span className="font-bold text-xl" style={{ color: '#0066a1' }}>FC</span>
-            </div>
-            {!collapsed && (
-              <div className="min-w-0 overflow-hidden flex flex-col justify-center">
-                <h1 className="text-white font-bold text-xl tracking-tight truncate">FullColor</h1>
-              </div>
-            )}
-          </Link>
+        {/* User Profile / Branding Area */}
+        <div className={cn(
+          "flex h-20 shrink-0 items-center px-2 border-b border-white/10", 
+          collapsed && "justify-center"
+        )}>
+          <UserMenu collapsed={collapsed} sidebarMode={true} />
         </div>
 
         {/* Collapse button */}
