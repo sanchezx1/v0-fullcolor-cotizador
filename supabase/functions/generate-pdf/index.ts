@@ -103,6 +103,7 @@ async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: 
     if (signedUrlError) {
       throw new Error(`No se pudo generar URL firmada: ${signedUrlError.message}`);
     }
+    const pdfSignedUrl = signedUrlData?.signedUrl;
     // Actualizar estado de la cotización con el path del PDF
     const { error: updateError } = await supabase.from('cotizaciones').update({
       pdf_url: storagePath,
@@ -331,7 +332,7 @@ function formatCurrency(n) {
     const items = cotizacionData.items;
     const totals = cotizacionData.totals;
     const lead = cotizacion.leads || {};
-    const cotizacionNumero = cotizacion.id.toString().padStart(6, '0');
+    const cotizacionNumero = cotizacion.id.toString();
     const fechaCreacion = formatDateShort(cotizacion.created_at);
     console.log('â Datos preparados:', {
       items: items.length,
@@ -400,7 +401,7 @@ function formatCurrency(n) {
     // Fondo blanco limpio
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    const invoiceCode = cotizacion.codigo || `PF-${new Date(cotizacion.created_at).getFullYear()}-${cotizacionNumero}`;
+    const invoiceCode = cotizacion.codigo || `FC-${cotizacionNumero}`;
     const validUntilDate = cotizacion.fecha_validez || cotizacion.validez_hasta || cotizacion.valido_hasta || cotizacion.fecha_expiracion || null;
     const validUntil = validUntilDate ? formatDateShort(validUntilDate) : formatDateShort(new Date(new Date(cotizacion.created_at).getTime() + 30 * 24 * 60 * 60 * 1000));
     const companyInfo = {

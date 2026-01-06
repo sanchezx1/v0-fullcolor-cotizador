@@ -195,7 +195,7 @@ export class PDFQuoteService {
       '{{EMPRESA_EMAIL}}': empresaConfig.email,
 
       // Cotización
-      '{{COTIZACION_NUMERO}}': `FC-2025-${cotizacion.id.toString().padStart(3, '0')}`,
+      '{{COTIZACION_NUMERO}}': `FC-${cotizacion.id}`,
       '{{COTIZACION_FECHA}}': formatDateLong(cotizacion.created_at),
       '{{COTIZACION_VALIDEZ_DIAS}}': cotizacion.validez_dias.toString(),
 

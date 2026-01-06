@@ -197,7 +197,7 @@ export default function ConfirmacionPage() {
     )
   }
 
-  const quoteNumber = `FC-2025-${quoteData.cotizacion.id.toString().padStart(3, '0')}`
+  const quoteNumber = `FC-${quoteData.cotizacion.id}`
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -194,7 +194,7 @@ test.describe('Flujo de cotizacion E2E', () => {
 
     await expect(page).toHaveURL(/\/confirmacion/, { timeout: 20000 })
     await expect(page.getByText(/cotizaci[oó]n.*enviada/i).or(page.getByText(/gracias/i))).toBeVisible({ timeout: 5000 })
-    await expect(page.getByText(/FC-2025-/i).first()).toBeVisible()
+    await expect(page.getByText(/FC-\d+/i).first()).toBeVisible()
   })
 
   test('debe mostrar validacion si faltan campos requeridos', async ({ page }) => {
