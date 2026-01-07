@@ -127,11 +127,13 @@ function AuthScreen() {
       }
     } finally {
       setLoading(false)
+
+
     }
   }
 
   return (
-    <div className="-m-4 flex min-h-[calc(100vh+2rem)] w-[calc(100vw+2rem)] flex-col bg-white lg:flex-row">
+    <div className="flex w-full flex-col bg-transparent lg:h-screen lg:max-h-screen lg:w-screen lg:flex-row lg:overflow-hidden lg:bg-white">
       <div className="relative hidden w-full lg:flex lg:w-1/2">
         <Image
           src="/herofoto1.webp"
@@ -151,36 +153,34 @@ function AuthScreen() {
         </div>
       </div>
 
-      <div className="flex w-full flex-1 flex-col bg-white px-6 py-8 sm:px-10 lg:w-1/2">
-        <div className="mb-12 flex items-center justify-between">
+      <div className="flex w-full flex-col justify-center rounded-2xl bg-white/95 px-6 py-8 shadow-xl backdrop-blur-sm sm:px-10 lg:w-1/2 lg:flex-1 lg:rounded-none lg:bg-white lg:shadow-none lg:backdrop-blur-none">
+        
+        <div className="mb-6 flex items-center justify-between lg:mb-12">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             asChild
-            className="flex items-center gap-2 text-primary hover:text-primary-hover"
+            className="hidden items-center gap-2 text-primary hover:text-primary-hover lg:flex"
           >
             <Link href="/">
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Volver al inicio
             </Link>
           </Button>
-          <div className="text-sm font-medium text-slate-500">Mi cuenta</div>
+          <div className="hidden text-sm font-medium text-slate-500 lg:block">Mi cuenta</div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-md space-y-8">
-            <div className="space-y-2">
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+        <div className="flex flex-1 flex-col items-center justify-center">
+          <div className="w-full max-w-sm space-y-8 lg:max-w-md">
+            <div className="space-y-2 text-left">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 lg:text-3xl">
                 {activeTab === 'login' ? 'Inicia sesión' : 'Crea tu cuenta'}
-              </p>
-              <h1 className="text-3xl font-bold text-slate-900">
-                {activeTab === 'login' ? 'Bienvenido de nuevo' : 'Tu cuenta FullColor'}
               </h1>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-500">
                 {activeTab === 'login'
-                  ? 'Ingresa tus datos para acceder a tus cotizaciones.'
-                  : 'Registra tu correo para vincular tus cotizaciones y agilizar futuras solicitudes.'}
+                  ? 'Ingresa tu correo abajo para acceder a tu cuenta'
+                  : 'Ingresa tus datos abajo para crear tu cuenta'}
               </p>
             </div>
 
@@ -188,7 +188,7 @@ function AuthScreen() {
               {activeTab === 'login' ? (
                 <form className="space-y-4" onSubmit={handleLogin}>
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -197,14 +197,14 @@ function AuthScreen() {
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="m@example.com"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="login-password">Password</Label>
-                      <Link href="#" className="text-sm text-primary hover:text-primary-hover hover:underline">
+                      <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                      <Link href="#" className="text-sm font-medium text-primary hover:text-primary-hover hover:underline">
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>
@@ -216,13 +216,13 @@ function AuthScreen() {
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder="********"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-primary text-white hover:bg-primary-hover"
+                    className="h-11 w-full bg-primary text-base font-semibold text-white hover:bg-primary-hover lg:h-10 lg:text-sm"
                     disabled={loading}
                   >
                     {loading ? 'Procesando...' : 'Iniciar sesión'}
@@ -231,19 +231,19 @@ function AuthScreen() {
               ) : (
                 <form className="space-y-4" onSubmit={handleRegister}>
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">Nombre</Label>
+                    <Label htmlFor="register-name" className="text-sm font-medium">Nombre</Label>
                     <Input
                       id="register-name"
                       required
                       value={name}
                       onChange={(event) => setName(event.target.value)}
                       placeholder="Tu nombre"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+                    <Label htmlFor="register-email" className="text-sm font-medium">Email</Label>
                     <Input
                       id="register-email"
                       type="email"
@@ -252,12 +252,12 @@ function AuthScreen() {
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="m@example.com"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                    <Label htmlFor="register-password" className="text-sm font-medium">Password</Label>
                     <Input
                       id="register-password"
                       type="password"
@@ -266,12 +266,12 @@ function AuthScreen() {
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder="********"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password-confirm">Confirmar password</Label>
+                    <Label htmlFor="register-password-confirm" className="text-sm font-medium">Confirmar password</Label>
                     <Input
                       id="register-password-confirm"
                       type="password"
@@ -279,13 +279,13 @@ function AuthScreen() {
                       value={passwordConfirm}
                       onChange={(event) => setPasswordConfirm(event.target.value)}
                       placeholder="********"
-                      className="focus-visible:border-primary focus-visible:ring-primary"
+                      className="h-11 border-slate-200 bg-white focus-visible:border-primary focus-visible:ring-primary lg:h-10"
                       disabled={loading}
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-primary text-white hover:bg-primary-hover"
+                    className="h-11 w-full bg-primary text-base font-semibold text-white hover:bg-primary-hover lg:h-10 lg:text-sm"
                     disabled={loading}
                   >
                     {loading ? 'Creando cuenta...' : 'Crear cuenta'}
@@ -304,7 +304,7 @@ function AuthScreen() {
                     ¿No tienes una cuenta?{' '}
                     <button
                       onClick={() => setActiveTab('register')}
-                      className="font-medium text-primary hover:text-primary-hover hover:underline focus:outline-none"
+                      className="font-medium text-slate-900 decoration-slate-900 underline-offset-4 hover:underline focus:outline-none"
                     >
                       Regístrate
                     </button>
@@ -314,7 +314,7 @@ function AuthScreen() {
                     ¿Ya tienes una cuenta?{' '}
                     <button
                       onClick={() => setActiveTab('login')}
-                      className="font-medium text-primary hover:text-primary-hover hover:underline focus:outline-none"
+                      className="font-medium text-slate-900 decoration-slate-900 underline-offset-4 hover:underline focus:outline-none"
                     >
                       Inicia sesión
                     </button>

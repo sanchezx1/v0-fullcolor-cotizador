@@ -226,10 +226,7 @@ export default function CatalogoPage() {
               </div>
 
               {/* Contador de resultados y limpiar filtros */}
-              <div className="mt-3 flex items-center justify-between text-sm text-slate-500">
-                <p>
-                  <span className="font-semibold text-slate-700">{sortedProducts.length}</span> productos
-                </p>
+              <div className="mt-3 flex items-center justify-end text-sm text-slate-500">
                 {(searchQuery || selectedCategory !== "all") && (
                   <button
                     onClick={() => {

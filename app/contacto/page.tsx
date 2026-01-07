@@ -32,7 +32,7 @@ const contactMethods: ContactMethod[] = [
     details: [
       {
         label: "Número",
-        value: "0988705311",
+        value: "+593 98 870 5311",
         href: "https://wa.me/message/NMOTUO5GTAI3C1"
       }
     ],
@@ -48,8 +48,8 @@ const contactMethods: ContactMethod[] = [
     details: [
       {
         label: "Número",
-        value: "0988705311",
-        href: "tel:0988705311"
+        value: "+593 98 870 5311",
+        href: "tel:+593988705311"
       },
       {
         label: "Horario",
@@ -59,7 +59,7 @@ const contactMethods: ContactMethod[] = [
     ],
     cta: {
       label: "Llamar ahora",
-      href: "tel:0988705311"
+      href: "tel:+593988705311"
     }
   },
   {
@@ -209,8 +209,8 @@ export default function ContactoPage() {
                 <div>
                   <h3 className="font-semibold text-slate-900">Ubicación</h3>
                   <p className="text-slate-600 mt-1">
-                    Quito, Ecuador<br />
-                    (Dirección exacta previa cita)
+                    Rocafuerte 302 y 23 Abril<br />
+                    Machala, El Oro - Ecuador
                   </p>
                 </div>
               </div>

@@ -81,20 +81,20 @@ export function Footer() {
                 <li className="flex items-start gap-3">
                   <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
                   <span>
-                    Av. 25 de Junio y Sucre<br />
+                    Rocafuerte 302 y 23 Abril<br />
                     Machala, El Oro - Ecuador
                   </span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
                   <a className="hover:text-white transition" href="tel:+593988705311">
-                    0988705311
+                    +593 98 870 5311
                   </a>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="h-5 w-5 flex-shrink-0 text-white" aria-hidden="true" />
-                  <a className="hover:text-white transition" href="mailto:hola@fullcolor.ec">
-                    hola@fullcolor.ec
+                  <a className="hover:text-white transition" href="mailto:fullcolorecuador@yahoo.com">
+                    fullcolorecuador@yahoo.com
                   </a>
                 </li>
               </ul>
@@ -118,8 +118,8 @@ export function Footer() {
             <p>&copy; {new Date().getFullYear()} FullColor. Todos los derechos reservados.</p>
             <p>
               Políticas de privacidad y tratamiento de datos disponibles a solicitud en{" "}
-              <a className="underline hover:text-white" href="mailto:hola@fullcolor.ec">
-                hola@fullcolor.ec
+              <a className="underline hover:text-white" href="mailto:fullcolorecuador@yahoo.com">
+                fullcolorecuador@yahoo.com
               </a>
               .
             </p>

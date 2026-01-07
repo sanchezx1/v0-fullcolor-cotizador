@@ -22,7 +22,7 @@ const BRAND = {
   },
   contact: {
     email: 'fullcolorecuador@yahoo.com',
-    whatsapp: '0988705311',
+    whatsapp: '+593 98 870 5311',
     website: 'fullcolor.com.ec',
   },
   logoUrl: 'https://cxhjxponouukrnuxdhyz.supabase.co/storage/v1/object/public/branding/logo-fullcolor.png',
