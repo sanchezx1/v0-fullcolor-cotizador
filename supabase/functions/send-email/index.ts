@@ -107,9 +107,10 @@ async function ensureQuoteAccess(req: Request, quoteId: number, rawQuoteToken?: 
     return;
   }
 
+  // SEC-001: Bloquear anon key sin quoteToken para prevenir abuso como spam relay
   if (supabaseAnonKey && parsedToken === supabaseAnonKey) {
-    console.warn('send-email: invocation anon sin quoteToken, se continuará con validación interna.');
-    return;
+    console.warn('send-email: intento de acceso con anon key sin quoteToken - BLOQUEADO');
+    throw new HttpError(401, 'Se requiere token de cotización para acceso público');
   }
 
   await requirePrivilegedAccess({
