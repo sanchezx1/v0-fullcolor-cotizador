@@ -40,6 +40,7 @@ export function formatDateShort(value: string | Date, locale: string = "es-EC"):
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "America/Guayaquil",
   }).format(date)
 }
 
@@ -57,6 +58,7 @@ export function formatDateLong(value: string | Date, locale: string = "es-ES"): 
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "America/Guayaquil",
   }).format(date)
 }
 
@@ -76,6 +78,7 @@ export function formatDateTime(value: string | Date, locale: string = "es-EC"): 
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "America/Guayaquil",
   }).format(date)
 }
 

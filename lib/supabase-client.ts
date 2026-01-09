@@ -69,3 +69,36 @@ export async function getSession() {
   if (error) throw error
   return session
 }
+
+/**
+ * Envía un email de recuperación de contraseña
+ * @param email - Email del usuario
+ * @param redirectTo - URL a donde redirigir después del reset (opcional)
+ */
+export async function resetPasswordForEmail(email: string, redirectTo?: string) {
+  const redirectUrl =
+    redirectTo ??
+    (typeof window !== "undefined"
+      ? `${window.location.origin}/auth/reset-password`
+      : undefined)
+
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl,
+  })
+
+  if (error) throw error
+  return data
+}
+
+/**
+ * Actualiza la contraseña del usuario autenticado
+ * @param newPassword - Nueva contraseña
+ */
+export async function updatePassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  })
+
+  if (error) throw error
+  return data
+}

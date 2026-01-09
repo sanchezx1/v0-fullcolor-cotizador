@@ -204,7 +204,7 @@ function AuthScreen() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
-                      <Link href="#" className="text-sm font-medium text-primary hover:text-primary-hover hover:underline">
+                      <Link href="/auth/forgot-password" className="text-sm font-medium text-primary hover:text-primary-hover hover:underline">
                         ¿Olvidaste tu contraseña?
                       </Link>
                     </div>

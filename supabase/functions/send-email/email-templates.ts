@@ -261,7 +261,7 @@ export function generateQuoteCreatedEmail(data: QuoteEmailData): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Cotizacion ${data.cotizacionNumero} - FullColor</title>
+  <title>Cotización ${data.cotizacionNumero} - FullColor</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${BRAND.colors.light};">
 
@@ -277,7 +277,7 @@ export function generateQuoteCreatedEmail(data: QuoteEmailData): string {
             <td style="padding: 32px 40px;">
 
               <p style="margin: 0 0 6px 0; font-family: ${font}; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: ${BRAND.colors.primary}; text-transform: uppercase;">
-                Cotizacion ${data.cotizacionNumero}
+                Cotización ${data.cotizacionNumero}
               </p>
 
               <h1 style="margin: 0 0 20px 0; font-family: ${font}; font-size: 24px; font-weight: 600; color: ${BRAND.colors.text}; line-height: 1.3;">
@@ -285,7 +285,7 @@ export function generateQuoteCreatedEmail(data: QuoteEmailData): string {
               </h1>
 
               <p style="margin: 0 0 24px 0; font-family: ${font}; font-size: 15px; color: ${BRAND.colors.text}; line-height: 1.6;">
-                Gracias por su interes en nuestros servicios. A continuacion encontrara el detalle de su cotizacion personalizada.
+                Gracias por su interés en nuestros servicios. A continuación encontrará el detalle de su cotización personalizada.
               </p>
 
               <!-- Quote Info Box -->
@@ -299,7 +299,7 @@ export function generateQuoteCreatedEmail(data: QuoteEmailData): string {
                       </tr>
                       <tr>
                         <td style="padding: 4px 0; font-family: ${font}; font-size: 12px; color: ${BRAND.colors.muted}; text-transform: uppercase;">Validez</td>
-                        <td style="padding: 4px 0; font-family: ${font}; font-size: 14px; color: ${BRAND.colors.text}; text-align: right;">${data.validezDias} dias</td>
+                        <td style="padding: 4px 0; font-family: ${font}; font-size: 14px; color: ${BRAND.colors.text}; text-align: right;">${data.validezDias} días</td>
                       </tr>
                     </table>
                   </td>
@@ -314,14 +314,14 @@ export function generateQuoteCreatedEmail(data: QuoteEmailData): string {
 
               ${generateTotals(data.subtotal, data.iva15, data.total)}
 
-              ${generateButton('Descargar Cotizacion PDF', data.pdfUrl)}
+              ${generateButton('Descargar Cotización PDF', data.pdfUrl)}
 
               <!-- Note -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 20px; background-color: #fef9e7; border: 1px solid ${BRAND.colors.accent}; border-radius: 4px;">
                 <tr>
                   <td style="padding: 14px 16px;">
                     <p style="margin: 0; font-family: ${font}; font-size: 13px; color: ${BRAND.colors.text}; line-height: 1.5;">
-                      <strong>Nota:</strong> Esta cotizacion tiene validez de ${data.validezDias} dias. Precios sujetos a disponibilidad.
+                      <strong>Nota:</strong> Esta cotización tiene validez de ${data.validezDias} días. Precios sujetos a disponibilidad.
                     </p>
                   </td>
                 </tr>
@@ -362,7 +362,7 @@ export function generateAdminNotificationEmail(data: QuoteEmailData): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Nueva Cotizacion ${data.cotizacionNumero}</title>
+  <title>Nueva Cotización ${data.cotizacionNumero}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${BRAND.colors.light};">
 
@@ -384,7 +384,7 @@ export function generateAdminNotificationEmail(data: QuoteEmailData): string {
                       Nueva Solicitud
                     </p>
                     <h1 style="margin: 0; font-family: ${font}; font-size: 22px; font-weight: 600; color: ${BRAND.colors.white};">
-                      Cotizacion ${data.cotizacionNumero}
+                      Cotización ${data.cotizacionNumero}
                     </h1>
                   </td>
                   <td style="text-align: right; vertical-align: middle;">
@@ -406,7 +406,7 @@ export function generateAdminNotificationEmail(data: QuoteEmailData): string {
                 <tr>
                   <td style="padding: 16px 20px; background-color: ${BRAND.colors.light};">
                     <p style="margin: 0 0 10px 0; font-family: ${font}; font-size: 11px; letter-spacing: 0.5px; color: ${BRAND.colors.muted}; text-transform: uppercase; font-weight: 600;">
-                      Informacion del Cliente
+                      Información del Cliente
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
@@ -436,7 +436,7 @@ export function generateAdminNotificationEmail(data: QuoteEmailData): string {
 
               ${generateTotals(data.subtotal, data.iva15, data.total)}
 
-              ${generateButton('Ver Cotizacion PDF', data.pdfUrl)}
+              ${generateButton('Ver Cotización PDF', data.pdfUrl)}
 
               <p style="margin: 20px 0 0 0; font-family: ${font}; font-size: 14px; color: ${BRAND.colors.muted}; text-align: center; font-style: italic;">
                 Responde al cliente a la brevedad para cerrar la venta.
@@ -449,7 +449,7 @@ export function generateAdminNotificationEmail(data: QuoteEmailData): string {
           <tr>
             <td style="padding: 16px 40px; background-color: ${BRAND.colors.light}; border-top: 1px solid ${BRAND.colors.border};">
               <p style="margin: 0; font-family: ${font}; font-size: 11px; color: ${BRAND.colors.muted}; text-align: center;">
-                Notificacion automatica del sistema de cotizaciones FullColor
+                Notificación automática del sistema de cotizaciones FullColor
               </p>
             </td>
           </tr>
@@ -504,7 +504,7 @@ export function generateStatusChangeEmail(data: StatusEmailData, statusKey: stri
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Actualizacion - ${data.cotizacionNumero}</title>
+  <title>Actualización - ${data.cotizacionNumero}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: ${BRAND.colors.light};">
 
@@ -520,7 +520,7 @@ export function generateStatusChangeEmail(data: StatusEmailData, statusKey: stri
             <td style="padding: 32px 40px;">
 
               <p style="margin: 0 0 6px 0; font-family: ${font}; font-size: 12px; font-weight: 600; letter-spacing: 1px; color: ${BRAND.colors.primary}; text-transform: uppercase;">
-                Actualizacion de Cotizacion
+                Actualización de Cotización
               </p>
 
               <h1 style="margin: 0 0 24px 0; font-family: ${font}; font-size: 24px; font-weight: 600; color: ${BRAND.colors.text}; line-height: 1.3;">
@@ -554,7 +554,7 @@ export function generateStatusChangeEmail(data: StatusEmailData, statusKey: stri
                   <td style="padding: 16px 20px;">
                     <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="padding: 4px 0; font-family: ${font}; font-size: 12px; color: ${BRAND.colors.muted}; text-transform: uppercase;">Cotizacion</td>
+                        <td style="padding: 4px 0; font-family: ${font}; font-size: 12px; color: ${BRAND.colors.muted}; text-transform: uppercase;">Cotización</td>
                         <td style="padding: 4px 0; font-family: ${font}; font-size: 14px; color: ${BRAND.colors.text}; text-align: right; font-weight: 600;">${data.cotizacionNumero}</td>
                       </tr>
                       <tr>
@@ -570,17 +570,17 @@ export function generateStatusChangeEmail(data: StatusEmailData, statusKey: stri
                 </tr>
               </table>
 
-              ${data.pdfUrl ? generateButton('Ver Cotizacion PDF', data.pdfUrl) : ''}
+              ${data.pdfUrl ? generateButton('Ver Cotización PDF', data.pdfUrl) : ''}
 
               <!-- Help -->
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 28px; border-top: 1px solid ${BRAND.colors.border};">
                 <tr>
                   <td style="padding-top: 20px;">
                     <p style="margin: 0 0 6px 0; font-family: ${font}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: ${BRAND.colors.muted}; text-transform: uppercase;">
-                      Necesitas ayuda?
+                      ¿Necesitas ayuda?
                     </p>
                     <p style="margin: 0; font-family: ${font}; font-size: 14px; color: ${BRAND.colors.text}; line-height: 1.5;">
-                      Escribenos a <a href="mailto:${BRAND.contact.email}" style="color: ${BRAND.colors.primary}; text-decoration: none;">${BRAND.contact.email}</a> o contactanos por WhatsApp al <strong>${BRAND.contact.whatsapp}</strong>
+                      Escríbenos a <a href="mailto:${BRAND.contact.email}" style="color: ${BRAND.colors.primary}; text-decoration: none;">${BRAND.contact.email}</a> o contáctanos por WhatsApp al <strong>${BRAND.contact.whatsapp}</strong>
                     </p>
                   </td>
                 </tr>
