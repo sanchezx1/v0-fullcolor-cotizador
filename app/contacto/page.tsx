@@ -222,25 +222,57 @@ export default function ContactoPage() {
                 <div>
                   <h3 className="font-semibold text-slate-900">Horario de Atención</h3>
                   <p className="text-slate-600 mt-1">
-                    Lunes a Viernes: 8:00 AM - 6:00 PM<br />
-                    Sábados: 9:00 AM - 1:00 PM
+                    Lunes a Viernes: 9:00 AM - 7:00 PM<br />
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-100 shadow-2xl ring-1 ring-slate-900/5 lg:aspect-square">
-             {/* Placeholder for map or office image */}
-             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400">
-                <div className="text-center space-y-2">
-                  <MapPin className="h-12 w-12 mx-auto opacity-20" />
-                  <p className="text-sm font-medium">Mapa de ubicación</p>
+          <a
+            href="https://maps.app.goo.gl/v5bZ4sy1NUCuRo2q9"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 via-slate-100 to-primary/10 shadow-2xl ring-1 ring-slate-900/5 lg:aspect-square transition-all duration-300 hover:shadow-primary/20 hover:ring-primary/20"
+          >
+            {/* Decorative map pattern */}
+            <div className="absolute inset-0 opacity-30">
+              <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-slate-300" />
+                  </pattern>
+                </defs>
+                <rect width="100" height="100" fill="url(#grid)" />
+              </svg>
+            </div>
+            
+            {/* Map pin marker */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="relative">
+                <div className="absolute -inset-8 rounded-full bg-primary/10 animate-ping" />
+                <div className="absolute -inset-4 rounded-full bg-primary/20" />
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-transform duration-300 group-hover:scale-110">
+                  <MapPin className="h-8 w-8" />
                 </div>
-             </div>
-             {/* If you have a real map iframe, put it here */}
-             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-          </div>
+              </div>
+            </div>
+            
+            {/* Location info overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900/80 via-slate-900/50 to-transparent p-6 pt-16">
+              <div className="flex items-end justify-between">
+                <div className="text-white">
+                  <p className="text-xl font-bold">FullColor</p>
+                  <p className="text-sm text-white/80 mt-1">Rocafuerte 302 y 23 Abril</p>
+                  <p className="text-sm text-white/60">Machala, El Oro - Ecuador</p>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-primary shadow-lg transition-all group-hover:bg-primary group-hover:text-white">
+                  <MapPin className="h-4 w-4" />
+                  Abrir en Maps
+                </div>
+              </div>
+            </div>
+          </a>
         </div>
       </section>
     </div>

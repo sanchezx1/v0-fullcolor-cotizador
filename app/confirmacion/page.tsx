@@ -137,7 +137,7 @@ export default function ConfirmacionPage() {
               Cargando cotización...
             </h1>
             <p className="text-gray-600">
-              Obteniendo datos desde Supabase
+              Preparando su información, un momento por favor
             </p>
           </CardContent>
         </Card>
