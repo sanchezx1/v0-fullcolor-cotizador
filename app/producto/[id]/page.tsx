@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, ShoppingCart, Check, Package, AlertCircle, CheckCircle } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Package, AlertCircle, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import { getProductWithTiers, priceForQuantity, ProductWithTiers, PricingTier } from "@/src/lib/data"
 import { useQuoteBuilder } from "@/src/hooks/useQuoteBuilder"
@@ -28,9 +27,7 @@ export default function ProductPage() {
   const [addingToQuote, setAddingToQuote] = useState(false)
   const [addSuccess, setAddSuccess] = useState(false)
   const [galleryImages, setGalleryImages] = useState<{ src: string; alt: string }[]>([])
-  const [activeTab, setActiveTab] = useState("pricing")
   const isMountedRef = useRef(true)
-  const pricingSectionRef = useRef<HTMLDivElement | null>(null)
 
   const parsedQuantity = Number.parseInt(quantity, 10)
   const quantityValue = Number.isNaN(parsedQuantity) ? 0 : Math.max(0, parsedQuantity)
@@ -114,13 +111,6 @@ export default function ProductPage() {
       duration: 6000,
       closeButton: false
     })
-  }
-
-  const handleScrollToPricing = () => {
-    setActiveTab("pricing")
-    if (pricingSectionRef.current) {
-      pricingSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
   }
 
   const loadProduct = useCallback(async () => {
@@ -407,13 +397,34 @@ export default function ProductPage() {
                     )}
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleScrollToPricing}
-                  className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700] focus-visible:ring-offset-2 transition-colors"
-                >
-                  Ver listas de precios
-                </button>
+                
+                {product.pricingTiers.length > 0 && (
+                  <div className="mt-4 mb-4">
+                    <h3 className="font-semibold text-sm mb-2 text-primary">¡Ahorra más, al comprar más!</h3>
+                    <div className="border rounded-md overflow-hidden text-sm">
+                      <div className="grid grid-cols-3 bg-slate-100 p-2 font-medium text-center">
+                        <div>Cantidad</div>
+                        <div>Precio</div>
+                        <div>Subtotal</div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {product.pricingTiers.map((tier) => (
+                          <div 
+                            key={tier.id} 
+                            onClick={() => setQuantity(tier.cantidad_min.toString())}
+                            className={`grid grid-cols-3 p-2 text-center border-t hover:bg-slate-50 transition-colors cursor-pointer ${
+                              currentPricing?.appliedTier?.minQty === tier.cantidad_min ? 'bg-primary/10 font-medium' : ''
+                            }`}
+                          >
+                            <div>{tier.cantidad_min} Unidades</div>
+                            <div>${tier.precio_unitario.toFixed(2)}</div>
+                            <div>${(tier.cantidad_min * tier.precio_unitario).toFixed(2)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {outOfStock && (
                   <div className="flex items-start gap-3 rounded-lg border border-[#1F2937]/15 bg-[#1F2937]/5 px-4 py-3 text-sm text-[#1F2937]">
@@ -464,94 +475,40 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Product Details Tabs */}
-        <div className="mt-12" ref={pricingSectionRef}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="pricing">Precios</TabsTrigger>
-              <TabsTrigger value="description">Descripción</TabsTrigger>
-              <TabsTrigger value="specifications">Especificaciones</TabsTrigger>
-            </TabsList>
+        {/* Product Details Sections */}
+        <div className="mt-12 grid gap-8 md:grid-cols-2">
+           <Card>
+              <CardHeader>
+                <CardTitle>Descripción</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 leading-relaxed">
+                  {product.descripcion}
+                </p>
+              </CardContent>
+           </Card>
 
-            <TabsContent value="pricing" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Escalas de Precio</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {product.pricingTiers.map((tier, index) => {
-                      const maxQty = index < product.pricingTiers.length - 1 
-                        ? product.pricingTiers[index + 1].cantidad_min - 1 
-                        : null
-                      
-                      return (
-                        <Card
-                          key={tier.id}
-                          className={`${
-                            currentPricing?.appliedTier?.minQty === tier.cantidad_min
-                              ? "ring-2 ring-primary bg-primary/5"
-                              : ""
-                          }`}
-                        >
-                          <CardContent className="pt-4 text-center">
-                            <div className="text-2xl font-bold text-primary">
-                              ${tier.precio_unitario.toFixed(2)}
-                            </div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {tier.cantidad_min}+ unidades
-                              {maxQty && ` - ${maxQty}`}
-                            </div>
-                            {currentPricing?.appliedTier?.minQty === tier.cantidad_min && (
-                              <div className="mt-2">
-                                <Badge variant="default" className="text-xs">
-                                  <Check className="w-3 h-3 mr-1" />
-                                  Aplicado
-                                </Badge>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
+           <Card>
+              <CardHeader>
+                <CardTitle>Especificaciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <div className="space-y-4">
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-muted-foreground">Categoría</span>
+                        <span className="font-medium text-right">{product.categoria}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-muted-foreground">Unidad</span>
+                        <span className="font-medium text-right">{product.unidad}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-gray-100 pb-2">
+                        <span className="text-muted-foreground">Mínimo de pedido</span>
+                        <span className="font-medium text-right">{minQuantity} {product.unidad}</span>
+                      </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="description" className="mt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-gray-700 leading-relaxed">
-                    {product.descripcion}
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="specifications" className="mt-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Categoría:</span>
-                        <span className="font-medium">{product.categoria}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Unidad:</span>
-                        <span className="font-medium">{product.unidad}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Mínimo de pedido:</span>
-                        <span className="font-medium">{minQuantity} {product.unidad}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+              </CardContent>
+           </Card>
         </div>
       </div>
     </div>
